@@ -75,9 +75,9 @@ function CategoryPills({ categories, value, onChange }) {
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="rounded-3xl bg-card border border-border/60 overflow-hidden">
+        <div key={i} className="rounded-xl bg-card border border-border/60 overflow-hidden">
           <div className="aspect-[16/10] bg-secondary/70 animate-pulse" />
           <div className="p-4 space-y-3">
             <div className="h-4 w-4/5 rounded bg-secondary animate-pulse" />
@@ -92,13 +92,13 @@ function SkeletonGrid() {
 
 function EmptyBlock({ icon: Icon = Compass, title, sub, action }) {
   return (
-    <div className="rounded-3xl border border-dashed border-border/80 bg-card/60 py-16 px-6 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-primary">
-        <Icon className="h-6 w-6" />
+    <div className="rounded-xl border border-dashed border-border/70 bg-card/50 py-10 px-6 text-center">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-primary">
+        <Icon className="h-5 w-5" />
       </div>
-      <h3 className="font-heading text-lg font-bold text-ink">{title}</h3>
-      <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted-foreground">{sub}</p>
-      {action && <div className="mt-5">{action}</div>}
+      <h3 className="font-heading text-base font-bold text-ink">{title}</h3>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{sub}</p>
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
@@ -108,7 +108,7 @@ function RailCard({ contest }) {
   return (
     <Link
       to={`/contest/${contest.id}`}
-      className="group shrink-0 w-[230px] rounded-2xl bg-card border border-border/60 p-4 shadow-elev-1 hover:shadow-elev-2 hover:border-primary/30 transition-all ease-brand"
+      className="group shrink-0 w-[230px] rounded-xl bg-card border border-border/60 p-4 shadow-elev-1 hover:shadow-elev-2 hover:border-primary/30 transition-all ease-brand"
     >
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground truncate max-w-[130px]">{contest.category || 'Contest'}</span>
@@ -142,7 +142,7 @@ function ClientRow({ contest }) {
   const label = isDraft ? 'Draft' : isDone ? 'Completed' : 'Active';
   const cls = isDraft ? 'text-muted-foreground bg-secondary' : isDone ? 'text-success bg-success/10' : 'text-primary bg-primary/10';
   return (
-    <Link to={`/contest/${contest.id}`} className="flex items-center justify-between rounded-2xl bg-card border border-border/60 px-4 py-3.5 hover:border-primary/30 hover:shadow-elev-1 transition-all ease-brand">
+    <Link to={`/contest/${contest.id}`} className="flex items-center justify-between rounded-xl bg-card border border-border/60 px-4 py-3.5 hover:border-primary/30 hover:shadow-elev-1 transition-all ease-brand">
       <div className="min-w-0">
         <p className="font-semibold text-sm text-ink truncate">{contest.title}</p>
         <p className="text-xs text-muted-foreground mt-0.5 nums flex items-center gap-1">
@@ -231,7 +231,7 @@ export default function Explore() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         {/* Header */}
         <header className="flex flex-wrap items-end justify-between gap-4">
@@ -248,24 +248,8 @@ export default function Explore() {
                 <Plus className="w-4 h-4" /> New contest
               </Link>
             )}
-            {user && (
-              <Link to="/notifications" aria-label="Notifications" className="grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors">
-                <Bell className="w-[18px] h-[18px]" />
-              </Link>
-            )}
           </div>
         </header>
-
-        {/* Quick link to My contests for authenticated users */}
-        {user && (
-          <Link to="/my-contests" className="flex items-center justify-between rounded-2xl bg-card border border-border/60 px-4 py-3 hover:border-primary/30 hover:shadow-elev-1 transition-all ease-brand">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary"><FolderOpen className="w-[18px] h-[18px]" /></span>
-              <p className="text-sm font-semibold text-ink">My contests</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </Link>
-        )}
 
         {/* Search + filters (discovery only) */}
         {!isClient && tab === 0 && (
@@ -276,7 +260,7 @@ export default function Explore() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search contests by title or category…"
-                className="w-full rounded-2xl border border-border/70 bg-card pl-11 pr-4 py-3 text-sm text-ink placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary/40 transition"
+                className="w-full rounded-xl border border-border/70 bg-card pl-11 pr-4 py-3 text-sm text-ink placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary/40 transition"
               />
             </div>
             {categories.length > 1 && <CategoryPills categories={categories} value={category} onChange={setCategory} />}
@@ -312,7 +296,7 @@ export default function Explore() {
                 </h2>
                 <Segmented tabs={SORTS} value={sort} onChange={setSort} size="sm" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {available.map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}
               </div>
             </section>
@@ -321,10 +305,10 @@ export default function Explore() {
               sub={search.trim() || category !== 'All' ? 'Try a different search or category.' : 'New prize-funded contests land here — check back soon.'} />
           )
         ) : tab === 1 ? (
-          joined.length ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">{joined.map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}</div>
+          joined.length ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{joined.map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}</div>
             : <EmptyBlock icon={Compass} title="No contests joined yet" sub="Find a contest and start creating to see it here." />
         ) : (
-          creatorCompleted.length ? <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">{creatorCompleted.map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}</div>
+          creatorCompleted.length ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{creatorCompleted.map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}</div>
             : <EmptyBlock title="No completed contests" sub="Your finished contests will appear here." />
         )}
       </div>

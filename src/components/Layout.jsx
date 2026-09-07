@@ -18,34 +18,40 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-// ── Role-aware PRIMARY navigation — top bar only, real routes only ───────────
+// ── Role-aware PRIMARY navigation — core destinations only (top bar) ─────────
+// Discovery/work/winners are the product. Admin tools, wallet, settings and
+// help live in the account menu / dashboard — NOT the primary nav.
 const NAV = {
   creator: [
     { to: '/creator/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/my-contests', label: 'My Work', icon: FolderKanban },
     { to: '/winners-hub', label: 'Winners', icon: Trophy },
-    { to: '/wallet', label: 'Earnings', icon: WalletIcon },
   ],
   brand: [
     { to: '/client/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/my-contests', label: 'Contests', icon: FolderKanban },
     { to: '/winners-hub', label: 'Winners', icon: Trophy },
-    { to: '/social', label: 'Social', icon: Share2 },
-    { to: '/wallet', label: 'Wallet', icon: WalletIcon },
+    { to: '/social', label: 'Social Tracker', icon: Share2 },
   ],
   admin: [
     { to: '/explore', label: 'Explore', icon: Compass },
     { to: '/winners-hub', label: 'Winners', icon: Trophy },
-    { to: '/admin/trust', label: 'Trust', icon: Shield },
-    { to: '/admin/payments', label: 'Payments', icon: CreditCard },
-    { to: '/admin/users', label: 'Users', icon: UsersIcon },
   ],
   visitor: [
     { to: '/explore', label: 'Explore', icon: Compass },
     { to: '/winners-hub', label: 'Winners', icon: Trophy },
-    { to: '/help', label: 'Help', icon: HelpCircle },
+  ],
+};
+
+// Quick links surfaced in the account menu (kept out of primary nav).
+const QUICK_LINKS = {
+  creator: [
+    { to: '/my-contests', label: 'My Work', icon: FolderKanban },
+    { to: '/wallet', label: 'Earnings', icon: WalletIcon },
+  ],
+  brand: [
+    { to: '/my-contests', label: 'My Contests', icon: FolderKanban },
+    { to: '/wallet', label: 'Wallet', icon: WalletIcon },
   ],
 };
 
@@ -127,14 +133,15 @@ export default function Layout() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto max-w-[1400px] h-16 px-4 sm:px-6 flex items-center gap-3">
 
-          {/* Brand */}
-          <Link to="/" aria-label="RazeKit home" className="flex items-center gap-2.5 shrink-0 mr-2 press">
-            <RazekitIcon size={30} />
-            <span className="hidden sm:block"><RazekitWordmark height={20} /></span>
+          {/* Brand — intentional, premium presence (logo unchanged) */}
+          <Link to="/" aria-label="RazeKit home" className="flex items-center gap-2.5 shrink-0 press">
+            <RazekitIcon size={36} />
+            <span className="hidden sm:block"><RazekitWordmark height={25} /></span>
           </Link>
+          <span className="hidden md:block h-7 w-px bg-border/70 mx-4" aria-hidden="true" />
 
           {/* Primary nav (desktop) */}
-          <nav className="hidden md:flex items-center gap-0.5" aria-label="Primary">
+          <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
             {navItems.map((item) => (
               <NavLink key={item.to} to={item.to} className={() => navClass(isActive(item.to))}>
                 {item.label}
@@ -191,6 +198,10 @@ export default function Layout() {
                     <p className="text-xs text-muted-foreground font-normal truncate">{user?.email}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {(QUICK_LINKS[navKey] || []).map((q) => (
+                    <DropdownMenuItem key={q.to} onClick={() => navigate(q.to)}><q.icon className="w-4 h-4 mr-2" /> {q.label}</DropdownMenuItem>
+                  ))}
+                  {QUICK_LINKS[navKey] && <DropdownMenuSeparator />}
                   <DropdownMenuItem onClick={() => navigate('/profile')}><UserIcon className="w-4 h-4 mr-2" /> Profile</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/settings')}><SettingsIcon className="w-4 h-4 mr-2" /> Settings</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/settings/language')}><Globe className="w-4 h-4 mr-2" /> Language</DropdownMenuItem>
