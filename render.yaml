@@ -1,7 +1,23 @@
-# Render Blueprint for the RazeKit backend (server/).
-# Import this repo at render.com → "New +" → "Blueprint". Render reads this file.
-# Set the secret env vars (sync:false) in the Render dashboard after creation.
+# Render Blueprint for RazeKit — frontend (static) + backend (Node) together.
+# Import this repo at render.com → "New +" → "Blueprint" (or "Manual sync" on the
+# existing blueprint). Set the secret env vars (sync:false) in the dashboard.
 services:
+  # ── Frontend: React/Vite static site ───────────────────────────────────────
+  - type: web
+    name: razekit-web
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://razekit-api.onrender.com
+    routes:
+      # SPA fallback so client-side routes (deep links) load index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ── Backend: Node/Express API ──────────────────────────────────────────────
   - type: web
     name: razekit-api
     runtime: node
