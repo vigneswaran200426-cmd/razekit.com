@@ -1,3 +1,4 @@
+import 'express-async-errors'; // makes async route errors reach the error handler (no 502s)
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -48,6 +49,19 @@ app.use('/api', miscRouter);
 app.get('/', (_req, res) => res.json({ service: 'razekit-api', ok: true }));
 
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
+
+// Central error handler — turns any thrown/rejected error into a clean JSON
+// response instead of a 502. Surfaces the message so misconfig (e.g. a missing
+// DATABASE_URL) is diagnosable from the API response.
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const status = err?.status && Number.isInteger(err.status) ? err.status : 500;
+  if (status >= 500) console.error('[error]', err);
+  res.status(status).json({ error: err?.message || 'Internal error' });
+});
+
+// Never let a stray rejection take the process down (Render would 502 all routes).
+process.on('unhandledRejection', (e) => console.error('[unhandledRejection]', e));
+process.on('uncaughtException', (e) => console.error('[uncaughtException]', e));
 
 app.listen(config.port, () => {
   console.log(`\n🚀 RazeKit API on http://localhost:${config.port}  (env: ${config.env})`);

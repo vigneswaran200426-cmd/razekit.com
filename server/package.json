@@ -27,6 +27,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^5.0.9",
@@ -34,9 +35,9 @@
     "zod": "^3.24.1"
   },
   "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@aws-sdk/client-s3": "^3.717.0",
     "@aws-sdk/s3-request-presigner": "^3.717.0",
-    "@anthropic-ai/sdk": "^0.32.1",
     "nodemailer": "^6.9.16",
     "resend": "^4.0.1"
   },
