@@ -1,0 +1,95 @@
+{
+  "name": "XpTransaction",
+  "type": "object",
+  "description": "Server-authoritative XP ledger. Only a trusted backend/admin function may create XP transactions \u2014 users must never create XP for themselves.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "join",
+        "submit",
+        "result",
+        "review",
+        "quality",
+        "consistency",
+        "delivery",
+        "penalty"
+      ],
+      "title": "Category"
+    },
+    "amount": {
+      "type": "number",
+      "title": "XP Amount"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "breakdown": {
+      "type": "string",
+      "title": "Breakdown Detail (JSON)"
+    },
+    "result_type": {
+      "type": "string",
+      "enum": [
+        "winner",
+        "runner_up",
+        "top5",
+        "honorable",
+        "accepted",
+        "lost"
+      ],
+      "title": "Result Type"
+    },
+    "rating": {
+      "type": "number",
+      "title": "Client Rating"
+    },
+    "quality_score": {
+      "type": "number",
+      "title": "Quality Score"
+    }
+  },
+  "required": [
+    "user_id",
+    "category",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

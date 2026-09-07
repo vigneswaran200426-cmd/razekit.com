@@ -1,0 +1,90 @@
+{
+  "name": "UserPreference",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "notif_contests": {
+      "type": "boolean",
+      "default": true,
+      "title": "Contest Updates"
+    },
+    "notif_submissions": {
+      "type": "boolean",
+      "default": true,
+      "title": "New Submissions"
+    },
+    "notif_winners": {
+      "type": "boolean",
+      "default": true,
+      "title": "Winner / Results"
+    },
+    "notif_payments": {
+      "type": "boolean",
+      "default": true,
+      "title": "Payment Notifications"
+    },
+    "notif_payouts": {
+      "type": "boolean",
+      "default": true,
+      "title": "Payout Notifications"
+    },
+    "notif_messages": {
+      "type": "boolean",
+      "default": true,
+      "title": "Messages"
+    },
+    "notif_support": {
+      "type": "boolean",
+      "default": true,
+      "title": "Support / System"
+    },
+    "profile_visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private"
+      ],
+      "default": "public",
+      "title": "Profile Visibility"
+    },
+    "allow_messages": {
+      "type": "boolean",
+      "default": true,
+      "title": "Allow Direct Messages"
+    },
+    "show_earnings": {
+      "type": "boolean",
+      "default": false,
+      "title": "Show Earnings Publicly"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

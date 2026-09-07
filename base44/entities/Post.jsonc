@@ -1,0 +1,190 @@
+{
+  "name": "Post",
+  "type": "object",
+  "properties": {
+    "author_id": {
+      "type": "string",
+      "title": "Author ID",
+      "description": "Display-only denormalized author id. NEVER used for authorization \u2014 ownership is enforced via the platform-trusted created_by_id."
+    },
+    "author_name": {
+      "type": "string",
+      "title": "Author Name (display only)"
+    },
+    "author_username": {
+      "type": "string",
+      "title": "Author Username (display only)"
+    },
+    "author_level": {
+      "type": "number",
+      "default": 1,
+      "title": "Author Level"
+    },
+    "author_verified": {
+      "type": "boolean",
+      "default": false,
+      "title": "Author Verified"
+    },
+    "author_avatar": {
+      "type": "string",
+      "title": "Author Avatar URL"
+    },
+    "post_type": {
+      "type": "string",
+      "enum": [
+        "showcase",
+        "discussion",
+        "achievement",
+        "image",
+        "video",
+        "text"
+      ],
+      "default": "image",
+      "title": "Post Type"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "image"
+      ],
+      "default": "image",
+      "title": "Media Type"
+    },
+    "media_url": {
+      "type": "string",
+      "title": "Media URL"
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "body": {
+      "type": "string",
+      "title": "Body / Text Content"
+    },
+    "caption": {
+      "type": "string",
+      "title": "Caption"
+    },
+    "hashtags": {
+      "type": "string",
+      "title": "Hashtags"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Edited Videos",
+        "Motion Graphics",
+        "VFX",
+        "Color Grading",
+        "Before & After",
+        "Reels",
+        "Animation",
+        "Editing Tutorials",
+        "Contest Winning Videos",
+        "Project Breakdowns"
+      ],
+      "default": "Edited Videos",
+      "title": "Category"
+    },
+    "software": {
+      "type": "string",
+      "title": "Software Used"
+    },
+    "editing_style": {
+      "type": "string",
+      "title": "Editing Style"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Linked Contest ID"
+    },
+    "submission_id": {
+      "type": "string",
+      "title": "Linked Winning Submission ID"
+    },
+    "is_system_generated": {
+      "type": "boolean",
+      "default": false,
+      "title": "System Generated"
+    },
+    "moderation_status": {
+      "type": "string",
+      "enum": [
+        "visible",
+        "removed",
+        "pending_review"
+      ],
+      "default": "visible",
+      "title": "Moderation Status"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Likes",
+      "description": "Denormalized counter kept for legacy only. Displayed like counts MUST be derived from authoritative PostLike records \u2014 this field is client-writable and must never be trusted for display."
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Comments"
+    },
+    "shares_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Shares"
+    },
+    "views_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Views"
+    },
+    "saves_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Saves"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "published",
+        "draft"
+      ],
+      "default": "published",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "author_id",
+    "post_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

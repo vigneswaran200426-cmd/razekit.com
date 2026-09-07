@@ -1,0 +1,77 @@
+{
+  "name": "MonthlyLeaderboard",
+  "type": "object",
+  "properties": {
+    "month": {
+      "type": "string",
+      "title": "Month (YYYY-MM)"
+    },
+    "user_id": {
+      "type": "string",
+      "title": "Creator User ID"
+    },
+    "username": {
+      "type": "string",
+      "title": "Username"
+    },
+    "display_name": {
+      "type": "string",
+      "title": "Display Name"
+    },
+    "avatar_url": {
+      "type": "string",
+      "title": "Avatar URL"
+    },
+    "level": {
+      "type": "number",
+      "default": 1,
+      "title": "Level"
+    },
+    "verified_wins": {
+      "type": "number",
+      "default": 0,
+      "title": "Verified Wins"
+    },
+    "monthly_earnings": {
+      "type": "number",
+      "default": 0,
+      "title": "Monthly Earnings (verified)"
+    },
+    "rank": {
+      "type": "number",
+      "title": "Rank"
+    },
+    "finalized": {
+      "type": "boolean",
+      "default": false,
+      "title": "Finalized Snapshot"
+    },
+    "snapshot_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Snapshot At"
+    }
+  },
+  "required": [
+    "month",
+    "user_id"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

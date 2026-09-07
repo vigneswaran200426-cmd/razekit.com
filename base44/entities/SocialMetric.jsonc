@@ -1,0 +1,116 @@
+{
+  "name": "SocialMetric",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string",
+      "title": "Owner User ID"
+    },
+    "social_connection_id": {
+      "type": "string",
+      "title": "Social Connection ID"
+    },
+    "provider": {
+      "type": "string",
+      "title": "Provider"
+    },
+    "metric_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Metric Date"
+    },
+    "followers": {
+      "type": "number",
+      "title": "Followers"
+    },
+    "following": {
+      "type": "number",
+      "title": "Following"
+    },
+    "subscriber_count": {
+      "type": "number",
+      "title": "Subscribers"
+    },
+    "views": {
+      "type": "number",
+      "title": "Views"
+    },
+    "video_views": {
+      "type": "number",
+      "title": "Video Views"
+    },
+    "reach": {
+      "type": "number",
+      "title": "Reach"
+    },
+    "impressions": {
+      "type": "number",
+      "title": "Impressions"
+    },
+    "likes": {
+      "type": "number",
+      "title": "Likes"
+    },
+    "comments": {
+      "type": "number",
+      "title": "Comments"
+    },
+    "shares": {
+      "type": "number",
+      "title": "Shares"
+    },
+    "saves": {
+      "type": "number",
+      "title": "Saves"
+    },
+    "watch_time": {
+      "type": "number",
+      "title": "Watch Time (min)"
+    },
+    "profile_visits": {
+      "type": "number",
+      "title": "Profile Visits"
+    },
+    "engagement_rate": {
+      "type": "number",
+      "title": "Engagement Rate (%)"
+    },
+    "provider_metadata": {
+      "type": "string",
+      "title": "Provider Metadata (JSON)"
+    }
+  },
+  "required": [
+    "provider",
+    "metric_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

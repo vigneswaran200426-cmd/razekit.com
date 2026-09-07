@@ -1,0 +1,77 @@
+{
+  "name": "Wallet",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "available_balance": {
+      "type": "number",
+      "default": 0,
+      "title": "Available Balance",
+      "description": "Server-authoritative. NEVER client-writable \u2014 balance mutations must be performed by a trusted backend function via single-ledger-insert-as-source-of-truth."
+    },
+    "pending_balance": {
+      "type": "number",
+      "default": 0,
+      "title": "Pending Balance",
+      "description": "Server-authoritative. NEVER client-writable."
+    },
+    "reserved_funds": {
+      "type": "number",
+      "default": 0,
+      "title": "Reserved Funds",
+      "description": "Server-authoritative. NEVER client-writable."
+    },
+    "total_deposits": {
+      "type": "number",
+      "default": 0,
+      "title": "Total Deposits",
+      "description": "Server-authoritative. NEVER client-writable."
+    },
+    "lifetime_earnings": {
+      "type": "number",
+      "default": 0,
+      "title": "Lifetime Earnings",
+      "description": "Server-authoritative. NEVER client-writable."
+    },
+    "currency": {
+      "type": "string",
+      "default": "INR",
+      "title": "Currency"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

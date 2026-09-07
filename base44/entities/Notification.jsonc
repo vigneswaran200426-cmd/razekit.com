@@ -1,0 +1,140 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "description": "Social + Context + Money + Enforcement activity feed notification. A user can read ONLY their own notifications (recipient_user_id). Creation is by trusted app logic (client SDK within app flows; backend functions would lock it further). A user may mark their own as read and update their own Context Invitation status, but cannot read, edit, or fabricate another user's notifications.",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "contest_joined",
+        "submission_uploaded",
+        "deadline_tomorrow",
+        "contest_ended",
+        "winner_announced",
+        "payment_received",
+        "post_liked",
+        "post_commented",
+        "comment_replied",
+        "user_mentioned",
+        "post_shared",
+        "post_saved",
+        "post_trending",
+        "contest_win",
+        "contest_submission_received",
+        "withdraw_completed",
+        "system_announcement",
+        "contest_invitation",
+        "shortlisted",
+        "footage_approved",
+        "winner_content_requested",
+        "winner_content_submitted",
+        "winner_content_revision",
+        "winner_content_published",
+        "account_warning",
+        "account_restricted",
+        "account_suspended",
+        "account_terminated",
+        "report_update"
+      ],
+      "title": "Notification Type"
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false,
+      "title": "Read"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Related Context ID"
+    },
+    "recipient_user_id": {
+      "type": "string",
+      "title": "Recipient User ID (feed owner)"
+    },
+    "actor_user_id": {
+      "type": "string",
+      "title": "Actor User ID"
+    },
+    "actor_name": {
+      "type": "string",
+      "title": "Actor Display Name"
+    },
+    "actor_avatar": {
+      "type": "string",
+      "title": "Actor Avatar URL"
+    },
+    "related_post_id": {
+      "type": "string",
+      "title": "Related Post ID"
+    },
+    "related_submission_id": {
+      "type": "string",
+      "title": "Related Submission ID"
+    },
+    "related_winner_id": {
+      "type": "string",
+      "title": "Related Winner Publishing Record ID"
+    },
+    "invitation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "expired"
+      ],
+      "title": "Invitation Status"
+    }
+  },
+  "required": [
+    "type",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.recipient_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "data.recipient_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.recipient_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "name": "Handover",
+  "type": "object",
+  "description": "First-class contest stage between Winner Selected and Completed. One record per contest, visible only to the contest client and the winning creator. The event_log is append-only (JSON array of {actor, actor_id, action, detail, time}) for a full audit trail.",
+  "properties": {
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "contest_title": {
+      "type": "string",
+      "title": "Contest Title"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID (contest owner)"
+    },
+    "winner_id": {
+      "type": "string",
+      "title": "Winner (creator) ID"
+    },
+    "handover_type": {
+      "type": "string",
+      "enum": [
+        "account_access",
+        "assets",
+        "both"
+      ],
+      "default": "both",
+      "title": "Handover Type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "initiated",
+        "in_progress",
+        "winner_confirmed",
+        "client_confirmed",
+        "completed",
+        "expired",
+        "disputed"
+      ],
+      "default": "not_started",
+      "title": "Status"
+    },
+    "handover_items": {
+      "type": "string",
+      "default": "[]",
+      "title": "Handover Items (JSON array of strings)"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Started At"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Deadline (24 hours from initiation)"
+    },
+    "creator_confirmation": {
+      "type": "boolean",
+      "default": false,
+      "title": "Creator Confirmation"
+    },
+    "creator_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Creator Confirmed At"
+    },
+    "client_confirmation": {
+      "type": "boolean",
+      "default": false,
+      "title": "Client Confirmation"
+    },
+    "client_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Client Confirmed At"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Completed At"
+    },
+    "event_log": {
+      "type": "string",
+      "default": "[]",
+      "title": "Event Log (append-only JSON array: actor, actor_id, action, detail, time)"
+    }
+  },
+  "required": [
+    "contest_id",
+    "client_id",
+    "winner_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "data.winner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "data.winner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

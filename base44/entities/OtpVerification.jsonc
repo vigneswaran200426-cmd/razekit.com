@@ -1,0 +1,85 @@
+{
+  "name": "OtpVerification",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "title": "Request ID"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "otp_code": {
+      "type": "string",
+      "title": "OTP Code"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Expires At"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0,
+      "title": "Attempts"
+    },
+    "max_attempts": {
+      "type": "number",
+      "default": 3,
+      "title": "Max Attempts"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "title": "Verified"
+    },
+    "used": {
+      "type": "boolean",
+      "default": false,
+      "title": "Used"
+    }
+  },
+  "required": [
+    "request_id",
+    "client_id",
+    "otp_code",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

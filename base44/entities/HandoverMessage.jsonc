@@ -1,0 +1,75 @@
+{
+  "name": "HandoverMessage",
+  "type": "object",
+  "description": "Message in a protected handover room \u2014 visible only to the contest client and the winning creator. client_id and winner_id are denormalized from the parent Handover so row-level security can enforce the two-party room.",
+  "properties": {
+    "handover_id": {
+      "type": "string",
+      "title": "Handover ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID (denormalized for RLS)"
+    },
+    "winner_id": {
+      "type": "string",
+      "title": "Winner ID (denormalized for RLS)"
+    },
+    "sender_id": {
+      "type": "string",
+      "title": "Sender User ID"
+    },
+    "sender_role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "creator"
+      ],
+      "title": "Sender Role"
+    },
+    "body": {
+      "type": "string",
+      "title": "Message Body"
+    }
+  },
+  "required": [
+    "handover_id",
+    "contest_id",
+    "client_id",
+    "winner_id",
+    "sender_id",
+    "body"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "data.winner_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

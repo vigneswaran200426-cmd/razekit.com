@@ -1,0 +1,87 @@
+{
+  "name": "ReconciliationRecord",
+  "type": "object",
+  "description": "Internal reconciliation flag created when internal financial state and provider state disagree (or cannot be verified). The affected Payment/Payout is moved to RECONCILIATION_REQUIRED and this record carries the mismatch. Internal-only \u2014 never shown to customers.",
+  "properties": {
+    "reference": {
+      "type": "string",
+      "title": "Reference (RK-RECON-\u2026)"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "PAYMENT",
+        "PAYOUT",
+        "REFUND"
+      ],
+      "title": "Entity Type"
+    },
+    "internal_ref": {
+      "type": "string",
+      "title": "Internal Reference (RK-PAY-\u2026 / RK-PAYOUT-\u2026)"
+    },
+    "internal_status": {
+      "type": "string",
+      "title": "Internal Status"
+    },
+    "provider": {
+      "type": "string",
+      "title": "Provider"
+    },
+    "provider_ref": {
+      "type": "string",
+      "title": "Provider Reference"
+    },
+    "provider_status": {
+      "type": "string",
+      "title": "Provider Status"
+    },
+    "mismatch_summary": {
+      "type": "string",
+      "title": "Mismatch Summary",
+      "description": "What disagreed, or why the provider state could not be verified."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "RESOLVED"
+      ],
+      "default": "OPEN",
+      "title": "Status"
+    },
+    "resolution_notes": {
+      "type": "string",
+      "title": "Resolution Notes",
+      "description": "Admin resolution \u2014 audited, never silent."
+    }
+  },
+  "required": [
+    "reference",
+    "entity_type",
+    "internal_ref",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

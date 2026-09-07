@@ -1,0 +1,91 @@
+{
+  "name": "DownloadSession",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "title": "Request ID"
+    },
+    "worker_id": {
+      "type": "string",
+      "title": "Worker ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "drive_link": {
+      "type": "string",
+      "title": "Drive Link"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "used",
+        "expired"
+      ],
+      "default": "active",
+      "title": "Status"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Expires At"
+    },
+    "download_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Download Count"
+    },
+    "max_downloads": {
+      "type": "number",
+      "default": 1,
+      "title": "Max Downloads"
+    },
+    "used_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Used At"
+    }
+  },
+  "required": [
+    "request_id",
+    "worker_id",
+    "contest_id",
+    "drive_link",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.worker_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "data.worker_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "name": "PayoutAccount",
+  "type": "object",
+  "description": "Creator's verified payout account with a provider \u2014 a Razorpay Route Linked Account (India) or a Stripe Connected Account (international, only where the platform's charge/transfer structure actually supports it). 'Ready' is never set without provider confirmation. Only the minimum necessary provider identifiers and capability flags are stored; no credentials, no bank details.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "Creator User ID"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "razorpay",
+        "stripe"
+      ],
+      "title": "Provider"
+    },
+    "provider_account_id": {
+      "type": "string",
+      "title": "Provider Account ID",
+      "description": "Razorpay Linked Account id (acc_) or Stripe Connected Account id (acct_)."
+    },
+    "country": {
+      "type": "string",
+      "title": "Account Country"
+    },
+    "onboarding_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending",
+        "verified",
+        "action_required",
+        "restricted"
+      ],
+      "default": "not_started",
+      "title": "Onboarding Status"
+    },
+    "charges_enabled": {
+      "type": "boolean",
+      "default": false,
+      "title": "Charges Enabled"
+    },
+    "payouts_enabled": {
+      "type": "boolean",
+      "default": false,
+      "title": "Payouts Enabled"
+    },
+    "requirements_status": {
+      "type": "string",
+      "title": "Requirements Status",
+      "description": "Provider's pending-requirements label when onboarding is incomplete."
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Synced At"
+    }
+  },
+  "required": [
+    "user_id",
+    "provider",
+    "onboarding_status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

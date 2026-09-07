@@ -1,0 +1,116 @@
+{
+  "name": "SocialPost",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string",
+      "title": "Owner User ID"
+    },
+    "social_connection_id": {
+      "type": "string",
+      "title": "Social Connection ID"
+    },
+    "provider": {
+      "type": "string",
+      "title": "Provider"
+    },
+    "provider_post_id": {
+      "type": "string",
+      "title": "Provider Post ID"
+    },
+    "post_url": {
+      "type": "string",
+      "title": "Post URL"
+    },
+    "media_type": {
+      "type": "string",
+      "title": "Media Type"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "title": "Thumbnail URL"
+    },
+    "caption": {
+      "type": "string",
+      "title": "Caption"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Published At"
+    },
+    "views": {
+      "type": "number",
+      "title": "Views"
+    },
+    "reach": {
+      "type": "number",
+      "title": "Reach"
+    },
+    "impressions": {
+      "type": "number",
+      "title": "Impressions"
+    },
+    "likes": {
+      "type": "number",
+      "title": "Likes"
+    },
+    "comments": {
+      "type": "number",
+      "title": "Comments"
+    },
+    "shares": {
+      "type": "number",
+      "title": "Shares"
+    },
+    "saves": {
+      "type": "number",
+      "title": "Saves"
+    },
+    "watch_time": {
+      "type": "number",
+      "title": "Watch Time (min)"
+    },
+    "engagement_rate": {
+      "type": "number",
+      "title": "Engagement Rate (%)"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Synced At"
+    }
+  },
+  "required": [
+    "provider"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.owner_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

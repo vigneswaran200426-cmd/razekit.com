@@ -1,0 +1,172 @@
+{
+  "name": "VisualAsset",
+  "type": "object",
+  "description": "One version of AI-generated (or brand-uploaded) visual artwork for any Razekit entity, produced by the permanent Visual Asset Engine. Config-driven: asset_type is a registry key (CONTEST_THUMBNAIL, CONTEST_HERO, CONTEST_AD, WINNER_HUB_COVER, future types) \u2014 adding a type needs no schema change. Versions are separate records; exactly one version per (entity_type, entity_id, asset_type) is current. Previous versions are never destroyed. Writes happen only through trusted backend functions (service role) after ownership checks; read is public so cards/discovery can render artwork.",
+  "properties": {
+    "entity_type": {
+      "type": "string",
+      "title": "Entity Type",
+      "description": "Registry key of the owning entity: CONTEST, or any future entity type registered in the Visual Asset Registry"
+    },
+    "entity_id": {
+      "type": "string",
+      "title": "Entity ID"
+    },
+    "asset_type": {
+      "type": "string",
+      "title": "Asset Type",
+      "description": "Registry key: CONTEST_THUMBNAIL, CONTEST_BANNER, CONTEST_HERO, CONTEST_AD, FEATURED_CONTEST_ART, WINNER_HUB_COVER, or any future registered type"
+    },
+    "generation_key": {
+      "type": "string",
+      "title": "Generation Key",
+      "description": "Idempotency key: entity_type:entity_id:asset_type:vN \u2014 the engine keys all generation on this"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "ready",
+        "failed",
+        "custom_active",
+        "archived"
+      ],
+      "default": "processing",
+      "title": "Status"
+    },
+    "is_current": {
+      "type": "boolean",
+      "default": false,
+      "title": "Is Current",
+      "description": "Exactly one version per entity+asset type is current; the UI renders only the current version"
+    },
+    "provider": {
+      "type": "string",
+      "title": "Provider",
+      "description": "Image generation provider label (e.g. openai) or brand_upload for custom uploads"
+    },
+    "model": {
+      "type": "string",
+      "title": "Model"
+    },
+    "prompt_version": {
+      "type": "string",
+      "default": "v1",
+      "title": "Prompt Version"
+    },
+    "policy_version": {
+      "type": "string",
+      "default": "v1",
+      "title": "Policy Version",
+      "description": "Version of the visual/category/platform rule set used at generation time"
+    },
+    "generation_version": {
+      "type": "number",
+      "default": 1,
+      "title": "Generation Version"
+    },
+    "generation_id": {
+      "type": "string",
+      "title": "Provider Generation ID"
+    },
+    "storage_key": {
+      "type": "string",
+      "title": "Storage Key"
+    },
+    "storage_url": {
+      "type": "string",
+      "title": "Storage URL",
+      "description": "Served through the platform's optimized media/CDN layer (responsive re-encoding)"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "title": "Thumbnail URL"
+    },
+    "width": {
+      "type": "number",
+      "title": "Width (px)"
+    },
+    "height": {
+      "type": "number",
+      "title": "Height (px)"
+    },
+    "mime_type": {
+      "type": "string",
+      "title": "MIME Type"
+    },
+    "file_size": {
+      "type": "number",
+      "title": "File Size (bytes)"
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Attempt Count"
+    },
+    "error_code": {
+      "type": "string",
+      "title": "Error Code"
+    },
+    "error_message": {
+      "type": "string",
+      "title": "Error Message"
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "regenerate",
+        "retry",
+        "custom_upload",
+        "backfill",
+        "admin"
+      ],
+      "default": "auto",
+      "title": "Origin",
+      "description": "What triggered this version: automatic event, explicit regenerate, manual retry, brand custom upload, backfill, or admin action"
+    },
+    "metadata": {
+      "type": "string",
+      "default": "{}",
+      "title": "Metadata (JSON)",
+      "description": "Visual brief, full prompt, generation events \u2014 audit/observability data"
+    },
+    "created_by": {
+      "type": "string",
+      "title": "Created By",
+      "description": "User id, or 'system' for event-driven generation"
+    },
+    "approved_by": {
+      "type": "string",
+      "title": "Approved By"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Approved At"
+    }
+  },
+  "required": [
+    "entity_type",
+    "entity_id",
+    "asset_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

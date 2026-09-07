@@ -1,0 +1,130 @@
+{
+  "name": "Report",
+  "type": "object",
+  "description": "User-submitted moderation report. A raw report never auto-punishes; only a VERIFIED violation issues a Warning. A user may read their own reports (reporter_id) but cannot see who reported them or modify status. Report status is advanced by admins/trusted rules only.",
+  "properties": {
+    "reporter_id": {
+      "type": "string",
+      "title": "Reporter ID"
+    },
+    "reported_user_id": {
+      "type": "string",
+      "title": "Reported User ID (the accused)"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "post",
+        "comment",
+        "user",
+        "profile",
+        "context",
+        "submission"
+      ],
+      "title": "Target Type"
+    },
+    "target_id": {
+      "type": "string",
+      "title": "Target ID"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "spam",
+        "harassment",
+        "fraud",
+        "copyright",
+        "misleading",
+        "inappropriate",
+        "platform_abuse",
+        "payment_abuse",
+        "footage_misuse",
+        "fake_account",
+        "other",
+        "duplicate",
+        "misinformation"
+      ],
+      "title": "Report Category"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "title": "Severity"
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason"
+    },
+    "evidence_url": {
+      "type": "string",
+      "title": "Evidence / Screenshot URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "under_review",
+        "verified_violation",
+        "unsubstantiated",
+        "dismissed",
+        "action_taken",
+        "escalated",
+        "closed",
+        "open",
+        "reviewing",
+        "resolved"
+      ],
+      "default": "submitted",
+      "title": "Status"
+    },
+    "resolution": {
+      "type": "string",
+      "title": "Resolution"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "title": "Reviewed By (admin)"
+    },
+    "related_warning_id": {
+      "type": "string",
+      "title": "Related Warning ID"
+    }
+  },
+  "required": [
+    "reporter_id",
+    "target_type",
+    "target_id",
+    "reason"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.reporter_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

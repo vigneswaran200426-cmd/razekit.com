@@ -1,0 +1,174 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "description": "One brand payment that funds a contest prize. Carries the immutable calculation snapshot (subtotal, fees, tax, total, rule versions) from its PaymentQuote. Currency is immutable for the lifetime of the record. Status only reaches CAPTURED after provider-authoritative confirmation (webhook or server-side verification) \u2014 never from a browser redirect. All amounts are integers in minor units.",
+  "properties": {
+    "reference": {
+      "type": "string",
+      "title": "Reference (RK-PAY-\u2026)",
+      "description": "Human-readable customer-facing reference \u2014 never the database id."
+    },
+    "brand_id": {
+      "type": "string",
+      "title": "Brand ID (payer)"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "market": {
+      "type": "string",
+      "enum": [
+        "IN",
+        "GLOBAL"
+      ],
+      "title": "Market",
+      "description": "Market used at funding time \u2014 locked; never re-derived from the user's later location."
+    },
+    "currency": {
+      "type": "string",
+      "title": "Currency (ISO 4217 \u2014 immutable once created)"
+    },
+    "subtotal_minor": {
+      "type": "number",
+      "title": "Prize Subtotal (minor units)"
+    },
+    "platform_fee_minor": {
+      "type": "number",
+      "title": "Platform Fee (minor units)"
+    },
+    "processing_fee_minor": {
+      "type": "number",
+      "title": "Processing Fee (minor units)"
+    },
+    "tax_minor": {
+      "type": "number",
+      "title": "Tax (minor units)"
+    },
+    "discount_minor": {
+      "type": "number",
+      "default": 0,
+      "title": "Discount (minor units)"
+    },
+    "total_minor": {
+      "type": "number",
+      "title": "Total Charged (minor units)"
+    },
+    "fee_rule_version": {
+      "type": "string",
+      "title": "Fee Rule Version (snapshot at charge time)"
+    },
+    "fee_percentage_bps": {
+      "type": "number",
+      "default": 0,
+      "title": "Fee Percentage (bps, snapshot)"
+    },
+    "tax_rule_version": {
+      "type": "string",
+      "title": "Tax Rule Version (snapshot)"
+    },
+    "quote_id": {
+      "type": "string",
+      "title": "Payment Quote ID"
+    },
+    "quote_snapshot": {
+      "type": "string",
+      "default": "{}",
+      "title": "Calculation Snapshot (JSON)",
+      "description": "Exact amounts, currency and rule versions charged \u2014 historical invoices are never recalculated."
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "razorpay",
+        "stripe"
+      ],
+      "title": "Payment Provider"
+    },
+    "provider_order_id": {
+      "type": "string",
+      "title": "Provider Order/Session ID",
+      "description": "Provider-side reference, stored separately from internal references."
+    },
+    "provider_payment_id": {
+      "type": "string",
+      "title": "Provider Payment ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "PENDING",
+        "AUTHORIZED",
+        "CAPTURED",
+        "FAILED",
+        "CANCELLED",
+        "REFUNDED",
+        "PARTIALLY_REFUNDED",
+        "DISPUTED",
+        "RECONCILIATION_REQUIRED"
+      ],
+      "default": "CREATED",
+      "title": "Status"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "title": "Idempotency Key",
+      "description": "One key = at most one charge, ever. Retries with the same key return the existing payment."
+    },
+    "failure_reason": {
+      "type": "string",
+      "title": "Failure Reason"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Captured At"
+    },
+    "refunded_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Refunded At"
+    }
+  },
+  "required": [
+    "reference",
+    "brand_id",
+    "contest_id",
+    "market",
+    "currency",
+    "subtotal_minor",
+    "total_minor",
+    "provider",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.brand_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

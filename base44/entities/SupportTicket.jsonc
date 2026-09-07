@@ -1,0 +1,143 @@
+{
+  "name": "SupportTicket",
+  "type": "object",
+  "description": "Support ticket created when a user escalates from Help (Contact Support). Users can read their own tickets; only admins can update/respond or delete. The ticket carries the full Help conversation, page context and escalation reason so the user never has to repeat the issue. Help itself cannot modify money, payouts, roles, reputation, footage approvals, OTP, or security \u2014 creating this ticket is its only write action.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "user_name": {
+      "type": "string",
+      "title": "User Name"
+    },
+    "user_email": {
+      "type": "string",
+      "title": "User Email"
+    },
+    "user_role": {
+      "type": "string",
+      "title": "User Role"
+    },
+    "ticket_id": {
+      "type": "string",
+      "title": "Ticket ID"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Account",
+        "Context",
+        "Submission",
+        "Footage Access",
+        "OTP",
+        "Payment",
+        "Wallet",
+        "Withdrawal",
+        "XP/Reputation",
+        "Profile",
+        "Notifications",
+        "Technical Problem",
+        "Security",
+        "Other",
+        "help",
+        "report_problem",
+        "payment_issue",
+        "contest_issue",
+        "submission_issue",
+        "dispute",
+        "abuse",
+        "contact",
+        "account_deletion"
+      ],
+      "title": "Category"
+    },
+    "subject": {
+      "type": "string",
+      "title": "Subject"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "conversation_summary": {
+      "type": "string",
+      "title": "Conversation Summary"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Related Context ID"
+    },
+    "related_submission_id": {
+      "type": "string",
+      "title": "Related Submission ID"
+    },
+    "related_transaction_id": {
+      "type": "string",
+      "title": "Related Transaction ID"
+    },
+    "attachment_url": {
+      "type": "string",
+      "title": "Attachment URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_review",
+        "waiting_for_user",
+        "resolved",
+        "closed",
+        "in_progress"
+      ],
+      "default": "open",
+      "title": "Status"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "title": "Priority"
+    },
+    "admin_response": {
+      "type": "string",
+      "title": "Admin Response"
+    }
+  },
+  "required": [
+    "user_id",
+    "category",
+    "subject",
+    "description"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

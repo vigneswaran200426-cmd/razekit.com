@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "money_reconciliation",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "sweep_money_states": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "moneyReconciliation",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Reconcile payments & payouts",
+            "description": "Check provider truth for stale money states"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Money Reconciliation",
+  "description": "Hourly sweep that reconciles stale pending payments and payouts against provider truth, flagging mismatches instead of leaving wrong financial states",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

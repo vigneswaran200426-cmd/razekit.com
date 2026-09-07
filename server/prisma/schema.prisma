@@ -1,0 +1,72 @@
+// RazeKit database schema — the off-Base44 replacement.
+//
+// Design: Base44 entities are schemaless documents, so the 52 app entities are
+// stored faithfully in ONE generic `Record` table (JSONB `data`), driven by the
+// exported JSON schemas + an RLS engine (see src/entities). Identity/credentials
+// live in dedicated auth tables because they need uniqueness + secrets.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Generic entity document store ────────────────────────────────────────────
+// Every app entity (Contest, Submission, Wallet, ...) is a row here.
+// `entity` = entity name; `data` = all entity-specific fields (JSONB).
+// `createdById` mirrors Base44's platform-trusted created_by_id (used by RLS).
+model Record {
+  id          String   @id @default(uuid())
+  entity      String
+  data        Json     @default("{}")
+  createdById String?  @map("created_by_id")
+  createdDate DateTime @default(now()) @map("created_date")
+  updatedDate DateTime @updatedAt @map("updated_date")
+
+  @@index([entity])
+  @@index([entity, createdById])
+  @@index([entity, createdDate])
+  @@map("records")
+}
+
+// ── Identity / credentials ───────────────────────────────────────────────────
+// Mirrors the Base44 `User` entity (role, user_role, account_status,
+// onboarding_completed) plus auth secrets. Arbitrary profile fields written via
+// auth.updateMe() are stored in `profile` (JSONB) so nothing is lost.
+model AppUser {
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  passwordHash        String?  @map("password_hash")
+  fullName            String?  @map("full_name")
+  role                String   @default("user") // 'user' | 'admin'
+  userRole            String   @default("visitor") @map("user_role") // 'visitor' | 'creator' | 'client' | 'editor'
+  accountStatus       String   @default("active") @map("account_status")
+  onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
+  emailVerified       Boolean  @default(false) @map("email_verified")
+  googleId            String?  @unique @map("google_id")
+  profile             Json     @default("{}")
+  createdDate         DateTime @default(now()) @map("created_date")
+  updatedDate         DateTime @updatedAt @map("updated_date")
+
+  @@map("app_users")
+}
+
+// One-time codes for register verification and password reset (auth-level;
+// distinct from the app's OtpVerification entity used for footage access).
+model AuthOtp {
+  id        String   @id @default(uuid())
+  email     String
+  purpose   String // 'register' | 'reset'
+  codeHash  String   @map("code_hash")
+  payload   Json     @default("{}") // pending signup fields, etc.
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, purpose])
+  @@map("auth_otps")
+}

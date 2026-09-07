@@ -1,0 +1,97 @@
+{
+  "name": "UserContact",
+  "type": "object",
+  "description": "Owner/admin-only private contact & account-status record. Holds the sensitive PII and admin-managed account/verification state that were split OUT of the public UserProfile, so other (Client/Creator) users can never read another user's email, phone, full name, account status, verification status, or registration source via the entity SDK. Read and update are restricted to the record owner (created_by_id) and platform admins. The public UserProfile keeps only display fields.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID",
+      "description": "Denormalized reference to the User; display/lookup only. Ownership is enforced via the platform-trusted created_by_id."
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email (denormalized, owner/admin only)"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "account_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "suspended",
+        "rejected",
+        "disabled"
+      ],
+      "default": "active",
+      "title": "Account Status"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "pending_review",
+        "verified",
+        "rejected"
+      ],
+      "default": "unverified",
+      "title": "Verification Status"
+    },
+    "registration_source": {
+      "type": "string",
+      "title": "Registration Source"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

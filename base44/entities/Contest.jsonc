@@ -1,0 +1,366 @@
+{
+  "name": "Contest",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Contest Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Project Description"
+    },
+    "short_description": {
+      "type": "string",
+      "title": "Short Description"
+    },
+    "contest_type": {
+      "type": "string",
+      "title": "Contest Type"
+    },
+    "cover_image_url": {
+      "type": "string",
+      "title": "Cover Image URL"
+    },
+    "brief": {
+      "type": "string",
+      "title": "Campaign Brief (rich text)"
+    },
+    "resources": {
+      "type": "string",
+      "default": "[]",
+      "title": "Resources (JSON array: type, title, link/file, description, usage, permission)"
+    },
+    "deliverables": {
+      "type": "string",
+      "default": "[]",
+      "title": "Deliverables (JSON array: name, content type, platform, duration, ratio, resolution, format, quantity, instructions)"
+    },
+    "custom_requirements": {
+      "type": "string",
+      "default": "[]",
+      "title": "Client-Added Requirements (JSON array of strings)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Instagram Reel",
+        "YouTube Shorts",
+        "YouTube Video",
+        "Advertisement",
+        "Gaming",
+        "Wedding",
+        "Documentary",
+        "Corporate",
+        "Travel",
+        "Music Video"
+      ],
+      "title": "Category"
+    },
+    "editing_style": {
+      "type": "string",
+      "title": "Editing Style"
+    },
+    "custom_editing_style": {
+      "type": "string",
+      "title": "Custom Editing Style"
+    },
+    "video_duration": {
+      "type": "string",
+      "title": "Video Duration"
+    },
+    "custom_duration": {
+      "type": "string",
+      "title": "Custom Duration"
+    },
+    "preferred_software": {
+      "type": "string",
+      "enum": [
+        "Any",
+        "CapCut",
+        "Premiere Pro",
+        "After Effects",
+        "DaVinci Resolve",
+        "Final Cut Pro",
+        "VN",
+        "Alight Motion"
+      ],
+      "title": "Preferred Editing Software"
+    },
+    "contest_rules": {
+      "type": "string",
+      "title": "Contest Rules"
+    },
+    "prize_amount": {
+      "type": "number",
+      "title": "Prize Amount"
+    },
+    "platform_fee": {
+      "type": "number",
+      "title": "Platform Fee"
+    },
+    "settlement_region": {
+      "type": "string",
+      "default": "IN",
+      "title": "Settlement Region",
+      "description": "Market this contest settles in. India only for now ('IN'); the Global/USD path is not enabled yet."
+    },
+    "currency": {
+      "type": "string",
+      "default": "INR",
+      "title": "Currency",
+      "description": "Display/settlement currency for the prize. INR only for now."
+    },
+    "number_of_winners": {
+      "type": "number",
+      "default": 1,
+      "title": "Number of Winners"
+    },
+    "prize_positions": {
+      "type": "string",
+      "default": "[]",
+      "title": "Award Distribution (JSON array: position, amount)"
+    },
+    "handover_required": {
+      "type": "boolean",
+      "default": false,
+      "title": "Handover Required"
+    },
+    "post_winner_action": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "ACCOUNT_HANDOVER",
+        "CLIENT_COLLABORATION"
+      ],
+      "default": "NONE",
+      "title": "Post-Winner Action",
+      "description": "What happens after the winner is selected \u2014 chosen by the client at creation."
+    },
+    "handover_type": {
+      "type": "string",
+      "title": "Handover Type (access level)"
+    },
+    "account_property_type": {
+      "type": "string",
+      "title": "Account/Property Type"
+    },
+    "handover_notes": {
+      "type": "string",
+      "title": "Handover Instructions"
+    },
+    "handover_deadline": {
+      "type": "string",
+      "title": "Handover Deadline"
+    },
+    "collaboration_type": {
+      "type": "string",
+      "title": "Collaboration Type"
+    },
+    "collaboration_duration": {
+      "type": "string",
+      "title": "Collaboration Duration"
+    },
+    "collaboration_responsibilities": {
+      "type": "string",
+      "title": "Collaboration Responsibilities"
+    },
+    "collaboration_notes": {
+      "type": "string",
+      "title": "Collaboration Notes"
+    },
+    "additional_compensation": {
+      "type": "string",
+      "title": "Additional Compensation"
+    },
+    "collaboration_communication": {
+      "type": "string",
+      "title": "Collaboration Communication"
+    },
+    "submission_limit": {
+      "type": "number",
+      "default": 0,
+      "title": "Submission Limit Per Creator (0 = unlimited)"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Contest Deadline"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Start Date"
+    },
+    "start_time": {
+      "type": "string",
+      "title": "Start Time"
+    },
+    "timezone": {
+      "type": "string",
+      "default": "UTC",
+      "title": "Timezone"
+    },
+    "drive_link": {
+      "type": "string",
+      "title": "Google Drive Link"
+    },
+    "drive_link_valid": {
+      "type": "boolean",
+      "default": false,
+      "title": "Drive Link Valid"
+    },
+    "reference_links": {
+      "type": "string",
+      "title": "Reference Links"
+    },
+    "additional_notes": {
+      "type": "string",
+      "title": "Additional Notes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "open",
+        "paused",
+        "joined",
+        "working",
+        "submitted",
+        "reviewing",
+        "winner_selected",
+        "completed"
+      ],
+      "default": "draft",
+      "title": "Status"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "winner_submission_id": {
+      "type": "string",
+      "title": "Winner Submission ID"
+    },
+    "winner_user_id": {
+      "type": "string",
+      "title": "Winner User ID",
+      "description": "Denormalized winning creator id so the public leaderboard can rank verified winners without reading RLS-locked submissions."
+    },
+    "winner_selected_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Winner Selected At"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Completed At"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "deliverable",
+        "delivered"
+      ],
+      "default": "pending",
+      "title": "Final Delivery Status"
+    },
+    "verified_creators_only": {
+      "type": "boolean",
+      "default": false,
+      "title": "Verified Creators Only"
+    },
+    "minimum_creator_level": {
+      "type": "number",
+      "default": 1,
+      "title": "Minimum Creator Level"
+    },
+    "private_contest": {
+      "type": "boolean",
+      "default": false,
+      "title": "Private Contest"
+    },
+    "auto_hide_drive_link": {
+      "type": "boolean",
+      "default": true,
+      "title": "Auto Hide Drive Link"
+    },
+    "allow_one_access": {
+      "type": "boolean",
+      "default": false,
+      "title": "Allow One Access"
+    },
+    "disable_reaccess_after_submission": {
+      "type": "boolean",
+      "default": false,
+      "title": "Disable Re-access After Submission"
+    },
+    "drive_link_removed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Drive Link Removed"
+    },
+    "require_otp": {
+      "type": "boolean",
+      "default": false,
+      "title": "Require OTP"
+    },
+    "manual_approval": {
+      "type": "boolean",
+      "default": false,
+      "title": "Manual Approval"
+    },
+    "max_downloads": {
+      "type": "number",
+      "default": 1,
+      "title": "Max Downloads"
+    },
+    "otp_code": {
+      "type": "string",
+      "title": "Manual OTP Code"
+    },
+    "max_editors": {
+      "type": "number",
+      "title": "Maximum Editors Allowed"
+    }
+  },
+  "required": [
+    "title",
+    "prize_amount",
+    "deadline"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "user_role": "client"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

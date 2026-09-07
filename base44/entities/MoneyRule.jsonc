@@ -1,0 +1,101 @@
+{
+  "name": "MoneyRule",
+  "type": "object",
+  "description": "Versioned, admin-configured financial rule used by the money engine's deterministic calculation service. One active rule per (rule_type, market, currency) is selected by highest version. Old transactions keep the rule version they were charged under \u2014 changing a rule never rewrites history. Platform fee is calculated on the prize subtotal only, never on fees or tax.",
+  "properties": {
+    "rule_type": {
+      "type": "string",
+      "enum": [
+        "PLATFORM_FEE",
+        "PROCESSING_FEE",
+        "TAX"
+      ],
+      "title": "Rule Type"
+    },
+    "market": {
+      "type": "string",
+      "enum": [
+        "IN",
+        "GLOBAL"
+      ],
+      "title": "Market",
+      "description": "Market key this rule applies to (IN or GLOBAL). Adding a future market needs no engine change."
+    },
+    "currency": {
+      "type": "string",
+      "title": "Currency",
+      "description": "ISO 4217 code the rule applies to (INR, USD, ...). A rule never applies across currencies."
+    },
+    "version": {
+      "type": "string",
+      "title": "Rule Version",
+      "description": "Version identifier (v1, v2, ...). Highest active version wins; the version is stored on every payment it prices."
+    },
+    "fee_model": {
+      "type": "string",
+      "enum": [
+        "NO_FEE",
+        "STANDARD_PERCENTAGE",
+        "CUSTOM_PERCENTAGE",
+        "FIXED_FEE",
+        "PERCENTAGE_WITH_MINIMUM",
+        "PERCENTAGE_WITH_MAXIMUM"
+      ],
+      "title": "Fee Model"
+    },
+    "percentage_bps": {
+      "type": "number",
+      "default": 0,
+      "title": "Percentage (basis points)",
+      "description": "1000 bps = 10%. Integer basis points only \u2014 never floating-point rates."
+    },
+    "fixed_fee_minor": {
+      "type": "number",
+      "default": 0,
+      "title": "Fixed Fee (minor units)"
+    },
+    "minimum_fee_minor": {
+      "type": "number",
+      "title": "Minimum Fee (minor units)"
+    },
+    "maximum_fee_minor": {
+      "type": "number",
+      "title": "Maximum Fee (minor units)"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "title": "Active"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes",
+      "description": "Why/when this rule was introduced (audit context)."
+    }
+  },
+  "required": [
+    "rule_type",
+    "market",
+    "currency",
+    "version",
+    "fee_model"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

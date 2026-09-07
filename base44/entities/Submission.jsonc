@@ -1,0 +1,241 @@
+{
+  "name": "Submission",
+  "type": "object",
+  "description": "One creator submission version for a contest. Versions are separate records (v1, v2, \u2026) \u2014 old versions are never deleted, forming the audit history. The final creative and source files live in private storage; the brand reviews in-app. platform/content_type/caption/live_url etc. carry the platform-specific submission details so Brand review has full context.",
+  "properties": {
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID (contest owner)",
+      "description": "Denormalized owner of the parent contest so RLS can grant the client read/update access"
+    },
+    "video_url": {
+      "type": "string",
+      "title": "Preview Video URL (legacy alias of preview_asset)"
+    },
+    "preview_asset": {
+      "type": "string",
+      "title": "Preview Asset (private storage URI, in-app review copy)"
+    },
+    "final_asset_uri": {
+      "type": "string",
+      "title": "Final Asset (private storage URI, for delivery only)"
+    },
+    "thumbnail": {
+      "type": "string",
+      "title": "Thumbnail (private storage URI)"
+    },
+    "media_kind": {
+      "type": "string",
+      "enum": [
+        "video",
+        "image",
+        "file"
+      ],
+      "default": "video",
+      "title": "Media Kind"
+    },
+    "platform": {
+      "type": "string",
+      "title": "Platform",
+      "description": "Submission platform id from the platform config model (instagram, tiktok, youtube, facebook, x, linkedin, pinterest, threads, other)"
+    },
+    "content_type": {
+      "type": "string",
+      "title": "Content Type",
+      "description": "Platform content type (Reel, Post, Short, Thread, \u2026)"
+    },
+    "live_url": {
+      "type": "string",
+      "title": "Live URL",
+      "description": "Published post/video URL when the creative is live"
+    },
+    "url_status": {
+      "type": "string",
+      "enum": [
+        "provided",
+        "not_published",
+        "manual_verification"
+      ],
+      "default": "not_published",
+      "title": "Live URL Status",
+      "description": "Whether a live URL is provided, the creative is not yet published, or manual verification (screenshot/proof) is needed"
+    },
+    "caption": {
+      "type": "string",
+      "title": "Caption / Post Copy"
+    },
+    "hashtags": {
+      "type": "string",
+      "title": "Hashtags"
+    },
+    "mentions": {
+      "type": "string",
+      "title": "Mentions"
+    },
+    "platform_data": {
+      "type": "string",
+      "default": "{}",
+      "title": "Platform Data (JSON object of remaining platform-specific fields)"
+    },
+    "source_assets": {
+      "type": "string",
+      "default": "[]",
+      "title": "Source Assets (JSON array: id, type, label, file_uri, name, size)",
+      "description": "Source files, raw footage and project files attached to this submission version"
+    },
+    "title": {
+      "type": "string",
+      "title": "Submission Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "version": {
+      "type": "string",
+      "title": "Version"
+    },
+    "notes_for_client": {
+      "type": "string",
+      "title": "Notes for Client"
+    },
+    "duration": {
+      "type": "number",
+      "title": "Duration (seconds)"
+    },
+    "resolution": {
+      "type": "string",
+      "title": "Resolution (e.g. 1920x1080)"
+    },
+    "file_size": {
+      "type": "number",
+      "title": "File Size (bytes)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "working",
+        "upload_pending",
+        "uploading",
+        "processing",
+        "ready_to_review",
+        "submitted",
+        "under_review",
+        "shortlisted",
+        "won",
+        "lost",
+        "not_selected",
+        "withdrawn",
+        "processing_failed",
+        "upload_failed"
+      ],
+      "default": "working",
+      "title": "Submission Status"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0,
+      "title": "Rating"
+    },
+    "client_feedback": {
+      "type": "string",
+      "title": "Client Feedback"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Submitted At"
+    },
+    "retention_until": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Losing-asset Retention Until"
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Final Asset Deleted At"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "deliverable",
+        "delivered",
+        "expired"
+      ],
+      "default": "pending",
+      "title": "Final Asset Delivery Status"
+    },
+    "dispute_hold": {
+      "type": "boolean",
+      "default": false,
+      "title": "Dispute / Moderation Hold"
+    }
+  },
+  "required": [
+    "contest_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "user_role": "editor"
+          }
+        },
+        {
+          "user_condition": {
+            "user_role": "creator"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

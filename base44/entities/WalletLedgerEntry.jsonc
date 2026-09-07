@@ -1,0 +1,116 @@
+{
+  "name": "WalletLedgerEntry",
+  "type": "object",
+  "description": "Immutable append-only wallet ledger entry \u2014 the source of truth for every financial movement in a user's wallet. A wallet balance is derived from the ledger, never trusted as a lone mutable number. Every entry carries its currency and the running balance after the entry, in minor units. Entries are never edited or deleted; corrections are new REVERSAL/ADJUSTMENT entries.",
+  "properties": {
+    "wallet_id": {
+      "type": "string",
+      "title": "Wallet ID"
+    },
+    "user_id": {
+      "type": "string",
+      "title": "Owner User ID"
+    },
+    "reference": {
+      "type": "string",
+      "title": "Reference (RK-TXN-\u2026)"
+    },
+    "currency": {
+      "type": "string",
+      "title": "Currency (ISO 4217 \u2014 must match the wallet's currency)"
+    },
+    "entry_type": {
+      "type": "string",
+      "enum": [
+        "DEPOSIT",
+        "PLATFORM_FEE",
+        "PROCESSING_FEE",
+        "TAX",
+        "PRIZE_RESERVATION",
+        "PRIZE_REFUND",
+        "FEE_REFUND",
+        "PAYOUT_CREDIT",
+        "REVERSAL",
+        "ADJUSTMENT"
+      ],
+      "title": "Entry Type"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "CREDIT",
+        "DEBIT"
+      ],
+      "title": "Direction"
+    },
+    "amount_minor": {
+      "type": "number",
+      "title": "Amount (minor units)"
+    },
+    "balance_after_minor": {
+      "type": "number",
+      "title": "Balance After (minor units)",
+      "description": "Running available balance after this entry \u2014 the auditable chain."
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Related Contest"
+    },
+    "related_payment_id": {
+      "type": "string",
+      "title": "Related Payment"
+    },
+    "related_payout_id": {
+      "type": "string",
+      "title": "Related Payout"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "metadata": {
+      "type": "string",
+      "default": "{}",
+      "title": "Metadata (JSON)"
+    }
+  },
+  "required": [
+    "wallet_id",
+    "user_id",
+    "reference",
+    "currency",
+    "entry_type",
+    "direction",
+    "amount_minor",
+    "balance_after_minor"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

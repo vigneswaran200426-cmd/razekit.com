@@ -1,0 +1,101 @@
+{
+  "name": "Warning",
+  "type": "object",
+  "description": "Server-authoritative warning issued against a user after a VERIFIED report. Storage is admin/server-only: a user may read their own warnings but can never create, edit, reduce, or remove them. One warning per verified report/event (never duplicate). The warning count lives on AccountStanding.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "editor",
+        "admin"
+      ],
+      "title": "Role at issue time"
+    },
+    "warning_number": {
+      "type": "number",
+      "default": 1,
+      "title": "Warning Number (sequence for the user)"
+    },
+    "violation_type": {
+      "type": "string",
+      "title": "Violation Type"
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason"
+    },
+    "related_report_id": {
+      "type": "string",
+      "title": "Related Report ID"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "title": "Severity"
+    },
+    "issued_by": {
+      "type": "string",
+      "title": "Issued By (admin id or 'system')"
+    },
+    "expiration": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Expiration (optional)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "reversed",
+        "expired"
+      ],
+      "default": "active",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "user_id",
+    "warning_number",
+    "violation_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

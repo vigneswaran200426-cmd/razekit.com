@@ -1,0 +1,173 @@
+{
+  "name": "CreatorStats",
+  "type": "object",
+  "description": "Server-authoritative creator reputation/XP stats. Only a trusted backend/admin function may create or update these \u2014 users must never modify total_xp, level, reputation_score, or account_trust.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "total_xp": {
+      "type": "number",
+      "default": 0,
+      "title": "Total XP"
+    },
+    "monthly_xp": {
+      "type": "number",
+      "default": 0,
+      "title": "Monthly XP"
+    },
+    "level": {
+      "type": "number",
+      "default": 1,
+      "title": "Level"
+    },
+    "reputation_score": {
+      "type": "number",
+      "default": 0,
+      "title": "Reputation Score (0-100)"
+    },
+    "global_rank": {
+      "type": "number",
+      "default": 0,
+      "title": "Global Rank"
+    },
+    "contests_joined": {
+      "type": "number",
+      "default": 0,
+      "title": "Contests Joined"
+    },
+    "contests_submitted": {
+      "type": "number",
+      "default": 0,
+      "title": "Contests Submitted"
+    },
+    "contests_won": {
+      "type": "number",
+      "default": 0,
+      "title": "Contests Won"
+    },
+    "contests_runner_up": {
+      "type": "number",
+      "default": 0,
+      "title": "Runner-up Finishes"
+    },
+    "contests_top5": {
+      "type": "number",
+      "default": 0,
+      "title": "Top 5 Finishes"
+    },
+    "total_reviews": {
+      "type": "number",
+      "default": 0,
+      "title": "Total Reviews"
+    },
+    "review_score_sum": {
+      "type": "number",
+      "default": 0,
+      "title": "Review Score Sum"
+    },
+    "on_time_count": {
+      "type": "number",
+      "default": 0,
+      "title": "On-Time Count"
+    },
+    "late_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Late Count"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0,
+      "title": "Current Quality Streak"
+    },
+    "best_streak": {
+      "type": "number",
+      "default": 0,
+      "title": "Best Streak"
+    },
+    "penalties": {
+      "type": "number",
+      "default": 0,
+      "title": "Penalties"
+    },
+    "quality_score_avg": {
+      "type": "number",
+      "default": 0,
+      "title": "Average Quality Score"
+    },
+    "quality_score_sum": {
+      "type": "number",
+      "default": 0,
+      "title": "Quality Score Sum"
+    },
+    "quality_score_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Quality Score Count"
+    },
+    "account_trust": {
+      "type": "number",
+      "default": 50,
+      "title": "Account Trust (0-100)"
+    },
+    "flagged_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Flagged Count"
+    },
+    "abandoned_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Abandoned Contest Count"
+    },
+    "duplicate_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Duplicate Submission Count"
+    },
+    "badges_earned": {
+      "type": "string",
+      "default": "[]",
+      "title": "Badges Earned (JSON)"
+    },
+    "last_contest_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Contest At"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

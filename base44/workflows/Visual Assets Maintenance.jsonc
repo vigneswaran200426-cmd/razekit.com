@@ -1,0 +1,47 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "visual_assets_maintenance",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "maintain_assets": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "visualAssetWorker",
+            "args": {
+              "mode": "maintain"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Maintain visual assets",
+            "description": "Due retries + backfill"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Visual Asset Engine maintenance: processes due retries with backoff and backfills contests still missing artwork",
+  "name": "Visual Assets Maintenance",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 6,
+      "interval_unit": "hours",
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

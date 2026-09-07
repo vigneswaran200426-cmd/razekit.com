@@ -1,0 +1,155 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "description": "Public display profile. Readable by everyone (public directory / search / public profile pages) and therefore carries ONLY public display fields plus the owner-controlled public-visibility flags visitors read to filter the public profile. Sensitive PII (email, phone, full_name) and admin-managed account/verification state live in the separate owner/admin-only UserContact entity. Ownership for writes is enforced via the platform-trusted created_by_id.",
+  "properties": {
+    "username": {
+      "type": "string",
+      "title": "Username"
+    },
+    "display_name": {
+      "type": "string",
+      "title": "Display Name"
+    },
+    "user_id": {
+      "type": "string",
+      "title": "User ID",
+      "description": "Denormalized reference to the User. Display/lookup only \u2014 NEVER used as the authorization key. Ownership is enforced via the platform-trusted created_by_id."
+    },
+    "country": {
+      "type": "string",
+      "title": "Country / Region"
+    },
+    "username_last_changed": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Username Last Changed"
+    },
+    "bio": {
+      "type": "string",
+      "title": "Bio / Short Description"
+    },
+    "avatar_url": {
+      "type": "string",
+      "title": "Avatar URL"
+    },
+    "professional_title": {
+      "type": "string",
+      "title": "Professional Title",
+      "description": "Identity/professional presence field edited in Edit Profile."
+    },
+    "skills": {
+      "type": "string",
+      "title": "Skills",
+      "description": "Comma-separated skills, edited in Edit Profile."
+    },
+    "categories": {
+      "type": "string",
+      "title": "Categories",
+      "description": "Comma-separated categories the user works in / plans to post."
+    },
+    "company_name": {
+      "type": "string",
+      "title": "Company / Brand Name"
+    },
+    "industry": {
+      "type": "string",
+      "title": "Industry"
+    },
+    "website": {
+      "type": "string",
+      "title": "Website"
+    },
+    "company_size": {
+      "type": "string",
+      "title": "Company Size"
+    },
+    "business_description": {
+      "type": "string",
+      "title": "Business Description"
+    },
+    "years_experience": {
+      "type": "string",
+      "title": "Years of Experience"
+    },
+    "tools": {
+      "type": "string",
+      "title": "Tools",
+      "description": "Comma-separated software/tools."
+    },
+    "portfolio_url": {
+      "type": "string",
+      "title": "Portfolio URL"
+    },
+    "featured_badge_id": {
+      "type": "string",
+      "title": "Featured Badge ID",
+      "description": "Owner-chosen featured achievement badge id. Only set from a badge the creator has actually earned (enforced in the badge screen). Visual/display only."
+    },
+    "profile_visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private"
+      ],
+      "default": "public",
+      "title": "Profile Visibility",
+      "description": "Master public visibility. When 'private', visitors see only name/username/avatar."
+    },
+    "show_location": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show Location"
+    },
+    "show_website": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show Website"
+    },
+    "show_portfolio": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show Portfolio"
+    },
+    "show_achievements": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show Achievements"
+    },
+    "show_ratings": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show Ratings"
+    },
+    "show_completed_work": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show Completed Work"
+    }
+  },
+  "required": [
+    "username",
+    "user_id"
+  ],
+  "rls": {
+    "read": {},
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

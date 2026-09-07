@@ -1,0 +1,178 @@
+{
+  "name": "PaymentTransaction",
+  "type": "object",
+  "description": "Authoritative financial ledger. The single source of truth for all money movement. Create/update/delete are admin (trusted backend) only \u2014 users must never write amount, status, net_amount, commission, or settlement state directly.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "deposit",
+        "withdrawal",
+        "prize",
+        "refund",
+        "commission",
+        "escrow_hold",
+        "escrow_release"
+      ],
+      "title": "Type"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount"
+    },
+    "currency": {
+      "type": "string",
+      "default": "INR",
+      "title": "Currency"
+    },
+    "payment_method": {
+      "type": "string",
+      "title": "Payment Method"
+    },
+    "stripe_payment_id": {
+      "type": "string",
+      "title": "Stripe Payment ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+        "refunded",
+        "disputed",
+        "expired"
+      ],
+      "default": "pending",
+      "title": "Status"
+    },
+    "commission": {
+      "type": "number",
+      "default": 0,
+      "title": "Commission"
+    },
+    "fees": {
+      "type": "number",
+      "default": 0,
+      "title": "Fees"
+    },
+    "taxes": {
+      "type": "number",
+      "default": 0,
+      "title": "Taxes"
+    },
+    "net_amount": {
+      "type": "number",
+      "default": 0,
+      "title": "Net Amount"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "reference_number": {
+      "type": "string",
+      "title": "Reference Number"
+    },
+    "actor_id": {
+      "type": "string",
+      "title": "Actor ID",
+      "description": "Audit: who triggered this state change (user id, or 'system')."
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "deposit",
+        "withdrawal",
+        "prize",
+        "refund",
+        "commission",
+        "escrow_hold",
+        "escrow_release",
+        "reserve",
+        "release",
+        "adjustment"
+      ],
+      "title": "Operation",
+      "description": "Audit: the logical operation this ledger entry records."
+    },
+    "previous_balance": {
+      "type": "number",
+      "default": 0,
+      "title": "Previous Balance (audit)",
+      "description": "Audit: wallet balance snapshot immediately before this entry applied."
+    },
+    "new_balance": {
+      "type": "number",
+      "default": 0,
+      "title": "New Balance (audit)",
+      "description": "Audit: wallet balance snapshot immediately after this entry applied."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "title": "Idempotency Key",
+      "description": "Atomicity: unique key per requested operation so a replayed/duplicate request does not double-apply. Backend must reject duplicate keys."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "manual",
+        "system",
+        "payout_provider"
+      ],
+      "default": "system",
+      "title": "Source",
+      "description": "Audit: what originated this entry."
+    },
+    "related_transaction_id": {
+      "type": "string",
+      "title": "Related Transaction ID",
+      "description": "Audit: link to a paired ledger entry (e.g. escrow hold <-> release, prize <-> commission)."
+    }
+  },
+  "required": [
+    "user_id",
+    "type",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

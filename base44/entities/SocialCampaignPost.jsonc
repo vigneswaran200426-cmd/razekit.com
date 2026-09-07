@@ -1,0 +1,219 @@
+{
+  "name": "SocialCampaignPost",
+  "type": "object",
+  "description": "One planned or published social post of a brand campaign \u2014 the distribution instance of content on a platform (distinct from the creator's content asset itself). Config-driven via the Social Platform Registry: platform is a registry key, content_type/metrics follow the platform configuration, and adding a future platform requires no schema change. Metrics are ONLY real values: entered manually by the brand, or synced by a trusted backend worker from an authorized platform API \u2014 never fabricated. metric_history is an append-only snapshot log.",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "title": "Client ID (campaign owner)",
+      "description": "Denormalized contest owner so RLS can scope reads/writes to the brand"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "creator_id": {
+      "type": "string",
+      "title": "Creator ID",
+      "description": "Creator whose content is distributed (winner / collaborator). Nullable for brand-uploaded content."
+    },
+    "winner_publish_id": {
+      "type": "string",
+      "title": "Winner Publish ID",
+      "description": "Link to the approved winner content when content_source is winner_content"
+    },
+    "submission_id": {
+      "type": "string",
+      "title": "Submission ID",
+      "description": "Link to the creator submission when content_source is creator_submission"
+    },
+    "platform": {
+      "type": "string",
+      "title": "Platform",
+      "description": "Registry key: instagram, tiktok, youtube, facebook, x, linkedin, pinterest, threads, other"
+    },
+    "content_type": {
+      "type": "string",
+      "title": "Content Type",
+      "description": "Platform content type from the registry config (Reel, Video, Short, Pin, Post, \u2026)"
+    },
+    "title": {
+      "type": "string",
+      "title": "Content Label"
+    },
+    "content_source": {
+      "type": "string",
+      "enum": [
+        "creator_submission",
+        "winner_content",
+        "collaboration_content",
+        "brand_upload",
+        "custom_asset"
+      ],
+      "default": "winner_content",
+      "title": "Content Source",
+      "description": "Where the content came from \u2014 full traceability"
+    },
+    "caption": {
+      "type": "string",
+      "title": "Caption"
+    },
+    "hashtags": {
+      "type": "string",
+      "title": "Hashtags"
+    },
+    "mentions": {
+      "type": "string",
+      "title": "Mentions"
+    },
+    "media_uri": {
+      "type": "string",
+      "title": "Media (private storage URI)",
+      "description": "The content asset distributed to this platform \u2014 references the creator content, never a duplicate"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "title": "Thumbnail URL"
+    },
+    "live_url": {
+      "type": "string",
+      "title": "Live Post URL",
+      "description": "Validated against the platform registry URL patterns before it is accepted"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PLANNED",
+        "CONTENT_PENDING",
+        "READY_FOR_REVIEW",
+        "APPROVED",
+        "SCHEDULED",
+        "PUBLISHED",
+        "TRACKING",
+        "FAILED",
+        "REMOVED",
+        "ARCHIVED"
+      ],
+      "default": "PLANNED",
+      "title": "Status",
+      "description": "Controlled state model \u2014 see the social tracker state machine; never ad-hoc strings"
+    },
+    "tracking_mode": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "auto"
+      ],
+      "default": "manual",
+      "title": "Tracking Mode",
+      "description": "manual = brand enters URL + metrics; auto = authorized API sync via a trusted backend worker"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Published At"
+    },
+    "published_by": {
+      "type": "string",
+      "title": "Published By",
+      "description": "'brand' for manual publishing, 'system' when an authorized publishing API did it"
+    },
+    "external_post_id": {
+      "type": "string",
+      "title": "External Post ID",
+      "description": "Platform's own post id when available from an authorized integration"
+    },
+    "publish_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Publish Deadline"
+    },
+    "metrics": {
+      "type": "string",
+      "default": "{}",
+      "title": "Latest Metrics (JSON)",
+      "description": "Only real values: {views, likes, comments, shares, \u2026} per the platform registry. Empty when not tracked yet."
+    },
+    "metric_history": {
+      "type": "string",
+      "default": "[]",
+      "title": "Metric Snapshots (append-only JSON array: at, source, values)",
+      "description": "Every collected snapshot, oldest first. No fabricated history."
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Checked At",
+      "description": "Last time metrics were recorded or synced"
+    },
+    "sync_error": {
+      "type": "string",
+      "title": "Sync Error",
+      "description": "Last sync failure; previous valid metrics are never erased on failure"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Internal Notes"
+    }
+  },
+  "required": [
+    "client_id",
+    "contest_id",
+    "platform"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "data.creator_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "user_role": "client"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

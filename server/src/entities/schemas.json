@@ -1,0 +1,3146 @@
+{
+  "AccountStanding": {
+    "name": "AccountStanding",
+    "required": [
+      "user_id"
+    ],
+    "defaults": {
+      "status": "active",
+      "warning_count": 0,
+      "restricted_actions": "[]"
+    },
+    "fields": [
+      "user_id",
+      "role",
+      "status",
+      "warning_count",
+      "restricted_actions",
+      "last_updated",
+      "updated_by"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "AuditLog": {
+    "name": "AuditLog",
+    "required": [
+      "user_id",
+      "action"
+    ],
+    "defaults": {},
+    "fields": [
+      "user_id",
+      "action",
+      "actor",
+      "status",
+      "reason",
+      "related_report_id",
+      "related_warning_id",
+      "result"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "BadgeAward": {
+    "name": "BadgeAward",
+    "required": [
+      "user_id",
+      "badge_id",
+      "badge_name",
+      "category"
+    ],
+    "defaults": {},
+    "fields": [
+      "user_id",
+      "badge_id",
+      "badge_name",
+      "badge_icon",
+      "category",
+      "description",
+      "contest_id"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Comment": {
+    "name": "Comment",
+    "required": [
+      "post_id",
+      "author_id",
+      "text"
+    ],
+    "defaults": {
+      "likes_count": 0,
+      "moderation_status": "visible"
+    },
+    "fields": [
+      "post_id",
+      "author_id",
+      "author_name",
+      "author_username",
+      "text",
+      "parent_id",
+      "likes_count",
+      "moderation_status"
+    ],
+    "rls": {
+      "read": {},
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Contest": {
+    "name": "Contest",
+    "required": [
+      "title",
+      "prize_amount",
+      "deadline"
+    ],
+    "defaults": {
+      "resources": "[]",
+      "deliverables": "[]",
+      "custom_requirements": "[]",
+      "settlement_region": "IN",
+      "currency": "INR",
+      "number_of_winners": 1,
+      "prize_positions": "[]",
+      "handover_required": false,
+      "post_winner_action": "NONE",
+      "submission_limit": 0,
+      "timezone": "UTC",
+      "drive_link_valid": false,
+      "status": "draft",
+      "delivery_status": "pending",
+      "verified_creators_only": false,
+      "minimum_creator_level": 1,
+      "private_contest": false,
+      "auto_hide_drive_link": true,
+      "allow_one_access": false,
+      "disable_reaccess_after_submission": false,
+      "drive_link_removed": false,
+      "require_otp": false,
+      "manual_approval": false,
+      "max_downloads": 1
+    },
+    "fields": [
+      "title",
+      "description",
+      "short_description",
+      "contest_type",
+      "cover_image_url",
+      "brief",
+      "resources",
+      "deliverables",
+      "custom_requirements",
+      "category",
+      "editing_style",
+      "custom_editing_style",
+      "video_duration",
+      "custom_duration",
+      "preferred_software",
+      "contest_rules",
+      "prize_amount",
+      "platform_fee",
+      "settlement_region",
+      "currency",
+      "number_of_winners",
+      "prize_positions",
+      "handover_required",
+      "post_winner_action",
+      "handover_type",
+      "account_property_type",
+      "handover_notes",
+      "handover_deadline",
+      "collaboration_type",
+      "collaboration_duration",
+      "collaboration_responsibilities",
+      "collaboration_notes",
+      "additional_compensation",
+      "collaboration_communication",
+      "submission_limit",
+      "deadline",
+      "start_date",
+      "start_time",
+      "timezone",
+      "drive_link",
+      "drive_link_valid",
+      "reference_links",
+      "additional_notes",
+      "status",
+      "contest_id",
+      "winner_submission_id",
+      "winner_user_id",
+      "winner_selected_at",
+      "completed_at",
+      "delivery_status",
+      "verified_creators_only",
+      "minimum_creator_level",
+      "private_contest",
+      "auto_hide_drive_link",
+      "allow_one_access",
+      "disable_reaccess_after_submission",
+      "drive_link_removed",
+      "require_otp",
+      "manual_approval",
+      "max_downloads",
+      "otp_code",
+      "max_editors"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "user_role": "client"
+        }
+      },
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "ContextFootage": {
+    "name": "ContextFootage",
+    "required": [
+      "contest_id",
+      "client_id",
+      "drive_link"
+    ],
+    "defaults": {},
+    "fields": [
+      "contest_id",
+      "client_id",
+      "drive_link"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "CreatorStats": {
+    "name": "CreatorStats",
+    "required": [
+      "user_id"
+    ],
+    "defaults": {
+      "total_xp": 0,
+      "monthly_xp": 0,
+      "level": 1,
+      "reputation_score": 0,
+      "global_rank": 0,
+      "contests_joined": 0,
+      "contests_submitted": 0,
+      "contests_won": 0,
+      "contests_runner_up": 0,
+      "contests_top5": 0,
+      "total_reviews": 0,
+      "review_score_sum": 0,
+      "on_time_count": 0,
+      "late_count": 0,
+      "current_streak": 0,
+      "best_streak": 0,
+      "penalties": 0,
+      "quality_score_avg": 0,
+      "quality_score_sum": 0,
+      "quality_score_count": 0,
+      "account_trust": 50,
+      "flagged_count": 0,
+      "abandoned_count": 0,
+      "duplicate_count": 0,
+      "badges_earned": "[]"
+    },
+    "fields": [
+      "user_id",
+      "total_xp",
+      "monthly_xp",
+      "level",
+      "reputation_score",
+      "global_rank",
+      "contests_joined",
+      "contests_submitted",
+      "contests_won",
+      "contests_runner_up",
+      "contests_top5",
+      "total_reviews",
+      "review_score_sum",
+      "on_time_count",
+      "late_count",
+      "current_streak",
+      "best_streak",
+      "penalties",
+      "quality_score_avg",
+      "quality_score_sum",
+      "quality_score_count",
+      "account_trust",
+      "flagged_count",
+      "abandoned_count",
+      "duplicate_count",
+      "badges_earned",
+      "last_contest_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "DownloadLog": {
+    "name": "DownloadLog",
+    "required": [
+      "submission_id",
+      "user_id"
+    ],
+    "defaults": {
+      "status": "success"
+    },
+    "fields": [
+      "submission_id",
+      "contest_id",
+      "user_id",
+      "status",
+      "downloaded_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "DownloadSession": {
+    "name": "DownloadSession",
+    "required": [
+      "request_id",
+      "worker_id",
+      "contest_id",
+      "drive_link",
+      "expires_at"
+    ],
+    "defaults": {
+      "status": "active",
+      "download_count": 0,
+      "max_downloads": 1
+    },
+    "fields": [
+      "request_id",
+      "worker_id",
+      "contest_id",
+      "drive_link",
+      "status",
+      "expires_at",
+      "download_count",
+      "max_downloads",
+      "used_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.worker_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "data.worker_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FootageAccessLog": {
+    "name": "FootageAccessLog",
+    "required": [
+      "user_id",
+      "contest_id"
+    ],
+    "defaults": {
+      "event_type": "access",
+      "access_count": 1,
+      "denied": false
+    },
+    "fields": [
+      "user_id",
+      "contest_id",
+      "event_type",
+      "ip_address",
+      "user_agent",
+      "device_type",
+      "access_count",
+      "denied",
+      "denial_reason",
+      "request_id",
+      "session_id",
+      "details"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "editor"
+            }
+          },
+          {
+            "user_condition": {
+              "user_role": "creator"
+            }
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FootageAccessRequest": {
+    "name": "FootageAccessRequest",
+    "required": [
+      "worker_id",
+      "contest_id",
+      "client_id"
+    ],
+    "defaults": {
+      "status": "pending",
+      "otp_attempts": 0,
+      "otp_verified": false
+    },
+    "fields": [
+      "worker_id",
+      "worker_name",
+      "worker_email",
+      "contest_id",
+      "contest_title",
+      "client_id",
+      "status",
+      "requested_at",
+      "reviewed_at",
+      "rejection_reason",
+      "otp_attempts",
+      "otp_locked_until",
+      "otp_verified"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "editor"
+            }
+          },
+          {
+            "user_condition": {
+              "user_role": "creator"
+            }
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FraudAlert": {
+    "name": "FraudAlert",
+    "required": [
+      "user_id",
+      "alert_type"
+    ],
+    "defaults": {
+      "severity": "medium",
+      "status": "flagged"
+    },
+    "fields": [
+      "user_id",
+      "transaction_id",
+      "alert_type",
+      "severity",
+      "status",
+      "details"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FraudInvestigation": {
+    "name": "FraudInvestigation",
+    "required": [
+      "subject_user_id"
+    ],
+    "defaults": {
+      "severity": "medium",
+      "status": "OPEN"
+    },
+    "fields": [
+      "subject_user_id",
+      "creator_id",
+      "contest_id",
+      "social_connection_id",
+      "reason",
+      "risk_score",
+      "severity",
+      "status",
+      "assigned_admin",
+      "admin_notes",
+      "evidence",
+      "resolved_at"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Fund": {
+    "name": "Fund",
+    "required": [
+      "amount",
+      "type"
+    ],
+    "defaults": {
+      "type": "added"
+    },
+    "fields": [
+      "amount",
+      "type",
+      "description",
+      "contest_id"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FundsTransaction": {
+    "name": "FundsTransaction",
+    "required": [
+      "type",
+      "amount"
+    ],
+    "defaults": {},
+    "fields": [
+      "type",
+      "amount",
+      "description",
+      "contest_id"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Handover": {
+    "name": "Handover",
+    "required": [
+      "contest_id",
+      "client_id",
+      "winner_id"
+    ],
+    "defaults": {
+      "handover_type": "both",
+      "status": "not_started",
+      "handover_items": "[]",
+      "creator_confirmation": false,
+      "client_confirmation": false,
+      "event_log": "[]"
+    },
+    "fields": [
+      "contest_id",
+      "contest_title",
+      "client_id",
+      "winner_id",
+      "handover_type",
+      "status",
+      "handover_items",
+      "started_at",
+      "deadline",
+      "creator_confirmation",
+      "creator_confirmed_at",
+      "client_confirmation",
+      "client_confirmed_at",
+      "completed_at",
+      "event_log"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "data.winner_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "data.winner_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "HandoverMessage": {
+    "name": "HandoverMessage",
+    "required": [
+      "handover_id",
+      "contest_id",
+      "client_id",
+      "winner_id",
+      "sender_id",
+      "body"
+    ],
+    "defaults": {},
+    "fields": [
+      "handover_id",
+      "contest_id",
+      "client_id",
+      "winner_id",
+      "sender_id",
+      "sender_role",
+      "body"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "data.winner_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "MoneyRule": {
+    "name": "MoneyRule",
+    "required": [
+      "rule_type",
+      "market",
+      "currency",
+      "version",
+      "fee_model"
+    ],
+    "defaults": {
+      "percentage_bps": 0,
+      "fixed_fee_minor": 0,
+      "active": true
+    },
+    "fields": [
+      "rule_type",
+      "market",
+      "currency",
+      "version",
+      "fee_model",
+      "percentage_bps",
+      "fixed_fee_minor",
+      "minimum_fee_minor",
+      "maximum_fee_minor",
+      "active",
+      "notes"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "MonthlyLeaderboard": {
+    "name": "MonthlyLeaderboard",
+    "required": [
+      "month",
+      "user_id"
+    ],
+    "defaults": {
+      "level": 1,
+      "verified_wins": 0,
+      "monthly_earnings": 0,
+      "finalized": false
+    },
+    "fields": [
+      "month",
+      "user_id",
+      "username",
+      "display_name",
+      "avatar_url",
+      "level",
+      "verified_wins",
+      "monthly_earnings",
+      "rank",
+      "finalized",
+      "snapshot_at"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Notification": {
+    "name": "Notification",
+    "required": [
+      "type",
+      "title"
+    ],
+    "defaults": {
+      "read": false
+    },
+    "fields": [
+      "type",
+      "title",
+      "description",
+      "read",
+      "contest_id",
+      "recipient_user_id",
+      "actor_user_id",
+      "actor_name",
+      "actor_avatar",
+      "related_post_id",
+      "related_submission_id",
+      "related_winner_id",
+      "invitation_status"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.recipient_user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "data.recipient_user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "data.recipient_user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "OtpVerification": {
+    "name": "OtpVerification",
+    "required": [
+      "request_id",
+      "client_id",
+      "otp_code",
+      "expires_at"
+    ],
+    "defaults": {
+      "attempts": 0,
+      "max_attempts": 3,
+      "verified": false,
+      "used": false
+    },
+    "fields": [
+      "request_id",
+      "client_id",
+      "contest_id",
+      "otp_code",
+      "expires_at",
+      "attempts",
+      "max_attempts",
+      "verified",
+      "used"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Payment": {
+    "name": "Payment",
+    "required": [
+      "reference",
+      "brand_id",
+      "contest_id",
+      "market",
+      "currency",
+      "subtotal_minor",
+      "total_minor",
+      "provider",
+      "status"
+    ],
+    "defaults": {
+      "discount_minor": 0,
+      "fee_percentage_bps": 0,
+      "quote_snapshot": "{}",
+      "status": "CREATED"
+    },
+    "fields": [
+      "reference",
+      "brand_id",
+      "contest_id",
+      "market",
+      "currency",
+      "subtotal_minor",
+      "platform_fee_minor",
+      "processing_fee_minor",
+      "tax_minor",
+      "discount_minor",
+      "total_minor",
+      "fee_rule_version",
+      "fee_percentage_bps",
+      "tax_rule_version",
+      "quote_id",
+      "quote_snapshot",
+      "provider",
+      "provider_order_id",
+      "provider_payment_id",
+      "status",
+      "idempotency_key",
+      "failure_reason",
+      "captured_at",
+      "refunded_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.brand_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "PaymentQuote": {
+    "name": "PaymentQuote",
+    "required": [
+      "reference",
+      "contest_id",
+      "brand_id",
+      "market",
+      "currency",
+      "subtotal_minor",
+      "total_minor",
+      "status",
+      "expires_at"
+    ],
+    "defaults": {
+      "discount_minor": 0,
+      "fee_percentage_bps": 0,
+      "status": "ACTIVE"
+    },
+    "fields": [
+      "reference",
+      "contest_id",
+      "brand_id",
+      "market",
+      "currency",
+      "subtotal_minor",
+      "platform_fee_minor",
+      "processing_fee_minor",
+      "tax_minor",
+      "discount_minor",
+      "total_minor",
+      "fee_rule_version",
+      "fee_percentage_bps",
+      "tax_rule_version",
+      "status",
+      "expires_at",
+      "consumed_by_payment_id"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.brand_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "PaymentTransaction": {
+    "name": "PaymentTransaction",
+    "required": [
+      "user_id",
+      "type",
+      "amount"
+    ],
+    "defaults": {
+      "currency": "INR",
+      "status": "pending",
+      "commission": 0,
+      "fees": 0,
+      "taxes": 0,
+      "net_amount": 0,
+      "previous_balance": 0,
+      "new_balance": 0,
+      "source": "system"
+    },
+    "fields": [
+      "user_id",
+      "contest_id",
+      "type",
+      "amount",
+      "currency",
+      "payment_method",
+      "stripe_payment_id",
+      "status",
+      "commission",
+      "fees",
+      "taxes",
+      "net_amount",
+      "description",
+      "reference_number",
+      "actor_id",
+      "operation",
+      "previous_balance",
+      "new_balance",
+      "idempotency_key",
+      "source",
+      "related_transaction_id"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Payout": {
+    "name": "Payout",
+    "required": [
+      "reference",
+      "creator_id",
+      "brand_id",
+      "contest_id",
+      "currency",
+      "amount_minor",
+      "provider",
+      "status"
+    ],
+    "defaults": {
+      "status": "READY_FOR_PAYOUT"
+    },
+    "fields": [
+      "reference",
+      "creator_id",
+      "brand_id",
+      "contest_id",
+      "payment_id",
+      "market",
+      "currency",
+      "amount_minor",
+      "provider",
+      "provider_account_id",
+      "provider_transfer_id",
+      "status",
+      "idempotency_key",
+      "failure_reason",
+      "initiated_at",
+      "completed_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.brand_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "PayoutAccount": {
+    "name": "PayoutAccount",
+    "required": [
+      "user_id",
+      "provider",
+      "onboarding_status"
+    ],
+    "defaults": {
+      "onboarding_status": "not_started",
+      "charges_enabled": false,
+      "payouts_enabled": false
+    },
+    "fields": [
+      "user_id",
+      "provider",
+      "provider_account_id",
+      "country",
+      "onboarding_status",
+      "charges_enabled",
+      "payouts_enabled",
+      "requirements_status",
+      "last_synced_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Post": {
+    "name": "Post",
+    "required": [
+      "author_id",
+      "post_type"
+    ],
+    "defaults": {
+      "author_level": 1,
+      "author_verified": false,
+      "post_type": "image",
+      "type": "image",
+      "category": "Edited Videos",
+      "is_system_generated": false,
+      "moderation_status": "visible",
+      "likes_count": 0,
+      "comments_count": 0,
+      "shares_count": 0,
+      "views_count": 0,
+      "saves_count": 0,
+      "status": "published"
+    },
+    "fields": [
+      "author_id",
+      "author_name",
+      "author_username",
+      "author_level",
+      "author_verified",
+      "author_avatar",
+      "post_type",
+      "type",
+      "media_url",
+      "title",
+      "body",
+      "caption",
+      "hashtags",
+      "category",
+      "software",
+      "editing_style",
+      "contest_id",
+      "submission_id",
+      "is_system_generated",
+      "moderation_status",
+      "likes_count",
+      "comments_count",
+      "shares_count",
+      "views_count",
+      "saves_count",
+      "status"
+    ],
+    "rls": {
+      "read": {},
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "PostLike": {
+    "name": "PostLike",
+    "required": [
+      "user_id",
+      "post_id"
+    ],
+    "defaults": {},
+    "fields": [
+      "user_id",
+      "post_id"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "data.user_id": "{{user.id}}"
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "PostSave": {
+    "name": "PostSave",
+    "required": [
+      "user_id",
+      "post_id"
+    ],
+    "defaults": {},
+    "fields": [
+      "user_id",
+      "post_id"
+    ],
+    "rls": {
+      "read": {
+        "data.user_id": "{{user.id}}"
+      },
+      "create": true,
+      "update": {
+        "data.user_id": "{{user.id}}"
+      },
+      "delete": {
+        "data.user_id": "{{user.id}}"
+      }
+    }
+  },
+  "ProviderWebhookEvent": {
+    "name": "ProviderWebhookEvent",
+    "required": [
+      "provider",
+      "event_id",
+      "status"
+    ],
+    "defaults": {
+      "signature_valid": false,
+      "status": "RECEIVED",
+      "summary": "{}"
+    },
+    "fields": [
+      "provider",
+      "event_id",
+      "event_type",
+      "signature_valid",
+      "status",
+      "summary",
+      "related_ref"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "PublicCreatorStats": {
+    "name": "PublicCreatorStats",
+    "required": [
+      "user_id"
+    ],
+    "defaults": {
+      "level": 1,
+      "reputation_score": 0,
+      "contests_won": 0,
+      "contests_completed": 0,
+      "rating": 0,
+      "public_badges": "[]"
+    },
+    "fields": [
+      "user_id",
+      "username",
+      "display_name",
+      "avatar_url",
+      "level",
+      "reputation_score",
+      "contests_won",
+      "contests_completed",
+      "rating",
+      "public_badges"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ReconciliationRecord": {
+    "name": "ReconciliationRecord",
+    "required": [
+      "reference",
+      "entity_type",
+      "internal_ref",
+      "status"
+    ],
+    "defaults": {
+      "status": "OPEN"
+    },
+    "fields": [
+      "reference",
+      "entity_type",
+      "internal_ref",
+      "internal_status",
+      "provider",
+      "provider_ref",
+      "provider_status",
+      "mismatch_summary",
+      "status",
+      "resolution_notes"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Report": {
+    "name": "Report",
+    "required": [
+      "reporter_id",
+      "target_type",
+      "target_id",
+      "reason"
+    ],
+    "defaults": {
+      "severity": "medium",
+      "status": "submitted"
+    },
+    "fields": [
+      "reporter_id",
+      "reported_user_id",
+      "target_type",
+      "target_id",
+      "category",
+      "severity",
+      "reason",
+      "evidence_url",
+      "status",
+      "resolution",
+      "reviewed_by",
+      "related_warning_id"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.reporter_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Review": {
+    "name": "Review",
+    "required": [
+      "reviewer_role",
+      "creator_id",
+      "client_id",
+      "contest_id",
+      "overall_rating"
+    ],
+    "defaults": {
+      "reviewer_role": "client",
+      "content_quality": 5,
+      "communication": 5,
+      "brief_understanding": 5,
+      "reliability": 5,
+      "delivery": 5,
+      "professionalism": 5,
+      "brief_quality": 5,
+      "fairness": 5,
+      "payment_experience": 5,
+      "would_work_again": true,
+      "verified": false,
+      "status": "published"
+    },
+    "fields": [
+      "reviewer_role",
+      "creator_id",
+      "client_id",
+      "contest_id",
+      "overall_rating",
+      "content_quality",
+      "communication",
+      "brief_understanding",
+      "reliability",
+      "delivery",
+      "professionalism",
+      "brief_quality",
+      "fairness",
+      "payment_experience",
+      "would_work_again",
+      "review_text",
+      "review_reply",
+      "creator_reply",
+      "verified",
+      "status"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "client"
+            }
+          },
+          {
+            "user_condition": {
+              "user_role": "creator"
+            }
+          },
+          {
+            "user_condition": {
+              "user_role": "editor"
+            }
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "SocialCampaignPost": {
+    "name": "SocialCampaignPost",
+    "required": [
+      "client_id",
+      "contest_id",
+      "platform"
+    ],
+    "defaults": {
+      "content_source": "winner_content",
+      "status": "PLANNED",
+      "tracking_mode": "manual",
+      "metrics": "{}",
+      "metric_history": "[]"
+    },
+    "fields": [
+      "client_id",
+      "contest_id",
+      "creator_id",
+      "winner_publish_id",
+      "submission_id",
+      "platform",
+      "content_type",
+      "title",
+      "content_source",
+      "caption",
+      "hashtags",
+      "mentions",
+      "media_uri",
+      "thumbnail_url",
+      "live_url",
+      "status",
+      "tracking_mode",
+      "published_at",
+      "published_by",
+      "external_post_id",
+      "publish_deadline",
+      "metrics",
+      "metric_history",
+      "last_checked_at",
+      "sync_error",
+      "notes"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "client"
+            }
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "SocialConnection": {
+    "name": "SocialConnection",
+    "required": [
+      "provider"
+    ],
+    "defaults": {
+      "owner_type": "creator",
+      "status": "pending",
+      "verified": false,
+      "public_display": true
+    },
+    "fields": [
+      "owner_user_id",
+      "owner_type",
+      "provider",
+      "provider_account_id",
+      "username",
+      "display_name",
+      "profile_url",
+      "profile_image_url",
+      "status",
+      "verified",
+      "public_display",
+      "scopes",
+      "last_synced_at",
+      "sync_error"
+    ],
+    "rls": {
+      "read": true,
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "SocialMetric": {
+    "name": "SocialMetric",
+    "required": [
+      "provider",
+      "metric_date"
+    ],
+    "defaults": {},
+    "fields": [
+      "owner_user_id",
+      "social_connection_id",
+      "provider",
+      "metric_date",
+      "followers",
+      "following",
+      "subscriber_count",
+      "views",
+      "video_views",
+      "reach",
+      "impressions",
+      "likes",
+      "comments",
+      "shares",
+      "saves",
+      "watch_time",
+      "profile_visits",
+      "engagement_rate",
+      "provider_metadata"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.owner_user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "SocialPost": {
+    "name": "SocialPost",
+    "required": [
+      "provider"
+    ],
+    "defaults": {},
+    "fields": [
+      "owner_user_id",
+      "social_connection_id",
+      "provider",
+      "provider_post_id",
+      "post_url",
+      "media_type",
+      "thumbnail_url",
+      "caption",
+      "published_at",
+      "views",
+      "reach",
+      "impressions",
+      "likes",
+      "comments",
+      "shares",
+      "saves",
+      "watch_time",
+      "engagement_rate",
+      "last_synced_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.owner_user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Submission": {
+    "name": "Submission",
+    "required": [
+      "contest_id"
+    ],
+    "defaults": {
+      "media_kind": "video",
+      "url_status": "not_published",
+      "platform_data": "{}",
+      "source_assets": "[]",
+      "status": "working",
+      "rating": 0,
+      "delivery_status": "pending",
+      "dispute_hold": false
+    },
+    "fields": [
+      "contest_id",
+      "client_id",
+      "video_url",
+      "preview_asset",
+      "final_asset_uri",
+      "thumbnail",
+      "media_kind",
+      "platform",
+      "content_type",
+      "live_url",
+      "url_status",
+      "caption",
+      "hashtags",
+      "mentions",
+      "platform_data",
+      "source_assets",
+      "title",
+      "description",
+      "version",
+      "notes_for_client",
+      "duration",
+      "resolution",
+      "file_size",
+      "status",
+      "rating",
+      "client_feedback",
+      "submitted_at",
+      "retention_until",
+      "deleted_at",
+      "delivery_status",
+      "dispute_hold"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "editor"
+            }
+          },
+          {
+            "user_condition": {
+              "user_role": "creator"
+            }
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "SupportTicket": {
+    "name": "SupportTicket",
+    "required": [
+      "user_id",
+      "category",
+      "subject",
+      "description"
+    ],
+    "defaults": {
+      "status": "open",
+      "priority": "medium"
+    },
+    "fields": [
+      "user_id",
+      "user_name",
+      "user_email",
+      "user_role",
+      "ticket_id",
+      "category",
+      "subject",
+      "description",
+      "conversation_summary",
+      "contest_id",
+      "related_submission_id",
+      "related_transaction_id",
+      "attachment_url",
+      "status",
+      "priority",
+      "admin_response"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "TermsAcceptance": {
+    "name": "TermsAcceptance",
+    "required": [
+      "user_id",
+      "contest_id"
+    ],
+    "defaults": {
+      "accepted": true
+    },
+    "fields": [
+      "user_id",
+      "contest_id",
+      "accepted",
+      "accepted_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "editor"
+            }
+          },
+          {
+            "user_condition": {
+              "user_role": "creator"
+            }
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "User": {
+    "name": "User",
+    "required": [
+      "role"
+    ],
+    "defaults": {
+      "user_role": "visitor",
+      "account_status": "active",
+      "onboarding_completed": false
+    },
+    "fields": [
+      "role",
+      "user_role",
+      "account_status",
+      "onboarding_completed"
+    ],
+    "rls": {
+      "read": {},
+      "create": true,
+      "update": {},
+      "delete": {}
+    }
+  },
+  "UserContact": {
+    "name": "UserContact",
+    "required": [
+      "user_id"
+    ],
+    "defaults": {
+      "account_status": "active",
+      "verification_status": "unverified"
+    },
+    "fields": [
+      "user_id",
+      "full_name",
+      "email",
+      "phone",
+      "account_status",
+      "verification_status",
+      "registration_source"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "UserPreference": {
+    "name": "UserPreference",
+    "required": [
+      "user_id"
+    ],
+    "defaults": {
+      "notif_contests": true,
+      "notif_submissions": true,
+      "notif_winners": true,
+      "notif_payments": true,
+      "notif_payouts": true,
+      "notif_messages": true,
+      "notif_support": true,
+      "profile_visibility": "public",
+      "allow_messages": true,
+      "show_earnings": false
+    },
+    "fields": [
+      "user_id",
+      "notif_contests",
+      "notif_submissions",
+      "notif_winners",
+      "notif_payments",
+      "notif_payouts",
+      "notif_messages",
+      "notif_support",
+      "profile_visibility",
+      "allow_messages",
+      "show_earnings"
+    ],
+    "rls": {
+      "read": {
+        "data.user_id": "{{user.id}}"
+      },
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "UserProfile": {
+    "name": "UserProfile",
+    "required": [
+      "username",
+      "user_id"
+    ],
+    "defaults": {
+      "profile_visibility": "public",
+      "show_location": true,
+      "show_website": true,
+      "show_portfolio": true,
+      "show_achievements": true,
+      "show_ratings": true,
+      "show_completed_work": true
+    },
+    "fields": [
+      "username",
+      "display_name",
+      "user_id",
+      "country",
+      "username_last_changed",
+      "bio",
+      "avatar_url",
+      "professional_title",
+      "skills",
+      "categories",
+      "company_name",
+      "industry",
+      "website",
+      "company_size",
+      "business_description",
+      "years_experience",
+      "tools",
+      "portfolio_url",
+      "featured_badge_id",
+      "profile_visibility",
+      "show_location",
+      "show_website",
+      "show_portfolio",
+      "show_achievements",
+      "show_ratings",
+      "show_completed_work"
+    ],
+    "rls": {
+      "read": {},
+      "create": true,
+      "update": {
+        "$or": [
+          {
+            "created_by_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "VisualAsset": {
+    "name": "VisualAsset",
+    "required": [
+      "entity_type",
+      "entity_id",
+      "asset_type"
+    ],
+    "defaults": {
+      "status": "processing",
+      "is_current": false,
+      "prompt_version": "v1",
+      "policy_version": "v1",
+      "generation_version": 1,
+      "attempt_count": 0,
+      "origin": "auto",
+      "metadata": "{}"
+    },
+    "fields": [
+      "entity_type",
+      "entity_id",
+      "asset_type",
+      "generation_key",
+      "status",
+      "is_current",
+      "provider",
+      "model",
+      "prompt_version",
+      "policy_version",
+      "generation_version",
+      "generation_id",
+      "storage_key",
+      "storage_url",
+      "thumbnail_url",
+      "width",
+      "height",
+      "mime_type",
+      "file_size",
+      "attempt_count",
+      "error_code",
+      "error_message",
+      "origin",
+      "metadata",
+      "created_by",
+      "approved_by",
+      "approved_at"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "VisualGenerationJob": {
+    "name": "VisualGenerationJob",
+    "required": [
+      "entity_type",
+      "entity_id",
+      "asset_type",
+      "generation_key"
+    ],
+    "defaults": {
+      "status": "queued",
+      "attempt_count": 0,
+      "max_attempts": 3,
+      "requested_by": "system",
+      "origin": "auto"
+    },
+    "fields": [
+      "entity_type",
+      "entity_id",
+      "asset_type",
+      "generation_key",
+      "status",
+      "attempt_count",
+      "max_attempts",
+      "last_error",
+      "next_retry_at",
+      "requested_by",
+      "origin",
+      "result_asset_id",
+      "started_at",
+      "completed_at",
+      "duration_ms"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Wallet": {
+    "name": "Wallet",
+    "required": [
+      "user_id"
+    ],
+    "defaults": {
+      "available_balance": 0,
+      "pending_balance": 0,
+      "reserved_funds": 0,
+      "total_deposits": 0,
+      "lifetime_earnings": 0,
+      "currency": "INR"
+    },
+    "fields": [
+      "user_id",
+      "available_balance",
+      "pending_balance",
+      "reserved_funds",
+      "total_deposits",
+      "lifetime_earnings",
+      "currency"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "WalletLedgerEntry": {
+    "name": "WalletLedgerEntry",
+    "required": [
+      "wallet_id",
+      "user_id",
+      "reference",
+      "currency",
+      "entry_type",
+      "direction",
+      "amount_minor",
+      "balance_after_minor"
+    ],
+    "defaults": {
+      "metadata": "{}"
+    },
+    "fields": [
+      "wallet_id",
+      "user_id",
+      "reference",
+      "currency",
+      "entry_type",
+      "direction",
+      "amount_minor",
+      "balance_after_minor",
+      "contest_id",
+      "related_payment_id",
+      "related_payout_id",
+      "description",
+      "metadata"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Warning": {
+    "name": "Warning",
+    "required": [
+      "user_id",
+      "warning_number",
+      "violation_type"
+    ],
+    "defaults": {
+      "warning_number": 1,
+      "severity": "medium",
+      "status": "active"
+    },
+    "fields": [
+      "user_id",
+      "role",
+      "warning_number",
+      "violation_type",
+      "reason",
+      "related_report_id",
+      "severity",
+      "issued_by",
+      "expiration",
+      "status"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "WinnerPublish": {
+    "name": "WinnerPublish",
+    "required": [
+      "contest_id",
+      "submission_id",
+      "creator_id",
+      "client_id"
+    ],
+    "defaults": {
+      "placement": 1,
+      "currency": "INR",
+      "status": "winner_selected",
+      "revision_count": 0
+    },
+    "fields": [
+      "contest_id",
+      "submission_id",
+      "creator_id",
+      "client_id",
+      "placement",
+      "title",
+      "description",
+      "caption",
+      "category",
+      "tools_used",
+      "creator_note",
+      "social_links",
+      "media_uri",
+      "media_type",
+      "thumbnail_uri",
+      "media_url",
+      "thumbnail_url",
+      "prize_amount",
+      "currency",
+      "status",
+      "revision_count",
+      "revision_feedback",
+      "client_approved_at",
+      "submitted_at",
+      "published_at",
+      "publish_error"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.status": "published"
+          },
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "$or": [
+          {
+            "user_condition": {
+              "user_role": "client"
+            }
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "WithdrawalRequest": {
+    "name": "WithdrawalRequest",
+    "required": [
+      "user_id",
+      "amount"
+    ],
+    "defaults": {
+      "status": "pending",
+      "commission": 0,
+      "fees": 0,
+      "net_amount": 0
+    },
+    "fields": [
+      "user_id",
+      "user_name",
+      "amount",
+      "bank_account_last4",
+      "bank_name",
+      "status",
+      "stripe_transfer_id",
+      "commission",
+      "fees",
+      "net_amount",
+      "requested_at",
+      "processed_at",
+      "rejection_reason"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "data.user_id": "{{user.id}}"
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "XpTransaction": {
+    "name": "XpTransaction",
+    "required": [
+      "user_id",
+      "category",
+      "amount"
+    ],
+    "defaults": {},
+    "fields": [
+      "user_id",
+      "category",
+      "amount",
+      "description",
+      "contest_id",
+      "breakdown",
+      "result_type",
+      "rating",
+      "quality_score"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  }
+}

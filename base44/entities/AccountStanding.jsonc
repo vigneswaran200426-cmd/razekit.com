@@ -1,0 +1,83 @@
+{
+  "name": "AccountStanding",
+  "type": "object",
+  "description": "Server-authoritative per-user enforcement state. Storage is admin/server-only: a user may read their own standing but can NEVER create/edit it (cannot un-suspend themselves, reduce warning_count, or change status). Enforcement action-blocking checks read this record.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "editor",
+        "admin"
+      ],
+      "title": "Role"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "warning",
+        "restricted",
+        "suspended",
+        "terminated"
+      ],
+      "default": "active",
+      "title": "Account Status"
+    },
+    "warning_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Verified Warning Count"
+    },
+    "restricted_actions": {
+      "type": "string",
+      "default": "[]",
+      "title": "Restricted Actions (JSON array)"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Updated"
+    },
+    "updated_by": {
+      "type": "string",
+      "title": "Updated By (admin id or 'system')"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

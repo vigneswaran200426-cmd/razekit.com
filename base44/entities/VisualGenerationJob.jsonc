@@ -1,0 +1,118 @@
+{
+  "name": "VisualGenerationJob",
+  "type": "object",
+  "description": "Asynchronous generation job in the Visual Asset Engine queue. Created idempotently per generation_key when an entity requires artwork; processed by the worker (event-driven via workflows, or scheduled maintenance). Tracks attempts, retry backoff and duration for observability. All writes go through trusted backend functions (service role); admin users can read jobs for monitoring.",
+  "properties": {
+    "entity_type": {
+      "type": "string",
+      "title": "Entity Type"
+    },
+    "entity_id": {
+      "type": "string",
+      "title": "Entity ID"
+    },
+    "asset_type": {
+      "type": "string",
+      "title": "Asset Type"
+    },
+    "generation_key": {
+      "type": "string",
+      "title": "Generation Key",
+      "description": "entity_type:entity_id:asset_type:vN \u2014 idempotency key; the same key never yields two concurrent jobs"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed"
+      ],
+      "default": "queued",
+      "title": "Status"
+    },
+    "attempt_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Attempt Count"
+    },
+    "max_attempts": {
+      "type": "number",
+      "default": 3,
+      "title": "Max Attempts"
+    },
+    "last_error": {
+      "type": "string",
+      "title": "Last Error"
+    },
+    "next_retry_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Next Retry At",
+      "description": "Backoff time before the next automatic retry; empty when attempts are exhausted (manual retry required)"
+    },
+    "requested_by": {
+      "type": "string",
+      "default": "system",
+      "title": "Requested By",
+      "description": "User id or 'system' (event-driven/backfill)"
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "regenerate",
+        "backfill",
+        "retry"
+      ],
+      "default": "auto",
+      "title": "Origin"
+    },
+    "result_asset_id": {
+      "type": "string",
+      "title": "Result Asset ID"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Started At"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Completed At"
+    },
+    "duration_ms": {
+      "type": "number",
+      "title": "Duration (ms)"
+    }
+  },
+  "required": [
+    "entity_type",
+    "entity_id",
+    "asset_type",
+    "generation_key"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

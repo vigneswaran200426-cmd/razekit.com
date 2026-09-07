@@ -1,0 +1,116 @@
+{
+  "name": "SocialConnection",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string",
+      "title": "Owner User ID"
+    },
+    "owner_type": {
+      "type": "string",
+      "enum": [
+        "creator",
+        "client"
+      ],
+      "default": "creator",
+      "title": "Owner Type"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "instagram",
+        "youtube",
+        "tiktok",
+        "facebook",
+        "linkedin",
+        "x"
+      ],
+      "title": "Provider"
+    },
+    "provider_account_id": {
+      "type": "string",
+      "title": "Provider Account ID"
+    },
+    "username": {
+      "type": "string",
+      "title": "Username"
+    },
+    "display_name": {
+      "type": "string",
+      "title": "Display Name"
+    },
+    "profile_url": {
+      "type": "string",
+      "title": "Profile URL"
+    },
+    "profile_image_url": {
+      "type": "string",
+      "title": "Profile Image URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "connected",
+        "error",
+        "disconnected"
+      ],
+      "default": "pending",
+      "title": "Status"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "title": "Verified (synced via official API)"
+    },
+    "public_display": {
+      "type": "boolean",
+      "default": true,
+      "title": "Show on public profile"
+    },
+    "scopes": {
+      "type": "string",
+      "title": "Granted Scopes"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Synced At"
+    },
+    "sync_error": {
+      "type": "string",
+      "title": "Sync Error"
+    }
+  },
+  "required": [
+    "provider"
+  ],
+  "rls": {
+    "read": true,
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

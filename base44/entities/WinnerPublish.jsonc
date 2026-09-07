@@ -1,0 +1,192 @@
+{
+  "name": "WinnerPublish",
+  "type": "object",
+  "description": "Winner publishing record connecting winner selection to the public Winners Hub. One record per contest, created automatically when the client selects a winner. Carries the post-contest workflow (winner_selected \u2192 content_requested \u2192 submitted_for_approval \u2192 approved/revision_requested \u2192 processing \u2192 published) plus the approved public media. Idempotent: the flow keys on contest_id and never creates a second record.",
+  "properties": {
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "submission_id": {
+      "type": "string",
+      "title": "Winning Submission ID"
+    },
+    "creator_id": {
+      "type": "string",
+      "title": "Winning Creator ID"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID (contest owner)"
+    },
+    "placement": {
+      "type": "number",
+      "default": 1,
+      "title": "Winning Placement (1 = 1st Place)"
+    },
+    "title": {
+      "type": "string",
+      "title": "Winning Work Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Short Description"
+    },
+    "caption": {
+      "type": "string",
+      "title": "Caption"
+    },
+    "category": {
+      "type": "string",
+      "title": "Creative Category"
+    },
+    "tools_used": {
+      "type": "string",
+      "title": "Tools Used"
+    },
+    "creator_note": {
+      "type": "string",
+      "title": "Creator Note / Winning Story"
+    },
+    "social_links": {
+      "type": "string",
+      "title": "Creator Social Links"
+    },
+    "media_uri": {
+      "type": "string",
+      "title": "Winner Media (private storage URI \u2014 public only after approval)"
+    },
+    "media_type": {
+      "type": "string",
+      "enum": [
+        "video",
+        "image"
+      ],
+      "title": "Winner Media Type"
+    },
+    "thumbnail_uri": {
+      "type": "string",
+      "title": "Thumbnail / Cover (private storage URI)"
+    },
+    "media_url": {
+      "type": "string",
+      "title": "Public Winner Media URL (set only during approved processing)"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "title": "Public Thumbnail URL (set only during approved processing)"
+    },
+    "prize_amount": {
+      "type": "number",
+      "title": "Prize Amount (denormalized from the contest)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "INR",
+      "title": "Currency (denormalized from the contest)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "winner_selected",
+        "content_requested",
+        "submitted_for_approval",
+        "revision_requested",
+        "approved",
+        "processing",
+        "published",
+        "archived"
+      ],
+      "default": "winner_selected",
+      "title": "Publishing Status"
+    },
+    "revision_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Revision Count"
+    },
+    "revision_feedback": {
+      "type": "string",
+      "title": "Latest Client Revision Feedback"
+    },
+    "client_approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Client Approved At"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Submitted For Approval At"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Published At"
+    },
+    "publish_error": {
+      "type": "string",
+      "title": "Publishing / Processing Error (admin-recoverable)"
+    }
+  },
+  "required": [
+    "contest_id",
+    "submission_id",
+    "creator_id",
+    "client_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.status": "published"
+        },
+        {
+          "data.creator_id": "{{user.id}}"
+        },
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "user_role": "client"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.creator_id": "{{user.id}}"
+        },
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

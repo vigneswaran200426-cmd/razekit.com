@@ -1,0 +1,173 @@
+{
+  "name": "Review",
+  "type": "object",
+  "description": "Verified two-sided reputation review tied to one real completed Razekit interaction. Clients review winning creators (reviewer_role 'client') and winning creators review the client (reviewer_role 'creator'). Only a verified participant of the completed interaction creates one, and only one review per direction per contest is allowed (enforced by app logic). verified is set only by the trusted post-completion review flow. The reviewed party may append a single reply but can never edit the ratings or text.",
+  "properties": {
+    "reviewer_role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "creator"
+      ],
+      "default": "client",
+      "title": "Reviewer Role",
+      "description": "Who wrote the review. 'client' = client reviewing the creator (creator_id is reviewed). 'creator' = winning creator reviewing the client (client_id is reviewed)."
+    },
+    "creator_id": {
+      "type": "string",
+      "title": "Creator ID",
+      "description": "The creator in the interaction. Reviewed party when reviewer_role is 'client'; reviewer when reviewer_role is 'creator'."
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID",
+      "description": "The client in the interaction. Reviewed party when reviewer_role is 'creator'; reviewer when reviewer_role is 'client'."
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID (the completed interaction)"
+    },
+    "overall_rating": {
+      "type": "number",
+      "title": "Overall Rating (1-5)"
+    },
+    "content_quality": {
+      "type": "number",
+      "default": 5,
+      "title": "Content Quality (1-5)"
+    },
+    "communication": {
+      "type": "number",
+      "default": 5,
+      "title": "Communication (1-5)"
+    },
+    "brief_understanding": {
+      "type": "number",
+      "default": 5,
+      "title": "Brief Understanding (1-5)"
+    },
+    "reliability": {
+      "type": "number",
+      "default": 5,
+      "title": "Reliability (1-5)"
+    },
+    "delivery": {
+      "type": "number",
+      "default": 5,
+      "title": "Delivery (1-5)"
+    },
+    "professionalism": {
+      "type": "number",
+      "default": 5,
+      "title": "Professionalism (1-5)"
+    },
+    "brief_quality": {
+      "type": "number",
+      "default": 5,
+      "title": "Brief Quality (1-5)",
+      "description": "Client-review category \u2014 how clear and complete the client's brief was."
+    },
+    "fairness": {
+      "type": "number",
+      "default": 5,
+      "title": "Fairness (1-5)",
+      "description": "Client-review category \u2014 how fairly the client treated the creator."
+    },
+    "payment_experience": {
+      "type": "number",
+      "default": 5,
+      "title": "Payment Experience (1-5)",
+      "description": "Client-review category \u2014 how smooth the prize/payment process was."
+    },
+    "would_work_again": {
+      "type": "boolean",
+      "default": true,
+      "title": "Would Work Again"
+    },
+    "review_text": {
+      "type": "string",
+      "title": "Review Text"
+    },
+    "review_reply": {
+      "type": "string",
+      "title": "Reviewed Party's Reply (may append once; never edits the review)"
+    },
+    "creator_reply": {
+      "type": "string",
+      "title": "Creator Reply (legacy alias of review_reply)"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "title": "Verified (completed contest)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "published",
+        "hidden",
+        "removed"
+      ],
+      "default": "published",
+      "title": "Status",
+      "description": "Moderation status. 'hidden'/'removed' are admin moderation states \u2014 a reviewed user can never delete someone else's review."
+    }
+  },
+  "required": [
+    "reviewer_role",
+    "creator_id",
+    "client_id",
+    "contest_id",
+    "overall_rating"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "user_role": "client"
+          }
+        },
+        {
+          "user_condition": {
+            "user_role": "creator"
+          }
+        },
+        {
+          "user_condition": {
+            "user_role": "editor"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.creator_id": "{{user.id}}"
+        },
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

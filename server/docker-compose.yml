@@ -1,0 +1,41 @@
+# Local dev infrastructure for the RazeKit backend.
+# Start with:  docker compose up -d
+# Postgres → localhost:5432   |   MinIO (S3) → localhost:9000, console localhost:9001
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: razekit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: razekit
+      POSTGRES_PASSWORD: razekit
+      POSTGRES_DB: razekit
+    ports:
+      - "5432:5432"
+    volumes:
+      - razekit_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U razekit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional S3-compatible storage for local dev. Set STORAGE_DRIVER=s3 and the
+  # S3_* vars in .env to use it (endpoint http://localhost:9000).
+  minio:
+    image: minio/minio:latest
+    container_name: razekit-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: razekit
+      MINIO_ROOT_PASSWORD: razekit-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - razekit_minio:/data
+
+volumes:
+  razekit_pg:
+  razekit_minio:

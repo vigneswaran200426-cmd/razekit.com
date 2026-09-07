@@ -1,0 +1,81 @@
+{
+  "name": "BadgeAward",
+  "type": "object",
+  "description": "Server-authoritative badge grants. Only a trusted backend/admin function may award badges \u2014 users must never award badges to themselves.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "badge_id": {
+      "type": "string",
+      "title": "Badge ID"
+    },
+    "badge_name": {
+      "type": "string",
+      "title": "Badge Name"
+    },
+    "badge_icon": {
+      "type": "string",
+      "title": "Badge Icon"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "wins",
+        "submissions",
+        "rating",
+        "level",
+        "delivery",
+        "reputation",
+        "streak",
+        "quality",
+        "trust"
+      ],
+      "title": "Badge Category"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID (if applicable)"
+    }
+  },
+  "required": [
+    "user_id",
+    "badge_id",
+    "badge_name",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "name": "TermsAcceptance",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "accepted": {
+      "type": "boolean",
+      "default": true,
+      "title": "Accepted"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Accepted At"
+    }
+  },
+  "required": [
+    "user_id",
+    "contest_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "user_role": "editor"
+          }
+        },
+        {
+          "user_condition": {
+            "user_role": "creator"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

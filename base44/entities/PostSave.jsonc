@@ -1,0 +1,30 @@
+{
+  "name": "PostSave",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "post_id": {
+      "type": "string",
+      "title": "Post ID"
+    }
+  },
+  "required": [
+    "user_id",
+    "post_id"
+  ],
+  "rls": {
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "create": true,
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
+}

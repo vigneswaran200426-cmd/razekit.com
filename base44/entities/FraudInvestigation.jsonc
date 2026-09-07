@@ -1,0 +1,96 @@
+{
+  "name": "FraudInvestigation",
+  "type": "object",
+  "properties": {
+    "subject_user_id": {
+      "type": "string",
+      "title": "Subject User ID"
+    },
+    "creator_id": {
+      "type": "string",
+      "title": "Creator ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "social_connection_id": {
+      "type": "string",
+      "title": "Social Connection ID"
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason"
+    },
+    "risk_score": {
+      "type": "number",
+      "title": "Risk Score"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "title": "Severity"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "INVESTIGATING",
+        "WAITING_FOR_INFORMATION",
+        "ACTION_REQUIRED",
+        "RESOLVED",
+        "DISMISSED"
+      ],
+      "default": "OPEN",
+      "title": "Status"
+    },
+    "assigned_admin": {
+      "type": "string",
+      "title": "Assigned Admin"
+    },
+    "admin_notes": {
+      "type": "string",
+      "title": "Admin Notes"
+    },
+    "evidence": {
+      "type": "string",
+      "title": "Evidence (JSON)"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Resolved At"
+    }
+  },
+  "required": [
+    "subject_user_id"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

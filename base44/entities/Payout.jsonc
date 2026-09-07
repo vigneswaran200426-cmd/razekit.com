@@ -1,0 +1,141 @@
+{
+  "name": "Payout",
+  "type": "object",
+  "description": "Winner payout record \u2014 one per contest, created only after a captured payment exists and a winner is selected. Status only reaches PAYOUT_COMPLETED on provider-authoritative confirmation (webhook / provider transfer status), never because an API call returned. Creator receives the full advertised prize; the platform fee is never deducted from the payout. Amounts are integers in minor units, currency immutable.",
+  "properties": {
+    "reference": {
+      "type": "string",
+      "title": "Reference (RK-PAYOUT-\u2026)"
+    },
+    "creator_id": {
+      "type": "string",
+      "title": "Winning Creator ID"
+    },
+    "brand_id": {
+      "type": "string",
+      "title": "Brand ID (contest owner)"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "payment_id": {
+      "type": "string",
+      "title": "Funding Payment ID"
+    },
+    "market": {
+      "type": "string",
+      "enum": [
+        "IN",
+        "GLOBAL"
+      ],
+      "title": "Market"
+    },
+    "currency": {
+      "type": "string",
+      "title": "Currency (ISO 4217 \u2014 immutable)"
+    },
+    "amount_minor": {
+      "type": "number",
+      "title": "Payout Amount (minor units)"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "razorpay",
+        "stripe"
+      ],
+      "title": "Payout Provider",
+      "description": "razorpay = Razorpay Route (India), stripe = Stripe Connect (international, only where eligible)."
+    },
+    "provider_account_id": {
+      "type": "string",
+      "title": "Creator Provider Account ID",
+      "description": "Razorpay Route linked account id or Stripe connected account id the transfer targets."
+    },
+    "provider_transfer_id": {
+      "type": "string",
+      "title": "Provider Transfer ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "NOT_ELIGIBLE",
+        "PENDING_PAYMENT",
+        "PAYMENT_RESERVED",
+        "READY_FOR_PAYOUT",
+        "PAYOUT_INITIATED",
+        "PAYOUT_PROCESSING",
+        "PAYOUT_COMPLETED",
+        "PAYOUT_FAILED",
+        "PAYOUT_REVERSED",
+        "ON_HOLD",
+        "RECONCILIATION_REQUIRED"
+      ],
+      "default": "READY_FOR_PAYOUT",
+      "title": "Status",
+      "description": "Controlled payout state machine \u2014 PAID is not used; completion is PAYOUT_COMPLETED only after provider confirmation."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "title": "Idempotency Key",
+      "description": "One key = at most one transfer. A second trigger returns the existing payout."
+    },
+    "failure_reason": {
+      "type": "string",
+      "title": "Failure Reason"
+    },
+    "initiated_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Initiated At"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Completed At"
+    }
+  },
+  "required": [
+    "reference",
+    "creator_id",
+    "brand_id",
+    "contest_id",
+    "currency",
+    "amount_minor",
+    "provider",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.creator_id": "{{user.id}}"
+        },
+        {
+          "data.brand_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

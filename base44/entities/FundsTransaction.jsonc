@@ -1,0 +1,62 @@
+{
+  "name": "FundsTransaction",
+  "type": "object",
+  "description": "Legacy ledger. Non-client-writable during financial consolidation \u2014 PaymentTransaction is the authoritative ledger. Existing data is preserved.",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "add",
+        "reserve",
+        "release",
+        "payout"
+      ],
+      "title": "Transaction Type"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    }
+  },
+  "required": [
+    "type",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

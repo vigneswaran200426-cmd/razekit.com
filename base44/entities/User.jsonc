@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "The role of the user in the app",
+      "enum": [
+        "admin",
+        "user"
+      ]
+    },
+    "user_role": {
+      "type": "string",
+      "description": "Product role on the single shared identity: new sign-ups stay 'visitor' until they choose Creator or Client during onboarding.",
+      "enum": [
+        "visitor",
+        "creator",
+        "client"
+      ],
+      "default": "visitor",
+      "title": "User Role"
+    },
+    "account_status": {
+      "type": "string",
+      "description": "Account lifecycle status. Existing users without an explicit value are treated as 'active'.",
+      "enum": [
+        "pending",
+        "active",
+        "restricted",
+        "suspended",
+        "deactivated",
+        "deleted"
+      ],
+      "default": "active",
+      "title": "Account Status"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Onboarding Completed"
+    }
+  },
+  "required": [
+    "role"
+  ],
+  "name": "User",
+  "type": "object"
+}

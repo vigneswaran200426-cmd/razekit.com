@@ -1,0 +1,90 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "description": "Security audit trail for account/role/enforcement events. Created by trusted onboarding/admin/enforcement flows; users cannot edit or delete entries.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "account_created",
+        "role_assigned",
+        "profile_created",
+        "verification_changed",
+        "account_suspended",
+        "account_reactivated",
+        "role_violation_attempt",
+        "report_created",
+        "report_reviewed",
+        "report_verified",
+        "report_dismissed",
+        "warning_issued",
+        "warning_reversed",
+        "threshold_reached",
+        "account_restricted",
+        "account_terminated",
+        "appeal_submitted",
+        "appeal_resolved"
+      ],
+      "title": "Action"
+    },
+    "actor": {
+      "type": "string",
+      "title": "Actor",
+      "description": "Who triggered the event: 'self', an admin user id, or 'system'."
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "description": "Outcome or resulting state of the action."
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason"
+    },
+    "related_report_id": {
+      "type": "string",
+      "title": "Related Report ID"
+    },
+    "related_warning_id": {
+      "type": "string",
+      "title": "Related Warning ID"
+    },
+    "result": {
+      "type": "string",
+      "title": "Result"
+    }
+  },
+  "required": [
+    "user_id",
+    "action"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

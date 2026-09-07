@@ -1,0 +1,74 @@
+{
+  "name": "FraudAlert",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "transaction_id": {
+      "type": "string",
+      "title": "Transaction ID"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "unusual_frequency",
+        "large_withdrawal",
+        "multiple_failures",
+        "duplicate_transaction",
+        "velocity_attack",
+        "suspicious_ip"
+      ],
+      "title": "Alert Type"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "title": "Severity"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "flagged",
+        "reviewing",
+        "cleared",
+        "blocked"
+      ],
+      "default": "flagged",
+      "title": "Status"
+    },
+    "details": {
+      "type": "string",
+      "title": "Details"
+    }
+  },
+  "required": [
+    "user_id",
+    "alert_type"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

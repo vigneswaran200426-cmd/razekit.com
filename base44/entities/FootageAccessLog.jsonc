@@ -1,0 +1,118 @@
+{
+  "name": "FootageAccessLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "contest_id": {
+      "type": "string",
+      "title": "Contest ID"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "request",
+        "approval",
+        "rejection",
+        "otp_generated",
+        "otp_verified",
+        "otp_failed",
+        "download_started",
+        "download_completed",
+        "failed_attempt",
+        "unauthorized_access",
+        "expired_session",
+        "access"
+      ],
+      "default": "access",
+      "title": "Event Type"
+    },
+    "ip_address": {
+      "type": "string",
+      "title": "IP Address"
+    },
+    "user_agent": {
+      "type": "string",
+      "title": "User Agent"
+    },
+    "device_type": {
+      "type": "string",
+      "title": "Device Type"
+    },
+    "access_count": {
+      "type": "number",
+      "default": 1,
+      "title": "Access Count"
+    },
+    "denied": {
+      "type": "boolean",
+      "default": false,
+      "title": "Denied"
+    },
+    "denial_reason": {
+      "type": "string",
+      "title": "Denial Reason"
+    },
+    "request_id": {
+      "type": "string",
+      "title": "Request ID"
+    },
+    "session_id": {
+      "type": "string",
+      "title": "Session ID"
+    },
+    "details": {
+      "type": "string",
+      "title": "Details"
+    }
+  },
+  "required": [
+    "user_id",
+    "contest_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "user_role": "editor"
+          }
+        },
+        {
+          "user_condition": {
+            "user_role": "creator"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

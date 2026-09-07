@@ -1,0 +1,43 @@
+# ── Secrets / environment (NEVER commit real values) ─────────────────────────
+.env
+.env.*
+*.local
+# ...but DO commit the example templates (variable names only):
+!.env.example
+!server/.env.example
+
+# ── Dependencies / build output ──────────────────────────────────────────────
+node_modules
+dist
+dist-ssr
+build
+.vite
+
+# ── Backend local runtime artifacts ──────────────────────────────────────────
+server/_storage
+server/_import
+_storage
+_import
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Editor / OS ──────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Base44 platform-local file (not needed off-platform) ─────────────────────
+base44/.app.jsonc

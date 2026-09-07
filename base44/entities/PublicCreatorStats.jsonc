@@ -1,0 +1,74 @@
+{
+  "name": "PublicCreatorStats",
+  "type": "object",
+  "description": "Public-read projection of a creator's public-safe metrics, denormalized from the owner-only CreatorStats by a trusted backend/admin sync. Visitors read this; only admins (or a trusted sync function) may create/update. Never includes account_trust, penalties, flagged/abandoned/duplicate counts, monthly/earnings data, Wallet, or WithdrawalRequest.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "username": {
+      "type": "string",
+      "title": "Username"
+    },
+    "display_name": {
+      "type": "string",
+      "title": "Display Name"
+    },
+    "avatar_url": {
+      "type": "string",
+      "title": "Avatar URL"
+    },
+    "level": {
+      "type": "number",
+      "default": 1,
+      "title": "Level"
+    },
+    "reputation_score": {
+      "type": "number",
+      "default": 0,
+      "title": "Reputation Score"
+    },
+    "contests_won": {
+      "type": "number",
+      "default": 0,
+      "title": "Wins"
+    },
+    "contests_completed": {
+      "type": "number",
+      "default": 0,
+      "title": "Completed Projects"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0,
+      "title": "Rating"
+    },
+    "public_badges": {
+      "type": "string",
+      "default": "[]",
+      "title": "Public Badges (JSON)"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

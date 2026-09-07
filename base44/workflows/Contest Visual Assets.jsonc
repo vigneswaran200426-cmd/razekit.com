@@ -1,0 +1,46 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "contest_visual_assets",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "generate_artwork": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "visualAssetWorker",
+            "args": {
+              "mode": "ensure",
+              "entity_type": "CONTEST",
+              "entity_id": "${ .trigger.entity_id }",
+              "asset_types": [
+                "CONTEST_THUMBNAIL"
+              ],
+              "origin": "auto"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Generate contest artwork",
+            "description": "Visual Asset Engine \u2014 thumbnail"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Automatically generates the artwork for every newly created contest through the Visual Asset Engine \u2014 permanent infrastructure, no per-contest code",
+  "name": "Contest Visual Assets",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Contest"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "ContextFootage",
+  "type": "object",
+  "description": "Private storage for a Context's raw Google Drive footage link. Readable only by the Context owner and admins \u2014 never publicly exposed. Backend functions read it via the service role and only surface the link to an editor through a DownloadSession after OTP verification, so the raw Drive URL is never reachable before authorization.",
+  "properties": {
+    "contest_id": {
+      "type": "string",
+      "title": "Context ID"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client (owner) ID"
+    },
+    "drive_link": {
+      "type": "string",
+      "title": "Google Drive Link"
+    }
+  },
+  "required": [
+    "contest_id",
+    "client_id",
+    "drive_link"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

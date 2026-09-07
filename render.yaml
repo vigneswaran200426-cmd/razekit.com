@@ -1,0 +1,73 @@
+# Render Blueprint for the RazeKit backend (server/).
+# Import this repo at render.com → "New +" → "Blueprint". Render reads this file.
+# Set the secret env vars (sync:false) in the Render dashboard after creation.
+services:
+  - type: web
+    name: razekit-api
+    runtime: node
+    plan: starter
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      # Provided/synced in the dashboard (never commit real values):
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: API_BASE_URL          # e.g. https://api.razekit.com (or the onrender.com URL)
+        sync: false
+      - key: WEB_BASE_URL          # e.g. https://razekit.com
+        sync: false
+      - key: CORS_ORIGINS          # e.g. https://razekit.com,https://www.razekit.com
+        sync: false
+      # Optional integrations — leave unset until you have them:
+      - key: STORAGE_DRIVER
+        value: s3
+      - key: STORAGE_PUBLIC_BASE_URL
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET_PUBLIC
+        sync: false
+      - key: S3_BUCKET_PRIVATE
+        sync: false
+      - key: EMAIL_DRIVER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: LLM_DRIVER
+        value: stub
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: IMAGE_DRIVER
+        value: stub
+      - key: OPENAI_API_KEY
+        sync: false

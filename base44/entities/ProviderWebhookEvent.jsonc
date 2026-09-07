@@ -1,0 +1,80 @@
+{
+  "name": "ProviderWebhookEvent",
+  "type": "object",
+  "description": "Processed provider webhook event \u2014 the deduplication and audit record for the money engine's webhook handler. event_id is the provider's event id (Stripe evt_\u2026) or a content hash (Razorpay raw body); the same event arriving twice is processed exactly once. Only a small structured summary is stored, never raw payloads or secrets.",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "razorpay",
+        "stripe"
+      ],
+      "title": "Provider"
+    },
+    "event_id": {
+      "type": "string",
+      "title": "Event ID",
+      "description": "Provider event id (Stripe) or deterministic hash of the raw payload (Razorpay)."
+    },
+    "event_type": {
+      "type": "string",
+      "title": "Event Type",
+      "description": "e.g. payment.captured, checkout.session.completed, transfer.processed."
+    },
+    "signature_valid": {
+      "type": "boolean",
+      "default": false,
+      "title": "Signature Valid"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "RECEIVED",
+        "PROCESSED",
+        "DUPLICATE",
+        "IGNORED",
+        "REJECTED"
+      ],
+      "default": "RECEIVED",
+      "title": "Status"
+    },
+    "summary": {
+      "type": "string",
+      "default": "{}",
+      "title": "Summary (JSON)",
+      "description": "Small structured outcome summary \u2014 never the raw webhook payload."
+    },
+    "related_ref": {
+      "type": "string",
+      "title": "Related Internal Reference",
+      "description": "The RK-PAY/RK-PAYOUT reference the event affected, when known."
+    }
+  },
+  "required": [
+    "provider",
+    "event_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
