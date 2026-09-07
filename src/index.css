@@ -70,7 +70,7 @@
     --chart-5: 4 69% 54%;
 
     /* ── Radius ── */
-    --radius: 1rem;   /* 16px — 24px card radius from spec */
+    --radius: 0.75rem;   /* 12px — boxy Apple-style panels (top-nav redesign) */
 
     /* ── Fonts ── */
     --font-heading: 'Sora', 'Manrope', ui-sans-serif, system-ui, sans-serif;

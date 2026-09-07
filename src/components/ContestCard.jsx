@@ -41,7 +41,7 @@ export default function ContestCard({ contest, submissionsCount, index = 0, clas
       <Link
         to={`/contest/${contest.id}`}
         aria-label={`${contest.title} — ${money(contest.prize_amount, contest.currency)} prize`}
-        className="group relative flex flex-col h-full rounded-3xl bg-card border border-border/60 overflow-hidden shadow-elev-1 transition-all duration-300 ease-brand hover:shadow-elev-2 hover:border-primary/30 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="group relative flex flex-col h-full rounded-xl bg-card border border-border/60 overflow-hidden shadow-elev-1 transition-all duration-300 ease-brand hover:shadow-elev-2 hover:border-primary/30 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {/* Cover */}
         <div className="relative aspect-[16/10] overflow-hidden bg-secondary">
