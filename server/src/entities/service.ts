@@ -8,11 +8,13 @@
 // returned FLATTENED (id, created_date, created_by_id, updated_date + data
 // fields) so existing frontend code keeps working unchanged.
 
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { prisma } from '../db.js';
 import { canAccess, readWhere, type RlsUser } from './rls.js';
 import { publicUser } from '../auth/users.js';
 import { coreIntegrations } from '../integrations/core.js';
-import schemasJson from './schemas.json' with { type: 'json' };
 
 type EntitySchema = {
   name: string;
@@ -22,7 +24,12 @@ type EntitySchema = {
   rls: { read: any; create: any; update: any; delete: any };
 };
 
-const SCHEMAS = schemasJson as unknown as Record<string, EntitySchema>;
+// Load entity schemas from the JSON sitting next to this module (works in both
+// tsx dev — src/entities/schemas.json — and the compiled build — dist/entities/
+// schemas.json, copied by scripts/copy-assets.mjs). Avoids import-attribute
+// syntax so it runs on any Node 18+.
+const __schemasPath = join(dirname(fileURLToPath(import.meta.url)), 'schemas.json');
+const SCHEMAS = JSON.parse(readFileSync(__schemasPath, 'utf8')) as Record<string, EntitySchema>;
 
 const META_KEYS = new Set(['id', 'created_date', 'created_by_id', 'updated_date']);
 

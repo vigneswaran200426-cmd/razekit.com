@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "RazeKit backend API — the off-Base44 replacement (Node + TypeScript + Express + Prisma/PostgreSQL).",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "gen:schemas": "node scripts/gen-schemas.mjs",
     "prisma:generate": "prisma generate",
