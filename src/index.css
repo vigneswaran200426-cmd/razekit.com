@@ -205,6 +205,8 @@
 
   /* Tabular figures for stats, prices, tables (spec §07/54) */
   .nums { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* Consistent page shell rhythm (spec §08) */
   .page-shell { padding: 1rem; }
