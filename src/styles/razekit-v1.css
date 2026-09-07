@@ -26,9 +26,10 @@ body {
     var(--rz-ground);
 }
 
-/* Global density: reclaim the oversized whitespace seen in the previous UI. */
+/* Full-width desktop composition with controlled gutters. */
 .page-shell {
-  width: min(100%, var(--rz-max));
+  width: 100%;
+  max-width: var(--rz-max) !important;
   margin-inline: auto;
   padding: 24px clamp(16px, 2.2vw, 32px) 40px;
 }
@@ -71,15 +72,11 @@ body {
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Reduce excessive rounding from generic utility compositions while preserving true pills. */
 .rounded-xl { border-radius: var(--rz-radius-md) !important; }
 .rounded-2xl { border-radius: var(--rz-radius-lg) !important; }
 .rounded-3xl { border-radius: 18px !important; }
-
-/* Pills remain pills only when deliberately used for compact state/category controls. */
 .rounded-full { border-radius: 9999px !important; }
 
-/* Inputs, selects and textareas share one precise control language. */
 input,
 textarea,
 select {
@@ -95,27 +92,19 @@ select:focus {
   border-color: rgba(23,105,255,.42);
 }
 
-/* Media-first contest surfaces: reduce empty chrome and keep image/content hierarchy strong. */
 img { max-width: 100%; }
 
-/* Common clickable surfaces should feel crisp rather than like floating SaaS tiles. */
 a,
-button {
-  -webkit-tap-highlight-color: transparent;
-}
+button { -webkit-tap-highlight-color: transparent; }
 
-/* Dense desktop rhythm for section groups. */
 section + section { margin-top: 28px; }
 
-/* Keep headings strong but restrained. */
 h1 { font-size: clamp(28px, 3vw, 40px); }
 h2 { font-size: clamp(20px, 2vw, 28px); }
 
-/* Data-heavy numbers should align visually. */
 .nums,
 [data-number] { font-variant-numeric: tabular-nums; }
 
-/* Shared page-enter motion. */
 .rz-page-enter {
   animation: rz-page-enter .36s cubic-bezier(.22,1,.36,1) both;
 }
@@ -129,7 +118,6 @@ h2 { font-size: clamp(20px, 2vw, 28px); }
   .rz-page-enter { animation: none; }
 }
 
-/* Utility for compact, information-dense rows. */
 .rz-row {
   display: flex;
   align-items: center;
@@ -142,7 +130,6 @@ h2 { font-size: clamp(20px, 2vw, 28px); }
   background: rgba(32,77,133,.10);
 }
 
-/* Empty states should be invitations, not huge dead boxes. */
 .rz-empty {
   min-height: 180px;
   display: grid;
@@ -154,10 +141,9 @@ h2 { font-size: clamp(20px, 2vw, 28px); }
   background: rgba(255,255,255,.62);
 }
 
-/* Keep admin/main product shells visually distinct without changing the business logic. */
-[data-razekit-admin] .page-shell {
-  max-width: 1520px;
-}
+[data-razekit-admin] .page-shell { max-width: 1520px !important; }
 
-/* Top navigation should remain the primary shell on desktop; no persistent sidebar styling. */
 header[aria-label="Primary"] { position: sticky; top: 0; }
+
+/* Prevent legacy sidebar chrome from becoming the dominant desktop navigation. */
+[data-sidebar="true"] { display: none !important; }
