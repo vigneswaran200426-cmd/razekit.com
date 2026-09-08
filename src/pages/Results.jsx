@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Trophy, Download, Play, IndianRupee, ArrowLeft, Check, Clock } from 'lucide-react';
+import { Trophy, Download, Play, IndianRupee, Check, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getHandover, handoverUnlocksPayment } from '@/lib/handover-utils';
 import { useToast } from '@/components/ui/use-toast';

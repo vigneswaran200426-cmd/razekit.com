@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, BadgeCheck, Trophy, Star, Calendar, Award, Heart, Film, Video, Lock } from 'lucide-react';
+import { X, BadgeCheck, Trophy, Star, Calendar, Award, Heart, Video, Lock } from 'lucide-react';
 import { MOCK_POSTS, formatCount } from './feedData';
 
 const TABS = ['Posts', 'Videos', 'Wins', 'Liked', 'Saved'];

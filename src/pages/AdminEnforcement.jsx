@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Flag, ShieldAlert, Gavel, Loader2, Lock, ArrowLeft, X, Sparkles, Undo2, Ban } from 'lucide-react';
+import { ShieldAlert, Gavel, Loader2, Lock, ArrowLeft, X, Sparkles, Undo2, Ban } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { isAppAdmin } from '@/lib/role-utils';
 import { issueWarning, dismissReport, reverseEnforcement, aiSuggestCategory, respondToAppeal } from '@/lib/enforcement-utils';

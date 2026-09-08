@@ -5,8 +5,7 @@ import { computeCreatorRisk } from '@/lib/risk-engine';
 import { issueWarning } from '@/lib/enforcement-utils';
 import { formatPrize } from '@/lib/utils';
 import {
-  Shield, AlertTriangle, Users, Activity, Wallet, X, Check, Eye, Gavel,
-  Loader2, TrendingUp, ShieldAlert, FolderSearch, Ban,
+  Shield, AlertTriangle, Users, Activity, Wallet, X, Check, Eye, Gavel, ShieldAlert, FolderSearch, Ban,
 } from 'lucide-react';
 
 const TABS = [

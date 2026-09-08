@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, ShieldCheck, KeyRound, MonitorSmartphone, BadgeCheck, Eye, MapPin, Globe, Link2, Trophy, Star, Award } from 'lucide-react';
+import { Loader2, ShieldCheck, KeyRound, MonitorSmartphone, BadgeCheck, MapPin, Globe, Link2, Trophy, Star, Award } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SettingsSection from '@/components/settings/SettingsSection';
 import { Switch } from '@/components/ui/switch';

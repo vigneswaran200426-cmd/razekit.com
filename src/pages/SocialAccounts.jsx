@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { SOCIAL_PROVIDERS, SOCIAL_LIVE, providerByKey } from '@/lib/social-providers';
 import { summarizeConnections } from '@/lib/social-analytics';
-import { Check, X, Plus, Trash2, ShieldCheck, Info, Users, Eye, Activity, TrendingUp, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, ShieldCheck, Info, Users, Eye, Activity, TrendingUp, Loader2 } from 'lucide-react';
 
 const STATUS = {
   connected: { label: 'Connected', cls: 'text-success', dot: 'bg-success' },

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Lock, Check } from 'lucide-react';
-import { unlocks, careerProfile } from './mockData';
+import { unlocks } from './mockData';
 
 export default function UnlockProgress() {
   const nextUnlock = unlocks.filter(u => !u.unlocked).sort((a, b) => a.level - b.level)[0];

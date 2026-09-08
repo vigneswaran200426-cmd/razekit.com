@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Eye, AlertTriangle, Ban, Activity, Lock, ArrowLeft, FileCheck, Download, Clock, User } from 'lucide-react';
+import { Shield, Eye, AlertTriangle, Activity, Lock, ArrowLeft, FileCheck, Download, User } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const EVENT_LABELS = {

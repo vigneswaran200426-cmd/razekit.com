@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Trophy, Wallet, ExternalLink, Edit3, CheckCircle2, Circle, Film, Clock, Check } from "lucide-react";
+import { FileText, Trophy, Wallet, Edit3, CheckCircle2, Circle, Film, Clock, Check } from "lucide-react";
 import { formatINR, calcPlatformFee, calcTotalCost, isValidGoogleDriveLink } from "@/lib/contest-utils";
 import CountdownTimer from "@/components/CountdownTimer";
 

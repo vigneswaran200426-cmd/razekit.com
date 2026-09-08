@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Lock, Download, CheckCircle, XCircle, AlertTriangle, Eye, Clock, RefreshCw, FileCheck, KeyRound, ExternalLink } from 'lucide-react';
+import { Shield, Lock, CheckCircle, XCircle, AlertTriangle, Eye, Clock, RefreshCw, FileCheck, KeyRound, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import CountdownDisplay from './CountdownDisplay';

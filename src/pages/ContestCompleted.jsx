@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Trophy, Check, Users, Share2, ArrowLeft, IndianRupee, ArrowLeftRight, Play, PartyPopper, Star } from 'lucide-react';
+import { Trophy, Check, Users, Share2, ArrowLeft, IndianRupee, ArrowLeftRight, Play, Star } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getHandover, HANDOVER_STATUS_LABELS } from '@/lib/handover-utils';
 import { useToast } from '@/components/ui/use-toast';

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Trophy, Clock, IndianRupee } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import CountdownTimer from '@/components/CountdownTimer';
 import AlertState from '@/components/alerts/AlertState';

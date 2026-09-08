@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, XCircle, Link2, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, Link2 } from 'lucide-react';
 import SecuritySettings from '@/components/footage/SecuritySettings';
 
 export default function Step1SourceFiles({ formData, updateFormData }) {

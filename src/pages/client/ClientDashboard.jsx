@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Plus, Trophy, FileVideo, CheckCircle2, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { PUBLISHED_LIKE } from '@/lib/social-tracker';
 import OverviewHeader, { greeting } from '@/components/ui/OverviewHeader';
 import NextTask from '@/components/ui/NextTask';
 import SectionHeader from '@/components/ui/SectionHeader';

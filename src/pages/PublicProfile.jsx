@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Pencil, Trophy, Star, Calendar, Award, AtSign, ExternalLink, Building2, Briefcase, MapPin, Globe, Send, ShieldCheck, Lock, Flag } from 'lucide-react';
+import { ArrowLeft, Pencil, Trophy, Star, Calendar, Award, ExternalLink, Building2, Briefcase, MapPin, Globe, Send, Lock, Flag } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getUserProfile, getUserProfileByUsername } from '@/lib/username-utils';
 import InviteToContextModal from '@/components/profile/InviteToContextModal';

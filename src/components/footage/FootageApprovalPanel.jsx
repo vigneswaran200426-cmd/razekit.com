@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Check, X, Clock, User, AlertTriangle, Mail } from 'lucide-react';
+import { Shield, Check, X, User, AlertTriangle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { logEvent } from './footage-utils';

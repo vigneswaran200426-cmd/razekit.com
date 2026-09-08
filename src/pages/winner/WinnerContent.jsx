@@ -11,7 +11,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { getWinnerPublish, submitWinnerContent, saveWinnerContentDraft, retryWinnerPublishing, WP_STATUS } from '@/lib/winner-publish';
 import WinnerPublishTimeline, { WinnerPublishStatusPill } from '@/components/winner/WinnerPublishTimeline';
 import WinnerContentForm from '@/components/winner/WinnerContentForm';
-import WinnerHubPreview from '@/components/winner/WinnerHubPreview';
 import WinnerMedia from '@/components/winner/WinnerMedia';
 import { generateThumbnailBlob } from '@/lib/submission-utils';
 

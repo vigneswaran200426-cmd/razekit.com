@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Save, Camera, AtSign, Briefcase, Eye, PlusCircle, Image as ImageIcon, Building2, Globe, Phone, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Camera, AtSign, Briefcase, Eye, PlusCircle, Image as ImageIcon, Building2, Phone, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import UsernameInput from '@/components/UsernameInput';
 import { getUserProfile, saveUsername, checkUsernameAvailable, canChangeUsername, formatDate } from '@/lib/username-utils';

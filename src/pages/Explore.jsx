@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Search, Bell, Compass, Flame, TrendingUp, Plus, FolderOpen,
-  ChevronRight, AlertCircle, Sparkles, Clock, IndianRupee,
+  Search, Compass, Flame, TrendingUp, Plus, FolderOpen, AlertCircle, Sparkles, Clock, IndianRupee,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';

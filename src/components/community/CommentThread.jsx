@@ -21,7 +21,7 @@ export default function CommentThread({ postId, user }) {
     setComments(cs.filter(c => c.moderation_status !== 'removed'));
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [postId]);
+  useEffect(() => { load();   }, [postId]);
 
   const submit = async () => {
     if (!text.trim() || !user) return;

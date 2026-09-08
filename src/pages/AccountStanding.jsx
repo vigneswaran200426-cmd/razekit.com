@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertTriangle, Loader2, ArrowLeft, Gavel, Check, Shield } from 'lucide-react';
+import { AlertTriangle, Loader2, Gavel, Check, Shield } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { appealWarning } from '@/lib/enforcement-utils';
 import PageHeader from '@/components/ui/PageHeader';

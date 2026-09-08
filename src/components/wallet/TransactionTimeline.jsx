@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { IndianRupee, ArrowDownCircle, ArrowUpCircle, Trophy, RefreshCcw, Lock, Unlock, Filter, Download, X } from 'lucide-react';
-import { formatINR } from '@/lib/contest-utils';
+import { IndianRupee, ArrowDownCircle, ArrowUpCircle, Trophy, RefreshCcw, Lock, Unlock, Filter } from 'lucide-react';
 import ReceiptModal from './ReceiptModal';
 import { EASE } from '@/lib/motion';
 

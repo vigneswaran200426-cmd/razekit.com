@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Award } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { BADGE_DEFINITIONS, getUserBadges } from '@/lib/xpSystem';
 import { BADGE_VISUALS, RARITY } from '@/lib/xp/badge-visuals';
 import Emblem from './Emblem';

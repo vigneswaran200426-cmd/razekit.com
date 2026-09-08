@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Loader2, Film } from 'lucide-react';
+import { Plus, Film } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { MOCK_POSTS, DISCOVERY_FILTERS } from './feedData';
 import { distributeFeed } from './discovery';

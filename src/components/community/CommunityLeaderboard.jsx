@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { computeLeaderboard, monthLabel } from '@/lib/community-utils';
-import { Loader2, Trophy, ChevronLeft, ChevronRight, Star, ShieldCheck, Zap, Award } from 'lucide-react';
+import { Loader2, Trophy, ChevronLeft, ChevronRight, Star, ShieldCheck, Award } from 'lucide-react';
 
 const PERIODS = [
   { key: 'monthly', label: 'Monthly' },

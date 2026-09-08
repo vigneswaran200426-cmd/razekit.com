@@ -62,7 +62,7 @@ export default function ContestFinancialsPanel({ contest }) {
         base44.functions.invoke('paymentConfirm', { reference: ref, stripe: { session_id: sessionId } }).catch(() => null);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [contest.id]);
 
   const captured = (payments || []).find((p) => p.status === 'CAPTURED');

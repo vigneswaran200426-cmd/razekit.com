@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, X, Pencil, Trash2, ExternalLink, Paperclip, Loader2, Link2, Film, FolderOpen, Image as ImageIcon, BookOpen, Lightbulb, Package, Music, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, ExternalLink, Paperclip, Loader2, Link2, Film, FolderOpen, Image as ImageIcon, BookOpen, Lightbulb, Package, Music, FileText } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { RESOURCE_TYPES, RESOURCE_PERMISSIONS, RESOURCE_FILTERS, RESOURCE_TYPE_GROUPS, parseJSON, emptyResource } from '@/lib/campaign-brief';
 
