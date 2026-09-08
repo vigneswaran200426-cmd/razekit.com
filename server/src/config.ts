@@ -2,12 +2,15 @@ import 'dotenv/config';
 
 function req(name: string, fallback?: string): string {
   const v = process.env[name] ?? fallback;
-  if (v === undefined) throw new Error(`Missing required env var: ${name}`);
+  if (v === undefined || v === '') throw new Error(`Missing required env var: ${name}`);
   return v;
 }
 
+const env = process.env.NODE_ENV || 'development';
+const isProduction = env === 'production';
+
 export const config = {
-  env: process.env.NODE_ENV || 'development',
+  env,
   port: Number(process.env.PORT || 4000),
   apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:4000',
   webBaseUrl: process.env.WEB_BASE_URL || 'http://localhost:5173',
@@ -16,7 +19,8 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 
-  jwtSecret: req('JWT_SECRET', 'dev-insecure-secret-change-me'),
+  // Never run production with the development JWT fallback.
+  jwtSecret: isProduction ? req('JWT_SECRET') : req('JWT_SECRET', 'dev-insecure-secret-change-me'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',
 
   google: {
