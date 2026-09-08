@@ -1,0 +1,49 @@
+name: RazeKit quality
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'redesign/**']
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Lint (autofix then verify)
+        run: npm run lint:fix && npm run lint
+
+      - name: Frontend typecheck
+        run: npm run typecheck
+
+      - name: Frontend build
+        run: npm run build
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Backend typecheck
+        run: npm run typecheck
+        working-directory: server
+
+      - name: Backend tests
+        run: npm test
+        working-directory: server
+
+      - name: Backend build
+        run: npm run build
+        working-directory: server

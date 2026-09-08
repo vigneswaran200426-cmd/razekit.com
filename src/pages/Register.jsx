@@ -13,6 +13,19 @@ import { toast } from "@/components/ui/use-toast";
 import { checkUsernameAvailable, saveUsername } from "@/lib/username-utils";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
+const safeAuthError = (err, fallback) => {
+  const raw = String(err?.message || '').trim();
+  const msg = raw.toLowerCase();
+  if (!raw) return fallback;
+  if (msg.includes('resend') || msg.includes('api key') || msg.includes('secret') || msg.includes('environment variable') || msg.includes('server configuration')) {
+    return 'Email verification is temporarily unavailable. Please try again shortly.';
+  }
+  if (msg.includes('timeout') || msg.includes('network') || msg.includes('fetch')) {
+    return 'We could not reach the verification service. Check your connection and try again.';
+  }
+  return raw.length > 180 ? fallback : raw;
+};
+
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +38,6 @@ export default function Register() {
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
 
-  // AI-client OAuth grants resume via ?returnTo=; normal signups land on /after-login.
   const resumeTo = () =>
     new URLSearchParams(window.location.search).get("returnTo") ? safeReturnTo() : "/after-login";
 
@@ -46,7 +58,7 @@ export default function Register() {
       setError(
         msg.includes("exist") || msg.includes("already") || msg.includes("registered") || msg.includes("in use")
           ? "An account already exists with this email."
-          : err.message || "Registration failed"
+          : safeAuthError(err, "Registration failed. Please try again.")
       );
     } finally {
       setLoading(false);
@@ -68,7 +80,7 @@ export default function Register() {
       }
       window.location.href = resumeTo();
     } catch (err) {
-      setError(err.message || "Invalid verification code");
+      setError(safeAuthError(err, "Invalid or expired verification code."));
     } finally {
       setLoading(false);
     }
@@ -80,7 +92,7 @@ export default function Register() {
       await base44.auth.resendOtp(email);
       toast({ title: "Code sent", description: "Check your email for the new code." });
     } catch (err) {
-      setError(err.message || "Failed to resend code");
+      setError(safeAuthError(err, "We could not resend the code. Please try again shortly."));
     }
   };
 
@@ -91,7 +103,7 @@ export default function Register() {
   if (showOtp) {
     return (
       <AuthLayout icon={Mail} title="Verify your email" subtitle={`We sent a code to ${email}`}>
-        {error && <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+        {error && <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
         <div className="flex justify-center mb-6">
           <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode} autoFocus autoComplete="one-time-code">
             <InputOTPGroup>
@@ -105,7 +117,7 @@ export default function Register() {
         </Button>
         <p className="text-center text-sm text-muted-foreground mt-4">
           Didn't receive the code?{" "}
-          <button onClick={handleResend} className="text-primary font-medium hover:underline">Resend</button>
+          <button type="button" onClick={handleResend} className="text-primary font-medium hover:underline">Resend</button>
         </p>
       </AuthLayout>
     );
@@ -115,7 +127,7 @@ export default function Register() {
     <AuthLayout
       icon={UserPlus}
       title="Create your account"
-      subtitle="Sign up to get started"
+      subtitle="Join RazeKit as a creator or client"
       footer={<>Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Log in</Link></>}
     >
       <Button variant="outline" className="w-full h-12 text-sm font-medium mb-6" onClick={handleGoogle}>
@@ -125,13 +137,13 @@ export default function Register() {
         <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
         <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-3 text-muted-foreground">or</span></div>
       </div>
-      {error && <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+      {error && <div role="alert" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Display Name</Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input id="name" type="text" autoComplete="name" placeholder="Vigneswaran" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="pl-10 h-12" required />
+            <Input id="name" type="text" autoComplete="name" placeholder="Your name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="pl-10 h-12" required />
           </div>
         </div>
         <div className="space-y-2">

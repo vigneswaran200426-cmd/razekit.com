@@ -1,7 +1,7 @@
 import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Compass, Trophy, Wallet as WalletIcon, Bell, HelpCircle, Search, Menu, X,
-  User as UserIcon, Settings as SettingsIcon, Globe, LogOut, LogIn, UserPlus,
+  User as UserIcon, Settings as SettingsIcon, Globe, LogOut,
   Shield, Users as UsersIcon, Image as ImageIcon, CreditCard, LayoutDashboard,
   FolderKanban, Share2,
 } from 'lucide-react';
@@ -18,9 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-// ── Role-aware PRIMARY navigation — core destinations only (top bar) ─────────
-// Discovery/work/winners are the product. Admin tools, wallet, settings and
-// help live in the account menu / dashboard — NOT the primary nav.
 const NAV = {
   creator: [
     { to: '/creator/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -43,7 +40,6 @@ const NAV = {
   ],
 };
 
-// Quick links surfaced in the account menu (kept out of primary nav).
 const QUICK_LINKS = {
   creator: [
     { to: '/my-contests', label: 'My Work', icon: FolderKanban },
@@ -83,35 +79,34 @@ export default function Layout() {
       .catch(() => {});
   }, [user?.id]);
 
-  // Complete onboarding before entering the app.
   useEffect(() => {
     if (user && !user.onboarding_completed && location.pathname !== '/onboarding') navigate('/onboarding');
   }, [user, location.pathname, navigate]);
 
-  // Close the mobile menu whenever the route changes.
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
-  // ⌘K / Ctrl+K → global search.
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); navigate('/search'); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        navigate('/search');
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [navigate]);
 
-  // AUTH_LOADING → neutral header skeleton (never a wrong-role shell).
   if (isLoading || authState === 'loading') {
     return (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-40 h-16 border-b border-border/60 bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto max-w-[1400px] h-full px-4 sm:px-6 flex items-center justify-between">
-            <div className="w-28 h-7 rounded-md bg-secondary animate-pulse" />
-            <div className="w-40 h-8 rounded-md bg-secondary/70 animate-pulse" />
+        <header className="sticky top-0 z-40 h-16 border-b border-border/60 bg-white/85 backdrop-blur-xl">
+          <div className="mx-auto max-w-[1440px] h-full px-4 sm:px-6 flex items-center justify-between">
+            <div className="w-32 h-7 rounded-lg bg-secondary animate-pulse" />
+            <div className="w-40 h-8 rounded-lg bg-secondary/70 animate-pulse" />
           </div>
         </header>
-        <main className="mx-auto max-w-[1400px] px-4 sm:px-6 py-8">
-          <div className="h-8 w-56 rounded-lg bg-secondary animate-pulse mb-5" />
+        <main className="mx-auto max-w-[1440px] px-4 sm:px-6 py-8">
+          <div className="h-7 w-56 rounded-lg bg-secondary animate-pulse mb-5" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[0, 1, 2].map((i) => <div key={i} className="h-28 rounded-xl bg-secondary/60 animate-pulse" />)}
           </div>
@@ -123,24 +118,20 @@ export default function Layout() {
   const isVisitor = authState === 'visitor';
   const navKey = isVisitor ? 'visitor' : (role === 'admin' || (user?.role === 'admin' && !user?.user_role) ? 'admin' : (role || 'visitor'));
   const navItems = NAV[navKey] || NAV.visitor;
+  const mobileNavItems = (NAV[navKey] || NAV.visitor).slice(0, 3);
   const isActive = (to) => location.pathname === to || location.pathname.startsWith(to + '/');
   const initials = (user?.full_name || user?.email || '?').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-
-      {/* ─────────────────────────── TOP NAVIGATION ─────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto max-w-[1400px] h-16 px-4 sm:px-6 flex items-center gap-3">
-
-          {/* Brand — intentional, premium presence (logo unchanged) */}
           <Link to="/" aria-label="RazeKit home" className="flex items-center gap-2.5 shrink-0 press">
             <RazekitIcon size={36} />
             <span className="hidden sm:block"><RazekitWordmark height={25} /></span>
           </Link>
           <span className="hidden md:block h-7 w-px bg-border/70 mx-4" aria-hidden="true" />
 
-          {/* Primary nav (desktop) */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
             {navItems.map((item) => (
               <NavLink key={item.to} to={item.to} className={() => navClass(isActive(item.to))}>
@@ -152,9 +143,7 @@ export default function Layout() {
             ))}
           </nav>
 
-          {/* Right controls */}
           <div className="ml-auto flex items-center gap-1.5">
-            {/* Search */}
             <button
               onClick={() => navigate('/search')}
               aria-label="Search"
@@ -179,7 +168,6 @@ export default function Layout() {
               <HelpCircle className="w-5 h-5" />
             </Link>
 
-            {/* Account / auth */}
             {isVisitor ? (
               <div className="hidden md:flex items-center gap-2 ml-1">
                 <Link to="/login" className="px-3.5 py-2 text-sm font-medium text-foreground rounded-lg hover:bg-secondary/60 transition-colors">Sign in</Link>
@@ -222,7 +210,6 @@ export default function Layout() {
               </DropdownMenu>
             )}
 
-            {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen((v) => !v)}
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
@@ -234,13 +221,12 @@ export default function Layout() {
           </div>
         </div>
 
-        {/* Mobile dropdown panel (not a permanent sidebar) */}
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden border-t border-border/60 bg-white/95 backdrop-blur-xl"
+            className="md:hidden border-t border-border/60 bg-white/96 backdrop-blur-xl"
           >
             <nav className="mx-auto max-w-[1400px] px-4 py-3 flex flex-col gap-1" aria-label="Mobile">
               {navItems.map((item) => (
@@ -266,7 +252,6 @@ export default function Layout() {
         )}
       </header>
 
-      {/* ─────────────────────────── CONTENT CANVAS ─────────────────────────── */}
       <main className="flex-1">
         <motion.div
           key={location.pathname}
@@ -277,6 +262,15 @@ export default function Layout() {
           <Outlet />
         </motion.div>
       </main>
+
+      <nav className="rz-bottom-nav" aria-label="Mobile primary">
+        {mobileNavItems.map((item) => (
+          <Link key={item.to} to={item.to} aria-current={isActive(item.to) ? 'page' : undefined}>
+            <item.icon className="w-[18px] h-[18px]" />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
 
       <HelpButton />
     </div>
