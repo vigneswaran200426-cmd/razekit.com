@@ -5,7 +5,7 @@ import { config } from '../config.js';
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 function stateSecret() {
-  return config.google.clientSecret || config.sessionSecret;
+  return config.jwtSecret;
 }
 
 function signState(returnTo: string, issuedAt: number) {
