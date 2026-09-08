@@ -9,7 +9,7 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,14 +20,30 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
 
       - name: Lint (autofix then verify)
         run: npm run lint:fix && npm run lint
 
-      - name: Typecheck
+      - name: Frontend typecheck
         run: npm run typecheck
 
-      - name: Build
+      - name: Frontend build
         run: npm run build
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Backend typecheck
+        run: npm run typecheck
+        working-directory: server
+
+      - name: Backend tests
+        run: npm test
+        working-directory: server
+
+      - name: Backend build
+        run: npm run build
+        working-directory: server
