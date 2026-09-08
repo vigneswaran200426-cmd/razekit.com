@@ -7,11 +7,12 @@ function FullSpinner() {
 }
 
 export function ProtectedRoute({ children, roles }) {
-  const { status, role, loading } = useAuth();
+  const { status, role, isAdmin, loading } = useAuth();
   const location = useLocation();
   if (loading) return <FullSpinner />;
   if (status !== 'authenticated') return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  if (roles && !roles.includes(role) && role !== 'admin') return <Navigate to="/dashboard" replace />;
+  // Admins can access every role's surface (they switch modes in the header).
+  if (roles && !roles.includes(role) && !isAdmin) return <Navigate to="/dashboard" replace />;
   return children;
 }
 

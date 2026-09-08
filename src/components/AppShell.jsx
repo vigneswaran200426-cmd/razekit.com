@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Bell, HelpCircle, Menu, X, LayoutDashboard, Compass, Trophy, LineChart,
-  User, Settings, Wallet, FolderKanban, LogOut, Shield, ChevronDown,
+  User, Settings, Wallet, FolderKanban, LogOut, Shield, ChevronDown, Video, Briefcase, Check,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { entities } from '@/lib/api';
@@ -47,14 +47,26 @@ function useClickOutside(ref, onOut) {
   }, [ref, onOut]);
 }
 
+const MODES = [
+  { key: 'visitor', label: 'Admin', icon: Shield },
+  { key: 'creator', label: 'Creator', icon: Video },
+  { key: 'client', label: 'Brand', icon: Briefcase },
+];
+
 function AccountMenu() {
-  const { user, role, signOut } = useAuth();
+  const { user, role, isAdmin, signOut, switchMode } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const ref = useRef(null);
   useClickOutside(ref, () => setOpen(false));
   const quick = QUICK[role] || [];
   const go = (to) => { setOpen(false); navigate(to); };
+  const doSwitch = async (mode) => {
+    if (mode === role || (mode === 'visitor' && role === 'admin')) return;
+    setSwitching(true);
+    try { await switchMode(mode); setOpen(false); navigate('/dashboard'); } finally { setSwitching(false); }
+  };
 
   return (
     <div className="relative" ref={ref}>
@@ -71,12 +83,29 @@ function AccountMenu() {
               <p className="text-sm font-semibold text-ink truncate">{user?.full_name || 'Your account'}</p>
               <p className="text-xs text-muted truncate">{user?.email}</p>
             </div>
+            {isAdmin && (
+              <div className="px-2 pb-2">
+                <p className="px-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">View as</p>
+                <div className="grid grid-cols-3 gap-1">
+                  {MODES.map((m) => {
+                    const activeMode = (m.key === 'visitor' && role === 'admin') || m.key === role;
+                    return (
+                      <button key={m.key} onClick={() => doSwitch(m.key)} disabled={switching}
+                        className={cn('flex flex-col items-center gap-1 rounded-md border py-2 text-[11px] font-semibold transition-colors',
+                          activeMode ? 'border-primary bg-primary/5 text-primary' : 'border-line text-muted hover:border-line-strong hover:text-ink')}>
+                        <m.icon className="w-4 h-4" />{m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="h-px bg-line my-1" />
             {quick.map((q) => <MenuItem key={q.to} icon={q.icon} onClick={() => go(q.to)}>{q.label}</MenuItem>)}
             {quick.length > 0 && <div className="h-px bg-line my-1" />}
             <MenuItem icon={User} onClick={() => go('/profile')}>Profile</MenuItem>
             <MenuItem icon={Settings} onClick={() => go('/settings')}>Settings</MenuItem>
-            {role === 'admin' && <MenuItem icon={Shield} onClick={() => go('/admin')}>Admin</MenuItem>}
+            {isAdmin && <MenuItem icon={Shield} onClick={() => go('/admin')}>Admin</MenuItem>}
             <div className="h-px bg-line my-1" />
             <MenuItem icon={LogOut} danger onClick={() => { setOpen(false); signOut().then(() => navigate('/')); }}>Sign out</MenuItem>
           </motion.div>

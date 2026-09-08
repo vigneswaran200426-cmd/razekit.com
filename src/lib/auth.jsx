@@ -18,12 +18,23 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => { await authApi.logout(); setUser(null); }, []);
 
-  // Product role: admins are admin; otherwise the chosen product role.
-  const role = user ? (user.role === 'admin' && !user.user_role ? 'admin' : (user.user_role || 'visitor')) : 'visitor';
+  // Admins can switch which product surface they use. This sets the real
+  // user_role on the backend (so brand/creator permissions actually apply),
+  // while role === 'admin' keeps admin privileges.
+  const switchMode = useCallback(async (mode) => {
+    await authApi.updateMe({ user_role: mode, onboarding_completed: true });
+    await load();
+  }, [load]);
+
+  const isAdmin = user?.role === 'admin';
+  // Effective product role for nav/dashboard/guards.
+  const role = user
+    ? (['creator', 'client'].includes(user.user_role) ? user.user_role : (isAdmin ? 'admin' : 'visitor'))
+    : 'visitor';
   const status = loading ? 'loading' : user ? 'authenticated' : 'visitor';
 
   return (
-    <AuthCtx.Provider value={{ user, setUser, role, status, loading, refresh: load, signOut }}>
+    <AuthCtx.Provider value={{ user, setUser, role, isAdmin, status, loading, refresh: load, signOut, switchMode }}>
       {children}
     </AuthCtx.Provider>
   );
