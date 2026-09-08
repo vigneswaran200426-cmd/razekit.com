@@ -28,15 +28,25 @@ authRouter.post('/register', async (req, res) => {
   if (existing) return res.status(409).json({ error: 'An account already exists with this email.' });
   const passwordHash = await hashPassword(password);
 
-  if (config.email.driver === 'console') {
+  const createSession = async () => {
     const user = await prisma.appUser.create({
       data: { email, passwordHash, fullName: req.body?.full_name || null, emailVerified: true, userRole: 'visitor', role: 'user' },
     });
     return res.json({ access_token: signToken(user.id), user: publicUser(user), requiresOtp: false });
-  }
+  };
 
-  await issueOtp(email, 'register', { passwordHash, full_name: req.body?.full_name || '' });
-  res.json({ ok: true, requiresOtp: true });
+  if (config.email.driver === 'console') return createSession();
+
+  // Try emailed OTP verification; if delivery fails (e.g. provider not fully
+  // configured / unverified domain), fall back to direct signup so a user is
+  // never blocked from creating an account.
+  try {
+    await issueOtp(email, 'register', { passwordHash, full_name: req.body?.full_name || '' });
+    return res.json({ ok: true, requiresOtp: true });
+  } catch (e) {
+    console.warn('[register] OTP email failed, creating account directly:', (e as Error).message);
+    return createSession();
+  }
 });
 
 authRouter.post('/verify-otp', async (req, res) => {

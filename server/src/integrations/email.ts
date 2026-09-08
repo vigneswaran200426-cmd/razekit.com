@@ -25,8 +25,12 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; i
     if (!config.email.resendApiKey) throw new Error('RESEND_API_KEY not set');
     const { Resend } = await import('resend');
     const resend = new Resend(config.email.resendApiKey);
-    const res = await resend.emails.send({ from, to, subject: input.subject, html, text });
-    return { ok: true, id: (res as any)?.data?.id };
+    const res: any = await resend.emails.send({ from, to, subject: input.subject, html, text });
+    // Resend returns { data, error } — surface delivery failures instead of
+    // silently "succeeding" (e.g. test mode rejects non-owner recipients until
+    // a sending domain is verified).
+    if (res?.error) throw new Error(res.error.message || res.error.name || 'Email delivery failed');
+    return { ok: true, id: res?.data?.id };
   }
 
   if (config.email.driver === 'smtp') {
