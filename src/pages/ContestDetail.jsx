@@ -18,8 +18,8 @@ import { useToast } from '@/components/ui/use-toast';
 
 const parseList = (json) => {
   try {
-    const v = JSON.parse(json);
-    return Array.isArray(v) ? v : [];
+    const value = JSON.parse(json);
+    return Array.isArray(value) ? value : [];
   } catch {
     return [];
   }
@@ -49,21 +49,31 @@ export default function ContestDetail() {
         setUser(userData);
         const subs = await base44.entities.Submission.filter({ contest_id: id }).catch(() => []);
         setSubmissions(subs);
-      } catch (e) {} finally { setLoading(false); }
+      } catch {
+        setContest(null);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [id]);
 
   const isClient = user?.user_role === 'client';
-  const isCreator = !isClient;
+  const isCreator = !!user && !isClient;
   const isOwner = contest?.created_by_id === user?.id;
+  const mySubmission = submissions.find((s) => s.created_by_id === user?.id || s.creator_id === user?.id);
 
   const handlePause = async () => {
     setManaging(true);
     try {
       const updated = await base44.entities.Contest.update(id, { status: 'paused' });
       setContest(updated);
-    } catch (e) {} finally { setManaging(false); }
+      toast({ title: 'Contest paused' });
+    } catch (e) {
+      toast({ title: 'Could not pause contest', description: e?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setManaging(false);
+    }
   };
 
   const handleResume = async () => {
@@ -71,238 +81,221 @@ export default function ContestDetail() {
     try {
       const updated = await base44.entities.Contest.update(id, { status: 'open' });
       setContest(updated);
-    } catch (e) {} finally { setManaging(false); }
+      toast({ title: 'Contest resumed' });
+    } catch (e) {
+      toast({ title: 'Could not resume contest', description: e?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setManaging(false);
+    }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Delete contest? This can\'t be undone.')) return;
+    if (!window.confirm('Delete this contest? This cannot be undone.')) return;
     setManaging(true);
     try {
       await base44.entities.Contest.delete(id);
       navigate('/explore');
-    } catch (e) {} finally { setManaging(false); }
+    } catch (e) {
+      toast({ title: 'Could not delete contest', description: e?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setManaging(false);
+    }
   };
 
   const handleJoin = async () => {
-    if (isClient) return;
+    if (!user) {
+      navigate(`/login?returnTo=${encodeURIComponent(`/contest/${id}`)}`);
+      return;
+    }
+    if (isClient || isOwner || !['open'].includes(contest?.status) || mySubmission) return;
     setJoining(true);
     try {
-      await base44.entities.Contest.update(id, { status: 'joined' });
-      await base44.entities.Submission.create({ contest_id: id, client_id: contest.created_by_id, status: 'working' });
+      // Joining creates the creator's working entry. Contest status is global and must remain open.
+      const submission = await base44.entities.Submission.create({
+        contest_id: id,
+        client_id: contest.created_by_id,
+        created_by_id: user.id,
+        creator_id: user.id,
+        status: 'working',
+      });
       await base44.entities.Notification.create({
         type: 'contest_joined',
         title: 'Contest joined',
         description: contest.title,
         contest_id: id,
-      });
+        recipient_user_id: user.id,
+      }).catch(() => {});
+      setSubmissions((current) => [...current, submission]);
       toast({ title: 'Joined contest', description: contest.title });
       navigate(`/contest/${id}/work`);
-    } catch (e) {} finally { setJoining(false); }
+    } catch (e) {
+      toast({ title: 'Could not join contest', description: e?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setJoining(false);
+    }
   };
 
   const handleWithdraw = async () => {
-    if (!confirm('Withdraw from this contest?')) return;
+    if (!mySubmission) return;
+    if (!window.confirm('Withdraw your entry from this contest? Your draft entry will be removed.')) return;
     setManaging(true);
     try {
-      await base44.entities.Contest.update(id, { status: 'open' });
-      const mySub = submissions.find((s) => s.created_by_id === user?.id);
-      if (mySub) await base44.entities.Submission.delete(mySub.id).catch(() => {});
-      toast({ title: 'Withdrew from contest' });
-      setContest({ ...contest, status: 'open' });
-    } catch (e) {} finally { setManaging(false); }
+      await base44.entities.Submission.delete(mySubmission.id);
+      setSubmissions((current) => current.filter((s) => s.id !== mySubmission.id));
+      toast({ title: 'Entry withdrawn' });
+      setContest({ ...contest });
+    } catch (e) {
+      toast({ title: 'Could not withdraw entry', description: e?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setManaging(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-secondary border-t-primary rounded-full animate-spin" />
+      <div className="page-shell grid place-items-center min-h-[55vh]">
+        <div className="w-8 h-8 border-4 border-secondary border-t-primary rounded-full animate-spin" role="status" aria-label="Loading contest" />
       </div>
     );
   }
+
   if (!contest) {
-    return <div className="p-8 text-center text-muted-foreground">Contest not found</div>;
+    return (
+      <div className="page-shell">
+        <div className="rz-empty">
+          <div>
+            <h1 className="font-heading text-xl font-bold">Contest not found</h1>
+            <p className="mt-1 text-sm text-muted-foreground">The contest may have been removed or you may not have access to it.</p>
+            <Button asChild className="mt-4"><Link to="/explore">Back to Explore</Link></Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const deliverables = parseList(contest.deliverables);
 
-  // The single state-driven action stack — one source, rendered in the summary
-  // panel on both desktop (sticky aside) and mobile (inline flow).
   const renderActions = () => (
-    <>
+    <div className="space-y-2.5">
       {contest.status === 'paused' && isCreator && (
-        <AlertState type="warning" shape="pill" title="This contest is paused" description="The brand has temporarily paused this contest." />
+        <AlertState type="warning" shape="pill" title="This contest is paused" description="The brand has temporarily paused participation." />
       )}
-      {contest.status === 'open' && isCreator && (
-        <Button onClick={handleJoin} disabled={joining} className="w-full h-12 text-base font-semibold" size="lg">
+      {contest.status === 'open' && isCreator && !mySubmission && (
+        <Button onClick={handleJoin} disabled={joining} className="rz-primary-action w-full h-12 text-base font-semibold" size="lg">
           {joining ? 'Joining…' : 'Join contest'}
         </Button>
       )}
-      {isClient && !isOwner && ['open', 'joined', 'working'].includes(contest.status) && (
-        <AlertState type="info" shape="orbs" title="Browsing as brand" description="Only creators can participate in this contest." action={{ label: 'Explore contests', to: '/explore' }} />
+      {!user && contest.status === 'open' && (
+        <Button onClick={handleJoin} className="rz-primary-action w-full h-12 text-base font-semibold" size="lg">
+          Sign in to join
+        </Button>
       )}
-      {(contest.status === 'joined' || contest.status === 'working') && isCreator && (
+      {isCreator && mySubmission && ['working', 'joined'].includes(mySubmission.status || contest.status) && (
         <>
-          <Button asChild className="w-full h-12 text-base font-semibold" size="lg">
+          <Button asChild className="rz-primary-action w-full h-12 text-base font-semibold" size="lg">
             <Link to={`/contest/${id}/work`}><Play className="w-4 h-4 mr-2" /> Continue working</Link>
           </Button>
-          <Button onClick={handleWithdraw} variant="outline" className="w-full text-destructive hover:text-destructive" disabled={managing}>
-            Withdraw
-          </Button>
+          <Button onClick={handleWithdraw} variant="outline" className="rz-danger-action w-full" disabled={managing}>Withdraw entry</Button>
         </>
       )}
       {contest.status === 'submitted' && isCreator && (
         <AlertState type="processing" shape="ring" title="Your entry is in review" action={{ label: 'View your entry', to: `/contest/${id}/work` }} />
       )}
       {(contest.status === 'submitted' || contest.status === 'reviewing') && isClient && (
-        <Button asChild className="w-full h-12 text-base font-semibold" size="lg">
+        <Button asChild className="rz-primary-action w-full h-12 text-base font-semibold" size="lg">
           <Link to={`/contest/${id}/review`}><Play className="w-4 h-4 mr-2" /> Review submissions</Link>
         </Button>
       )}
       {(contest.status === 'winner_selected' || contest.status === 'completed') && (
-        <Button asChild className="w-full h-12 text-base font-semibold" size="lg">
+        <Button asChild className="rz-primary-action w-full h-12 text-base font-semibold" size="lg">
           <Link to={`/contest/${id}/results`}><Trophy className="w-4 h-4 mr-2" /> View results</Link>
         </Button>
       )}
       {(contest.status === 'winner_selected' || contest.status === 'completed') && (isOwner || user?.id === contest.winner_user_id) && (
-        <Button asChild variant="outline" className="w-full">
+        <Button asChild variant="outline" className="rz-secondary-action w-full">
           <Link to={`/contest/${id}/handover`}><ArrowLeftRight className="w-4 h-4 mr-2" /> Handover</Link>
         </Button>
       )}
-      {contest.status === 'completed' && (
-        <AlertState type="completed" shape="ring" title="Contest completed" description="Thanks for participating." />
-      )}
-      {contest.status === 'draft' && isClient && (
-        <Button asChild className="w-full h-12 text-base font-semibold" size="lg">
+      {contest.status === 'completed' && <AlertState type="completed" shape="ring" title="Contest completed" description="This contest has completed its workflow." />}
+      {contest.status === 'draft' && isOwner && isClient && (
+        <Button asChild className="rz-primary-action w-full h-12 text-base font-semibold" size="lg">
           <Link to="/create-contest"><Sparkles className="w-4 h-4 mr-2" /> Edit contest</Link>
         </Button>
       )}
       {isClient && isOwner && contest.status === 'open' && (
-        <Button onClick={() => setShowInvite(true)} variant="outline" className="w-full">
-          <Send className="w-4 h-4 mr-2" /> Invite creator
-        </Button>
+        <Button onClick={() => setShowInvite(true)} variant="outline" className="rz-secondary-action w-full"><Send className="w-4 h-4 mr-2" /> Invite creator</Button>
       )}
-      {!isOwner && (
-        <Button onClick={() => setShowReport(true)} variant="ghost" className="w-full text-muted-foreground">
-          <Flag className="w-4 h-4 mr-2" /> Report
-        </Button>
-      )}
-    </>
+      {!isOwner && user && <Button onClick={() => setShowReport(true)} variant="ghost" className="w-full text-muted-foreground"><Flag className="w-4 h-4 mr-2" /> Report</Button>}
+    </div>
   );
 
-  // Mobile sticky bar — the one obvious next action, kept in thumb reach above
-  // the bottom navigation.
   const primaryCta = (() => {
-    if (contest.status === 'open' && isCreator) return { label: 'Join contest', onClick: handleJoin, disabled: joining };
-    if (['joined', 'working'].includes(contest.status) && isCreator) return { label: 'Continue', to: `/contest/${id}/work` };
-    if (['submitted', 'reviewing'].includes(contest.status) && isClient) return { label: 'Review', to: `/contest/${id}/review` };
-    if (['winner_selected', 'completed'].includes(contest.status)) return { label: 'Results', to: `/contest/${id}/results` };
+    if (!user && contest.status === 'open') return { label: 'Sign in to join', to: `/login?returnTo=${encodeURIComponent(`/contest/${id}`)}` };
+    if (contest.status === 'open' && isCreator && !mySubmission) return { label: 'Join contest', onClick: handleJoin, disabled: joining };
+    if (mySubmission && ['working', 'joined'].includes(mySubmission.status || contest.status) && isCreator) return { label: 'Continue working', to: `/contest/${id}/work` };
+    if (['submitted', 'reviewing'].includes(contest.status) && isClient) return { label: 'Review submissions', to: `/contest/${id}/review` };
+    if (['winner_selected', 'completed'].includes(contest.status)) return { label: 'View results', to: `/contest/${id}/results` };
     return null;
   })();
 
-  const summaryPanel = (
-    <ContestSummaryPanel contest={contest} entriesCount={submissions.length}>
-      {renderActions()}
-    </ContestSummaryPanel>
-  );
-
-  const sectionTitle = 'text-xs font-semibold uppercase tracking-widest text-muted-foreground';
+  const summaryPanel = <ContestSummaryPanel contest={contest} entriesCount={submissions.length}>{renderActions()}</ContestSummaryPanel>;
+  const sectionTitle = 'text-xs font-semibold uppercase tracking-[.12em] text-muted-foreground';
 
   return (
-    <div className="page-shell max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto pb-8">
-      <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 press">
-        <ArrowLeft className="w-4 h-4" /> Explore
-      </Link>
+    <div className="page-shell pb-8">
+      <Link to="/explore" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 press"><ArrowLeft className="w-4 h-4" /> Explore</Link>
 
-      {/* Hero — media-first cover with category + status */}
-      <div className="glass-card rounded-3xl overflow-hidden mb-5 shadow-glass-lg animate-fade-in">
-        <div className="relative h-44 md:h-56 overflow-hidden">
-          <VisualAssetImage
-            entityType="CONTEST"
-            entityId={contest.id}
-            assetType="CONTEST_HERO"
-            ensure
-            fallbackAssetType="CONTEST_THUMBNAIL"
-            alt={`${contest.title} — contest artwork`}
-          />
+      <div className="surface-2 overflow-hidden mb-5 animate-fade-in">
+        <div className="rz-media-cover relative min-h-[220px] md:min-h-[320px]">
+          <VisualAssetImage entityType="CONTEST" entityId={contest.id} assetType="CONTEST_HERO" ensure fallbackAssetType="CONTEST_THUMBNAIL" alt={`${contest.title} — contest artwork`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4">
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-card/90 text-muted-foreground font-medium">{contest.category}</span>
-            <span><ContestStatusBadge status={contest.status} /></span>
+            <span className="text-[11px] px-2.5 py-1 rounded-full bg-white/90 text-slate-700 font-semibold">{contest.category || 'Contest'}</span>
+            <ContestStatusBadge status={contest.status} />
           </div>
-        </div>
-        <div className="px-5 py-5">
-          <h1 className="font-heading text-xl md:text-2xl font-bold tracking-tight">{contest.title}</h1>
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-7 text-white">
+            <div className="max-w-4xl">
+              <p className="text-[11px] uppercase tracking-[.16em] font-semibold text-white/75 mb-1">Prize-funded creative contest</p>
+              <h1 className="font-heading text-2xl md:text-4xl font-bold tracking-tight leading-tight">{contest.title}</h1>
+              {contest.short_description && <p className="mt-2 max-w-2xl text-sm md:text-base text-white/85">{contest.short_description}</p>}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Desktop: two-column — brief as the star, sticky prize/action panel */}
       <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
         <div className="space-y-4 min-w-0">
-          {/* Mobile summary + actions inline; desktop hides this (aside below) */}
           <div className="lg:hidden">{summaryPanel}</div>
 
-          {contest.description && (
-            <section className="surface rounded-2xl p-5 elev-1">
-              <h2 className={`${sectionTitle} mb-2.5`}>Brief</h2>
-              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{contest.description}</p>
-            </section>
-          )}
+          {contest.description && <section className="surface p-5"><h2 className={`${sectionTitle} mb-2.5`}>Brief</h2><p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">{contest.description}</p></section>}
 
           {deliverables.length > 0 && (
-            <section className="surface rounded-2xl p-5 elev-1">
+            <section className="surface p-5">
               <h2 className={`${sectionTitle} mb-3`}>Deliverables</h2>
               <div className="grid sm:grid-cols-2 gap-2.5">
-                {deliverables.map((d, i) => (
-                  <div key={i} className="rounded-xl bg-secondary/60 px-3.5 py-3">
-                    <p className="text-sm font-medium">{d.name || d.content_type || 'Deliverable'}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {[d.platform, d.duration, d.ratio, d.resolution, d.format].filter(Boolean).join(' · ')}
-                    </p>
-                  </div>
-                ))}
+                {deliverables.map((d, i) => <div key={i} className="rounded-lg bg-secondary/55 px-3.5 py-3 border border-border/50"><p className="text-sm font-semibold">{d.name || d.content_type || 'Deliverable'}</p><p className="text-xs text-muted-foreground mt-0.5">{[d.platform, d.duration, d.ratio, d.resolution, d.format].filter(Boolean).join(' · ')}</p></div>)}
               </div>
             </section>
           )}
 
-          {/* Footage / project files */}
           {contest.manual_approval ? (
-            <>
-              <SecureFootageSection contest={contest} user={user} isOwner={contest.created_by_id === user?.id} />
-              {contest.created_by_id === user?.id && <FootageApprovalPanel contest={contest} user={user} />}
-            </>
-          ) : (
-            <FootageAccessSection contest={contest} user={user} isOwner={contest.created_by_id === user?.id} />
-          )}
+            <><SecureFootageSection contest={contest} user={user} isOwner={isOwner} />{isOwner && <FootageApprovalPanel contest={contest} user={user} />}</>
+          ) : <FootageAccessSection contest={contest} user={user} isOwner={isOwner} />}
 
-          {contest.contest_rules && (
-            <section className="surface rounded-2xl p-5 elev-1">
-              <h2 className={`${sectionTitle} mb-2.5`}>Rules</h2>
-              <p className="text-sm leading-relaxed whitespace-pre-line">{contest.contest_rules}</p>
-            </section>
-          )}
-
-          {contest.reference_links && (
-            <section className="surface rounded-2xl p-5 elev-1">
-              <h2 className={`${sectionTitle} mb-2.5`}>References</h2>
-              <p className="text-sm break-all">{contest.reference_links}</p>
-            </section>
-          )}
+          {contest.contest_rules && <section className="surface p-5"><h2 className={`${sectionTitle} mb-2.5`}>Rules</h2><p className="text-sm leading-relaxed whitespace-pre-line">{contest.contest_rules}</p></section>}
+          {contest.reference_links && <section className="surface p-5"><h2 className={`${sectionTitle} mb-2.5`}>References</h2><p className="text-sm break-all whitespace-pre-line">{contest.reference_links}</p></section>}
 
           {isOwner && <ContestArtworkControls entityType="CONTEST" entityId={contest.id} />}
           {isOwner && <ContestFinancialsPanel contest={contest} />}
 
           {isClient && ['submitted', 'reviewing', 'winner_selected', 'completed'].includes(contest.status) && submissions.length > 0 && (
-            <section className="surface rounded-2xl p-5 elev-1">
+            <section className="surface p-5">
               <h2 className={`${sectionTitle} mb-3`}>Submissions <span className="nums">({submissions.length})</span></h2>
-              <div className="space-y-2">
-                {submissions.slice(0, 6).map((s) => (
-                  <Link key={s.id} to={`/contest/${id}/review`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                    <div className="w-14 h-10 rounded-md bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                      {s.preview_asset || s.video_url ? <Play className="w-4 h-4 text-primary" /> : <span className="text-[10px] text-muted-foreground">No prev</span>}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">Creator #{s.created_by_id?.slice(-4)?.toUpperCase()}</p>
-                      <p className="text-xs text-muted-foreground">{s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('en-IN') : 'Pending'}</p>
-                    </div>
+              <div className="space-y-1">
+                {submissions.slice(0, 8).map((s) => (
+                  <Link key={s.id} to={`/contest/${id}/review`} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/50 transition-colors">
+                    <div className="w-14 h-10 rounded-md bg-secondary flex items-center justify-center overflow-hidden shrink-0">{s.preview_asset || s.video_url ? <Play className="w-4 h-4 text-primary" /> : <span className="text-[10px] text-muted-foreground">No preview</span>}</div>
+                    <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">Creator #{s.created_by_id?.slice(-4)?.toUpperCase() || '—'}</p><p className="text-xs text-muted-foreground">{s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('en-IN') : 'Pending'}</p></div>
                     <span className="text-[10px] px-2 py-1 rounded-full bg-secondary text-muted-foreground capitalize">{s.status}</span>
                   </Link>
                 ))}
@@ -310,55 +303,29 @@ export default function ContestDetail() {
             </section>
           )}
 
-          {isClient && isOwner && !['winner_selected', 'completed'].includes(contest.status) && (
-            <section className="surface rounded-2xl p-5 elev-1 space-y-3">
-              <h2 className={sectionTitle}>Manage</h2>
+          {isOwner && isClient && !['winner_selected', 'completed'].includes(contest.status) && (
+            <section className="surface p-5 space-y-3">
+              <h2 className={sectionTitle}>Manage contest</h2>
               <div className="grid grid-cols-2 gap-2">
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/create-contest"><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Edit</Link>
-                </Button>
-                {contest.status === 'paused' ? (
-                  <Button onClick={handleResume} disabled={managing} variant="outline" size="sm">
-                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Resume
-                  </Button>
-                ) : (
-                  <Button onClick={handlePause} disabled={managing || contest.status === 'draft'} variant="outline" size="sm">
-                    <Pause className="w-3.5 h-3.5 mr-1.5" /> Pause
-                  </Button>
-                )}
-                <Button onClick={handleDelete} disabled={managing} variant="outline" size="sm" className="text-destructive hover:text-destructive col-span-2">
-                  <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete contest
-                </Button>
+                <Button asChild variant="outline" size="sm" className="rz-secondary-action"><Link to="/create-contest"><Sparkles className="w-3.5 h-3.5 mr-1.5" /> Edit</Link></Button>
+                {contest.status === 'paused' ? <Button onClick={handleResume} disabled={managing} variant="outline" size="sm" className="rz-secondary-action"><RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Resume</Button> : <Button onClick={handlePause} disabled={managing || contest.status === 'draft'} variant="outline" size="sm" className="rz-secondary-action"><Pause className="w-3.5 h-3.5 mr-1.5" /> Pause</Button>}
+                <Button onClick={handleDelete} disabled={managing} variant="outline" size="sm" className="rz-danger-action col-span-2"><Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete contest</Button>
               </div>
             </section>
           )}
         </div>
 
-        {/* Desktop sticky panel — prize, deadline, entries, actions */}
-        <aside className="hidden lg:block sticky top-6">
-          {summaryPanel}
-        </aside>
+        <aside className="hidden lg:block sticky top-20">{summaryPanel}</aside>
       </div>
 
-      {/* Mobile sticky primary action — floats above the bottom nav */}
       {primaryCta && (
-        <div className="lg:hidden sticky bottom-16 z-40 -mx-1 mt-5">
-          {primaryCta.to ? (
-            <Button asChild className="w-full h-12 text-base font-semibold shadow-elev-2" size="lg">
-              <Link to={primaryCta.to}>{primaryCta.label}</Link>
-            </Button>
-          ) : (
-            <Button onClick={primaryCta.onClick} disabled={primaryCta.disabled} className="w-full h-12 text-base font-semibold shadow-elev-2" size="lg">
-              {primaryCta.disabled ? 'Joining…' : primaryCta.label}
-            </Button>
-          )}
+        <div className="lg:hidden sticky bottom-16 z-40 mt-4">
+          {primaryCta.to ? <Button asChild className="rz-primary-action w-full h-12 text-base font-semibold shadow-elev-2" size="lg"><Link to={primaryCta.to}>{primaryCta.label}</Link></Button> : <Button onClick={primaryCta.onClick} disabled={primaryCta.disabled} className="rz-primary-action w-full h-12 text-base font-semibold shadow-elev-2" size="lg">{primaryCta.disabled ? 'Joining…' : primaryCta.label}</Button>}
         </div>
       )}
 
       {showInvite && <InviteCreatorModal contest={contest} user={user} onClose={() => setShowInvite(false)} />}
-      {showReport && user && (
-        <ReportModal open={showReport} onClose={() => setShowReport(false)} targetType="context" targetId={id} reportedUserId={contest?.created_by_id} user={user} />
-      )}
+      {showReport && user && <ReportModal open={showReport} onClose={() => setShowReport(false)} targetType="context" targetId={id} reportedUserId={contest?.created_by_id} user={user} />}
     </div>
   );
 }
