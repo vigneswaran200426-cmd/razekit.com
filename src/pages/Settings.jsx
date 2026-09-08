@@ -5,15 +5,12 @@ import { useI18n } from '@/lib/i18n/I18nContext';
 import PageHeader from '@/components/ui/PageHeader';
 
 export default function Settings() {
-  // Identity and logout come from the session provider — the single source of truth.
   const { user, logout } = useAuth();
   const { t, localeMeta } = useI18n();
-  const handleLogout = () => logout();
-
   const isClient = user?.user_role === 'client';
   const languageDesc = `${localeMeta.nativeName} · ${t('settings.language.desc')}`;
 
-  const SECTIONS = [
+  const sections = [
     { group: t('settings.group.account'), items: [{ icon: User, label: t('settings.account.label'), desc: t('settings.account.desc'), to: '/settings/account' }] },
     { group: t('settings.group.preferences'), items: [
       { icon: Languages, label: t('settings.language.label'), desc: languageDesc, to: '/settings/language' },
@@ -25,41 +22,32 @@ export default function Settings() {
   ];
 
   return (
-    <div className="page-shell max-w-3xl lg:max-w-4xl mx-auto space-y-6 pb-8">
-      <PageHeader title={t('settings.title')} />
+    <div className="page-shell pb-10">
+      <div className="max-w-4xl mx-auto space-y-5">
+        <PageHeader title={t('settings.title')} />
+        <div className="surface-2 p-4 md:p-5"><p className="text-[11px] uppercase tracking-[.14em] font-semibold text-primary">Account control center</p><p className="mt-1 text-sm text-muted-foreground">Manage profile, language, notifications, privacy, payments and account access without leaving the RazeKit shell.</p></div>
 
-      {SECTIONS.map(sec => (
-        <div key={sec.group} className="space-y-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">{sec.group}</h2>
-          <div className="space-y-2">
-            {sec.items.map(item => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.label} to={item.to} className="flex items-center justify-between glass-card rounded-2xl px-4 py-3.5 hover-lift">
-                  <span className="flex items-center gap-3 min-w-0">
-                    <span className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-primary" /></span>
-                    <span className="min-w-0">
-                      <span className="text-sm font-medium block">{item.label}</span>
-                      <span className="text-xs text-muted-foreground block truncate">{item.desc}</span>
-                    </span>
-                  </span>
+        {sections.map((section) => (
+          <section key={section.group} className="space-y-2">
+            <h2 className="px-1 text-[11px] font-semibold uppercase tracking-[.14em] text-muted-foreground">{section.group}</h2>
+            <div className="surface overflow-hidden divide-y divide-border/60">
+              {section.items.map(({ icon: Icon, label, desc, to }) => (
+                <Link key={to} to={to} className="flex items-center justify-between gap-4 px-4 py-3.5 hover:bg-secondary/30 transition-colors">
+                  <span className="flex items-center gap-3 min-w-0"><span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary shrink-0"><Icon className="w-4 h-4" /></span><span className="min-w-0"><span className="block text-sm font-semibold">{label}</span><span className="block text-xs text-muted-foreground truncate">{desc}</span></span></span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                 </Link>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+              ))}
+            </div>
+          </section>
+        ))}
 
-      <div className="space-y-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">{t('settings.group.accountActions')}</h2>
-        <Link to="/settings/delete-account" className="flex items-center justify-between glass-card rounded-2xl px-4 py-3.5 hover-lift">
-          <span className="text-sm font-medium flex items-center gap-3 text-destructive"><Trash2 className="w-4 h-4" /> {t('settings.deleteAccount.label')}</span>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </Link>
-        <button onClick={handleLogout} className="flex items-center justify-between glass-card rounded-2xl px-4 py-3.5 hover-lift w-full">
-          <span className="text-sm font-medium flex items-center gap-3"><LogOut className="w-4 h-4" /> {t('settings.logout.label')}</span>
-        </button>
+        <section className="space-y-2">
+          <h2 className="px-1 text-[11px] font-semibold uppercase tracking-[.14em] text-muted-foreground">{t('settings.group.accountActions')}</h2>
+          <div className="surface overflow-hidden divide-y divide-border/60">
+            <Link to="/settings/delete-account" className="flex items-center justify-between gap-4 px-4 py-3.5 hover:bg-destructive/[0.03] transition-colors"><span className="flex items-center gap-3 text-sm font-semibold text-destructive"><Trash2 className="w-4 h-4" /> {t('settings.deleteAccount.label')}</span><ChevronRight className="w-4 h-4 text-muted-foreground" /></Link>
+            <button type="button" onClick={logout} className="w-full flex items-center gap-3 px-4 py-3.5 text-left text-sm font-semibold hover:bg-secondary/30 transition-colors"><LogOut className="w-4 h-4" /> {t('settings.logout.label')}</button>
+          </div>
+        </section>
       </div>
     </div>
   );
