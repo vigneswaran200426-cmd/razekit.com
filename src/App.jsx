@@ -11,6 +11,9 @@ import Explore from '@/pages/Explore';
 import Dashboard from '@/pages/Dashboard';
 import ContestDetail from '@/pages/ContestDetail';
 import Winners from '@/pages/Winners';
+import Leaderboard from '@/pages/Leaderboard';
+import Feed from '@/pages/Feed';
+import CreatorProfile from '@/pages/CreatorProfile';
 import Work from '@/pages/Work';
 import Wallet from '@/pages/Wallet';
 import Profile from '@/pages/Profile';
@@ -42,6 +45,9 @@ export default function App() {
             {/* Public-in-shell */}
             <Route path="/explore" element={<Explore />} />
             <Route path="/winners" element={<Winners />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/u/:id" element={<CreatorProfile />} />
             <Route path="/contest/:id" element={<ContestDetail />} />
             <Route path="/help" element={<Help />} />
             {/* Authenticated */}

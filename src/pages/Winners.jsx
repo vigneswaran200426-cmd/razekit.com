@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
+import { Trophy, BarChart3 } from 'lucide-react';
 import { entities } from '@/lib/api';
 import { money, dateShort } from '@/lib/format';
-import { PageHeader, Segmented, EmptyState, Skeleton, Badge } from '@/components/ui';
+import { PageHeader, Segmented, EmptyState, Skeleton, Badge, Button } from '@/components/ui';
 
 function cover(id = '') { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360; return `linear-gradient(135deg, hsl(${h} 70% 60%), hsl(${(h + 40) % 360} 72% 46%))`; }
 
@@ -47,7 +47,8 @@ export default function Winners() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Winners Hub" title="The work that won" description="Winning creative from across the RazeKit marketplace." />
+      <PageHeader eyebrow="Winners Hub" title="The work that won" description="Winning creative from across the RazeKit marketplace."
+        actions={<Button to="/leaderboard" variant="secondary"><BarChart3 className="w-4 h-4" />Leaderboard</Button>} />
       <Segmented tabs={[{ key: 'recent', label: 'Recent' }, { key: 'prize', label: 'Highest prize' }]} value={tab} onChange={setTab} />
       {!items ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-64" />)}</div>

@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Bell, HelpCircle, Menu, X, LayoutDashboard, Compass, Trophy, LineChart,
-  User, Settings, Wallet, FolderKanban, LogOut, Shield, ChevronDown, Video, Briefcase, Check,
+  User, Settings, Wallet, FolderKanban, LogOut, Shield, ChevronDown, Video, Briefcase, Check, Newspaper,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { entities } from '@/lib/api';
@@ -15,21 +15,25 @@ const NAV = {
   creator: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/explore', label: 'Explore', icon: Compass },
+    { to: '/feed', label: 'Feed', icon: Newspaper },
     { to: '/winners', label: 'Winners', icon: Trophy },
   ],
   client: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/explore', label: 'Explore', icon: Compass },
+    { to: '/feed', label: 'Feed', icon: Newspaper },
     { to: '/winners', label: 'Winners', icon: Trophy },
     { to: '/social', label: 'Social Tracker', icon: LineChart },
   ],
   admin: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/explore', label: 'Explore', icon: Compass },
+    { to: '/feed', label: 'Feed', icon: Newspaper },
     { to: '/winners', label: 'Winners', icon: Trophy },
   ],
   visitor: [
     { to: '/explore', label: 'Explore', icon: Compass },
+    { to: '/feed', label: 'Feed', icon: Newspaper },
     { to: '/winners', label: 'Winners', icon: Trophy },
   ],
 };
