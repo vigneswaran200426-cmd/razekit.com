@@ -61,7 +61,7 @@ export default function CreateContest() {
           <div><Label htmlFor="mk">Market &amp; currency</Label>
             <select id="mk" value={f.market} onChange={set('market')} className="h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
               {Object.entries(MARKETS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
-            <p className="mt-1 text-[11px] text-muted">{f.market === 'GLOBAL' ? 'Funded via PayPal / card checkout.' : 'Funded via UPI / cards (Razorpay).'}</p></div>
+            <p className="mt-1 text-[11px] text-muted">Sets the prize currency. Prizes are arranged with winners off-platform.</p></div>
           <div className="grid sm:grid-cols-3 gap-4">
             <div><Label htmlFor="p">Prize ({mkt.symbol})</Label><Input id="p" type="number" min="0" value={f.prize_amount} onChange={set('prize_amount')} placeholder={f.market === 'GLOBAL' ? '300' : '25000'} className="nums" /></div>
             <div><Label htmlFor="w">Winners</Label><Input id="w" type="number" min="1" value={f.number_of_winners} onChange={set('number_of_winners')} className="nums" /></div>

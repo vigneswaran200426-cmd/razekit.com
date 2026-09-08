@@ -98,7 +98,6 @@ export default function ContestDetail() {
             <div className="mt-5 space-y-2">
               {isOwner ? (
                 <>
-                  {['open', 'draft'].includes(contest.status) && <Button to={`/contest/${id}/fund`} className="w-full">Fund contest</Button>}
                   {subs.length > 0 && !ended && <Button to={`/contest/${id}/review`} className="w-full" variant={contest.status === 'open' ? 'secondary' : 'primary'}>Review entries ({subs.filter((s) => s.status !== 'working').length})</Button>}
                   {ended && <Button to={`/contest/${id}/handover`} className="w-full">Account handover</Button>}
                   {ended && <Button to={`/contest/${id}/review`} className="w-full" variant="secondary">View entries</Button>}

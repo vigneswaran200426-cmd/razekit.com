@@ -1,21 +1,20 @@
 // @ts-nocheck
 // Currency policy engine — ported verbatim from base44/shared/money/markets.ts.
+// Currency policy per market. Payment-provider pointers were removed with the
+// gateways; only currency/region/label/symbol remain (used for display + the
+// fee/quote domain). Funding and payouts are handled off-platform.
 export const MARKETS = {
   IN: {
     key: 'IN',
     label: 'India',
     currency: 'INR',
     symbol: '₹',
-    paymentProvider: 'razorpay',
-    payoutProvider: 'razorpay_route',
   },
   GLOBAL: {
     key: 'GLOBAL',
     label: 'International',
     currency: 'USD',
     symbol: '$',
-    paymentProvider: 'stripe',
-    payoutProvider: 'stripe_connect',
   },
 };
 

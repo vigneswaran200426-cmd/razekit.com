@@ -26,7 +26,6 @@ import CreateContest from '@/pages/CreateContest';
 import SubmitWork from '@/pages/SubmitWork';
 import Review from '@/pages/Review';
 import Handover from '@/pages/Handover';
-import FundContest from '@/pages/FundContest';
 import NotFound from '@/pages/NotFound';
 
 export default function App() {
@@ -61,7 +60,6 @@ export default function App() {
             <Route path="/create-contest" element={<ProtectedRoute roles={['client']}><CreateContest /></ProtectedRoute>} />
             <Route path="/contest/:id/submit" element={<ProtectedRoute roles={['creator']}><SubmitWork /></ProtectedRoute>} />
             <Route path="/contest/:id/review" element={<ProtectedRoute roles={['client']}><Review /></ProtectedRoute>} />
-            <Route path="/contest/:id/fund" element={<ProtectedRoute roles={['client']}><FundContest /></ProtectedRoute>} />
             <Route path="/contest/:id/handover" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} />
           </Route>

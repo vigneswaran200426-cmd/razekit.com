@@ -70,27 +70,7 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
-      - key: RAZORPAY_KEY_ID
-        sync: false
-      - key: RAZORPAY_KEY_SECRET
-        sync: false
-      - key: RAZORPAY_WEBHOOK_SECRET
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      # PayPal (Orders v2) — preferred when set. Secret is server-side only.
-      # PAYPAL_ENV must match your keys: `live` for production keys (real money),
-      # `sandbox` for developer.paypal.com sandbox keys. Set it in the dashboard.
-      - key: PAYPAL_ENV
-        sync: false
-      - key: PAYPAL_CLIENT_ID
-        sync: false
-      - key: PAYPAL_CLIENT_SECRET
-        sync: false
-      - key: PAYPAL_WEBHOOK_ID
-        sync: false
+      # No payment gateway — prize funding/payouts are handled off-platform.
       - key: LLM_DRIVER
         value: stub
       - key: ANTHROPIC_API_KEY

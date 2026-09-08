@@ -1,6 +1,5 @@
 // Small compatibility + housekeeping endpoints.
 import { Router } from 'express';
-import { config } from '../config.js';
 
 export const miscRouter = Router();
 
@@ -10,8 +9,6 @@ miscRouter.get('/public-settings', (_req, res) => {
     name: 'Razekit',
     auth: { providers: ['password', 'google'] },
     maintenance: false,
-    // Public payment surface (client ID only — never the secret).
-    paypal: { configured: config.paypal.configured, clientId: config.paypal.clientId, env: config.paypal.env },
   });
 });
 

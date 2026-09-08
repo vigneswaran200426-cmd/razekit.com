@@ -9,7 +9,6 @@ import { entitiesRouter } from './entities/routes.js';
 import { functionsRouter } from './functions/routes.js';
 import { integrationsRouter } from './integrations/routes.js';
 import { filesRouter } from './integrations/files.js';
-import { webhooksRouter } from './webhooks/routes.js';
 import { miscRouter } from './misc/routes.js';
 import { startScheduler } from './scheduler.js';
 
@@ -25,9 +24,6 @@ app.use(
   })
 );
 app.use(cookieParser());
-
-// Webhooks need the RAW body and therefore must be mounted before express.json().
-app.use('/api/webhooks', webhooksRouter);
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
