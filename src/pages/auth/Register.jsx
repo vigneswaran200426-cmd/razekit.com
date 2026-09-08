@@ -23,7 +23,11 @@ export default function Register() {
     setErr('');
     if (password.length < 8) { setErr('Password must be at least 8 characters.'); return; }
     setLoading(true);
-    try { await auth.register({ email: email.trim(), password, full_name: fullName.trim() }); setStep('otp'); }
+    try {
+      const r = await auth.register({ email: email.trim(), password, full_name: fullName.trim() });
+      if (r?.access_token) { await refresh(); navigate('/onboarding', { replace: true }); return; }
+      setStep('otp');
+    }
     catch (e2) { setErr(e2.message || 'Could not create your account.'); }
     finally { setLoading(false); }
   };

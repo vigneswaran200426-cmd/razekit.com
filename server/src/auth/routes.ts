@@ -14,7 +14,11 @@ export const authRouter = Router();
 
 const norm = (e: string) => String(e || '').trim().toLowerCase();
 
-// ── Register (email/password) → sends verification OTP ───────────────────────
+// ── Register (email/password) ─────────────────────────────────────────────────
+// If a real email provider is configured, we email a 6-digit OTP and require
+// verification. If email is in console mode (no provider), we can't deliver the
+// code — so create the account immediately and return a session. Adding
+// EMAIL_DRIVER=resend/smtp automatically re-enables OTP verification.
 authRouter.post('/register', async (req, res) => {
   const email = norm(req.body?.email);
   const password = String(req.body?.password || '');
@@ -23,6 +27,14 @@ authRouter.post('/register', async (req, res) => {
   const existing = await prisma.appUser.findUnique({ where: { email } });
   if (existing) return res.status(409).json({ error: 'An account already exists with this email.' });
   const passwordHash = await hashPassword(password);
+
+  if (config.email.driver === 'console') {
+    const user = await prisma.appUser.create({
+      data: { email, passwordHash, fullName: req.body?.full_name || null, emailVerified: true, userRole: 'visitor', role: 'user' },
+    });
+    return res.json({ access_token: signToken(user.id), user: publicUser(user), requiresOtp: false });
+  }
+
   await issueOtp(email, 'register', { passwordHash, full_name: req.body?.full_name || '' });
   res.json({ ok: true, requiresOtp: true });
 });

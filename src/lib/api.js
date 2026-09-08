@@ -68,7 +68,7 @@ export const auth = {
     if (r?.access_token) token.set(r.access_token);
     return r;
   },
-  register: (data) => request('POST', '/api/auth/register', { body: data }),
+  register: async (data) => { const r = await request('POST', '/api/auth/register', { body: data }); if (r?.access_token) token.set(r.access_token); return r; },
   verifyOtp: async (email, code) => {
     const r = await request('POST', '/api/auth/verify-otp', { body: { email, code } });
     if (r?.access_token) token.set(r.access_token);
