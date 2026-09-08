@@ -1,22 +1,8 @@
-# Render Blueprint for RazeKit — frontend (static) + backend (Node) together.
-# Import this repo at render.com → "New +" → "Blueprint" (or "Manual sync" on the
-# existing blueprint). Set the secret env vars (sync:false) in the dashboard.
+# Render Blueprint for RazeKit — backend (Node) only.
+# The frontend React app was removed from this repo; the razekit-web static
+# service is no longer defined here. Suspend/delete razekit-web in the Render
+# dashboard to take the site fully offline.
 services:
-  # ── Frontend: React/Vite static site ───────────────────────────────────────
-  - type: web
-    name: razekit-web
-    runtime: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://razekit-api.onrender.com
-    routes:
-      # SPA fallback so client-side routes (deep links) load index.html
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
   # ── Backend: Node/Express API ──────────────────────────────────────────────
   - type: web
     name: razekit-api
