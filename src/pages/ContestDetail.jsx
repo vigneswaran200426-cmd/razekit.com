@@ -33,7 +33,9 @@ export default function ContestDetail() {
   if (!contest) return <EmptyState icon={Flag} title="Contest not found" description="This contest may have been removed." action={<Button to="/explore">Back to Explore</Button>} />;
 
   const isOwner = contest.created_by_id === user?.id;
-  const isCreator = role === 'creator';
+  const isCreator = role === 'creator' || role === 'admin';
+  const isWinner = contest.winner_user_id === user?.id;
+  const ended = ['winner_selected', 'completed'].includes(contest.status);
   const deliverables = parseList(contest.deliverables);
   const mySub = subs.find((s) => s.created_by_id === user?.id);
 
@@ -42,8 +44,7 @@ export default function ContestDetail() {
     setBusy(true);
     try {
       if (!mySub) await entities.Submission.create({ contest_id: id, client_id: contest.created_by_id, status: 'working' });
-      await entities.Notification.create({ type: 'contest_joined', title: 'Contest joined', description: contest.title, contest_id: id, recipient_user_id: user.id }).catch(() => {});
-      navigate('/work');
+      navigate(`/contest/${id}/submit`);
     } finally { setBusy(false); }
   };
 
@@ -94,15 +95,22 @@ export default function ContestDetail() {
               <div className="flex items-center justify-between"><span className="text-muted flex items-center gap-1.5"><Trophy className="w-4 h-4" />Winners</span><span className="font-semibold text-ink nums">{contest.number_of_winners || 1}</span></div>
               {contest.deadline && <div className="flex items-center justify-between"><span className="text-muted">Deadline</span><span className="font-medium text-ink">{dateShort(contest.deadline)}</span></div>}
             </div>
-            <div className="mt-5">
-              {['winner_selected', 'completed'].includes(contest.status) ? (
-                <Button to={`/contest/${id}`} className="w-full" variant="secondary" disabled>Contest ended</Button>
-              ) : isOwner ? (
-                <Button to="/work" className="w-full" variant="secondary">Manage contest</Button>
-              ) : isCreator && contest.status === 'open' ? (
-                <Button className="w-full" loading={busy} onClick={join}>{mySub ? 'Continue working' : 'Join contest'}</Button>
-              ) : mySub ? (
-                <Button to="/work" className="w-full" variant="secondary">View your entry</Button>
+            <div className="mt-5 space-y-2">
+              {isOwner ? (
+                <>
+                  {['open', 'draft'].includes(contest.status) && <Button to={`/contest/${id}/fund`} className="w-full">Fund contest</Button>}
+                  {subs.length > 0 && !ended && <Button to={`/contest/${id}/review`} className="w-full" variant={contest.status === 'open' ? 'secondary' : 'primary'}>Review entries ({subs.filter((s) => s.status !== 'working').length})</Button>}
+                  {ended && <Button to={`/contest/${id}/handover`} className="w-full">Account handover</Button>}
+                  {ended && <Button to={`/contest/${id}/review`} className="w-full" variant="secondary">View entries</Button>}
+                </>
+              ) : isCreator ? (
+                <>
+                  {contest.status === 'open' && !mySub && <Button className="w-full" loading={busy} onClick={join}>Join contest</Button>}
+                  {mySub && ['working', 'joined', 'open'].includes(mySub.status || contest.status) && <Button to={`/contest/${id}/submit`} className="w-full">Submit work</Button>}
+                  {mySub?.status === 'submitted' && <Button className="w-full" variant="secondary" disabled>Your entry is in review</Button>}
+                  {ended && isWinner && <Button to={`/contest/${id}/handover`} className="w-full">Account handover</Button>}
+                  {ended && !isWinner && <Button to="/explore" className="w-full" variant="secondary">Browse contests</Button>}
+                </>
               ) : (
                 <Button to="/explore" className="w-full" variant="secondary">Browse contests</Button>
               )}
