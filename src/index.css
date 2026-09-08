@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── RazeKit design tokens ─────────────────────────────────────────────────
+   Boxy, precise, media-first. One electric-blue accent over cool neutrals. */
+:root {
+  --bg: 246 247 249;          /* #F6F7F9 cool near-white */
+  --surface: 255 255 255;     /* #FFFFFF */
+  --surface-2: 240 242 245;   /* #F0F2F5 */
+  --ink: 11 21 36;            /* #0B1524 deep navy-black */
+  --muted: 90 100 115;        /* #5A6473 */
+  --line: 228 231 236;        /* #E4E7EC hairline */
+  --line-strong: 211 216 224; /* #D3D8E0 */
+  --primary: 26 123 248;      /* #1A7BF8 RazeKit blue */
+  --primary-ink: 11 68 199;   /* #0B44C7 */
+  --accent: 6 182 212;        /* #06B6D4 cyan (used sparingly) */
+  --success: 22 163 74;
+  --warning: 217 119 6;
+  --danger: 220 38 38;
+  color-scheme: light;
+}
+
+@layer base {
+  * { border-color: rgb(var(--line)); }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: rgb(var(--bg));
+    color: rgb(var(--ink));
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4, h5 { font-family: 'Inter Tight', 'Inter', sans-serif; letter-spacing: -0.02em; }
+  ::selection { background: rgb(var(--primary) / 0.16); }
+  :focus-visible { outline: 2px solid rgb(var(--primary)); outline-offset: 2px; border-radius: 4px; }
+  /* Thin, quiet scrollbars */
+  * { scrollbar-width: thin; scrollbar-color: rgb(var(--line-strong)) transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { background: rgb(var(--line-strong)); border-radius: 999px; border: 3px solid rgb(var(--bg)); }
+}
+
+@layer utilities {
+  .nums { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .shell { max-width: 1400px; margin-inline: auto; padding-inline: 1rem; }
+  @media (min-width: 640px) { .shell { padding-inline: 1.5rem; } }
+  @media (min-width: 1024px) { .shell { padding-inline: 2rem; } }
+  /* subtle diagonal hatch for empty media wells */
+  .hatch { background-image: repeating-linear-gradient(135deg, rgb(var(--line) / 0.6) 0 1px, transparent 1px 10px); }
+}
