@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Search, Activity } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { PUBLISHED_LIKE, SOCIAL_POST_STATE_LABELS, SOCIAL_POST_STATES, campaignTotals, formatMetric, hasMetrics } from '@/lib/social-tracker';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
 import AlertState from '@/components/alerts/AlertState';
 import PlatformTabs from '@/components/social/PlatformTabs';
@@ -16,7 +16,7 @@ import AddPostDialog from '@/components/social/AddPostDialog';
 const inputCls = 'w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
 
 export default function SocialTracker() {
-  const { user } = require('@/lib/AuthContext').useAuth();
+  const { user } = useAuth();
   const [contests, setContests] = useState([]);
   const [posts, setPosts] = useState(null);
   const [winnerPublishes, setWinnerPublishes] = useState([]);
