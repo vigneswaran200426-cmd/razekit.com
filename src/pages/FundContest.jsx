@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
 import { fn, entities } from '@/lib/api';
 import { moneyMinor } from '@/lib/format';
@@ -16,6 +16,7 @@ function loadRazorpay() {
 export default function FundContest() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [contest, setContest] = useState(null);
   const [quote, setQuote] = useState(null);
   const [loadErr, setLoadErr] = useState('');
@@ -24,12 +25,31 @@ export default function FundContest() {
   const [done, setDone] = useState(false);
   const idem = useRef(null);
 
+  const paypalReturn = params.get('paypal_return') === '1';
+  const paypalToken = params.get('token'); // PayPal appends ?token=<orderId> on return
+  const cancelled = params.get('payment') === 'cancelled';
+
   useEffect(() => { entities.Contest.get(id).then(setContest).catch(() => {}); }, [id]);
+  useEffect(() => { if (cancelled) setPayErr('Payment was cancelled. You can try again below.'); }, [cancelled]);
+
+  // PayPal redirect return → capture the approved order server-side, then settle.
   useEffect(() => {
+    if (!paypalReturn) return;
+    if (!paypalToken) { setPayErr('PayPal payment was not completed.'); return; }
+    setPaying(true);
+    fn('paymentConfirm', { paypal: { order_id: paypalToken } })
+      .then((c) => { if (c.status === 'CAPTURED') setDone(true); else setPayErr('Payment is processing — it will confirm shortly.'); })
+      .catch((e) => setPayErr(e?.data?.error?.message || 'Could not confirm the PayPal payment.'))
+      .finally(() => setPaying(false));
+  }, [paypalReturn, paypalToken]);
+
+  // Load the fee quote (skip while finishing a PayPal return).
+  useEffect(() => {
+    if (paypalReturn) return;
     fn('paymentQuote', { contest_id: id })
       .then((d) => { if (d?.error) setLoadErr(d.error.message || 'Could not load the payment summary.'); else setQuote(d); })
       .catch((e) => setLoadErr(e?.data?.error?.code === 'ALREADY_FUNDED' ? 'This contest is already funded.' : (e.message || 'Could not load the payment summary.')));
-  }, [id]);
+  }, [id, paypalReturn]);
 
   const pay = async () => {
     if (!quote) return;
@@ -37,7 +57,8 @@ export default function FundContest() {
     if (!idem.current) idem.current = `fund-${id}-${Math.random().toString(36).slice(2, 10)}`;
     try {
       const data = await fn('paymentCreate', { quote_id: quote.quote_id, idempotency_key: idem.current, origin: window.location.origin });
-      if (data.provider === 'stripe' && data.redirect_url) { window.location.href = data.redirect_url; return; }
+      // Redirect providers (PayPal approval page / Stripe Checkout) hand off to their hosted flow.
+      if ((data.provider === 'paypal' || data.provider === 'stripe') && data.redirect_url) { window.location.href = data.redirect_url; return; }
       if (data.provider === 'razorpay') {
         const ok = await loadRazorpay();
         if (!ok) { setPayErr('Could not open the payment window.'); setPaying(false); return; }
@@ -51,8 +72,12 @@ export default function FundContest() {
       }
       setPayErr('Payment could not be started.'); setPaying(false);
     } catch (e) {
-      const code = e?.data?.error?.code;
-      setPayErr(code === 'PROVIDER_UNAVAILABLE' ? 'Payments aren’t enabled for this market yet — the RazeKit payment provider is still being connected. Your contest is saved.' : (e.message || 'Payment could not be started.'));
+      const err = e?.data?.error || {};
+      setPayErr(
+        err.code === 'PROVIDER_UNAVAILABLE'
+          ? 'Payments aren’t enabled for this market yet — the RazeKit payment provider is still being connected. Your contest is saved.'
+          : (err.message || e.message || 'Payment could not be started.')
+      );
       setPaying(false);
     }
   };
@@ -62,6 +87,12 @@ export default function FundContest() {
       <h1 className="mt-4 font-display text-2xl font-extrabold text-ink">Contest funded</h1>
       <p className="mt-2 text-muted">The prize is held securely and your contest is live.</p>
       <Button className="mt-6" onClick={() => navigate(`/contest/${id}`)}>View contest</Button></div>
+  );
+
+  // Finishing a PayPal return (capturing the approved order).
+  if (paypalReturn && !payErr) return (
+    <div className="max-w-md mx-auto text-center py-16"><Spinner />
+      <p className="mt-4 text-muted">Confirming your PayPal payment…</p></div>
   );
 
   const row = (label, minor, strong) => (

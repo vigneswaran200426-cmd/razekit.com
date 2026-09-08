@@ -68,6 +68,14 @@ export const config = {
     model: process.env.IMAGE_MODEL || 'gpt-image-1',
   },
 
+  paypal: {
+    // Client ID is public (safe to expose to the browser). The SECRET is read
+    // only inside the money engine and never sent to the client.
+    clientId: process.env.PAYPAL_CLIENT_ID || '',
+    env: (process.env.PAYPAL_ENV || 'sandbox') as 'sandbox' | 'live',
+    configured: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
+  },
+
   enableScheduler: (process.env.ENABLE_SCHEDULER || 'true') === 'true',
 };
 

@@ -7,6 +7,7 @@ import { secrets } from '../secrets.js';
 import { readCreds } from '../money/router.js';
 import { verifyWebhookSignature as verifyRazorpayWebhook } from '../money/providers/razorpay.js';
 import { verifyWebhookSignature as verifyStripeWebhook } from '../money/providers/stripe.js';
+import { verifyWebhookSignature as verifyPaypalWebhook } from '../money/providers/paypal.js';
 import { sha256Hex } from '../money/providers/crypto.js';
 import { settleCapturedPayment, completePayout, refundCapturedPayment } from '../money/settlement.js';
 import { serviceClient } from '../entities/service.js';
@@ -36,6 +37,17 @@ export async function handleMoneyWebhook({ rawBody, provider, headers }) {
       eventType = event.type;
       eventId = event.id;
       entity = (event.data && event.data.object) || null;
+    }
+  } else if (provider === 'paypal') {
+    valid = await verifyPaypalWebhook(
+      { clientId: creds.paypalClientId, clientSecret: creds.paypalClientSecret, env: creds.paypalEnv },
+      { headers, rawBody: raw, webhookId: creds.paypalWebhookId }
+    );
+    if (valid) {
+      const event = JSON.parse(raw);
+      eventType = event.event_type;
+      eventId = event.id;
+      entity = event.resource || null;
     }
   } else {
     return { status: 400, json: { error: 'Unknown provider' } };
@@ -121,6 +133,38 @@ export async function handleMoneyWebhook({ rawBody, provider, headers }) {
         relatedRef = payouts[0].reference;
         const fresh = await svc.entities.Payout.get(payouts[0].id);
         result = await completePayout(svc, { payout: fresh });
+      }
+    }
+  } else if (provider === 'paypal') {
+    // Capture already happens synchronously on the payer's return; these events
+    // are a backup path + refund/denial handling.
+    const orderId =
+      (entity && entity.supplementary_data && entity.supplementary_data.related_ids && entity.supplementary_data.related_ids.order_id) ||
+      (entity && entity.custom_id) || null;
+    const byOrder = async () => (orderId ? svc.entities.Payment.filter({ provider_order_id: orderId }, '-created_date', 1) : []);
+    if (eventType === 'PAYMENT.CAPTURE.COMPLETED' && entity) {
+      let payments = await byOrder();
+      if (!payments.length && entity.custom_id) payments = await svc.entities.Payment.filter({ reference: entity.custom_id }, '-created_date', 1);
+      if (payments.length) {
+        relatedRef = payments[0].reference;
+        await svc.entities.Payment.update(payments[0].id, { provider_payment_id: entity.id });
+        const fresh = await svc.entities.Payment.get(payments[0].id);
+        const contest = await svc.entities.Contest.get(payments[0].contest_id);
+        result = await settleCapturedPayment(svc, { payment: fresh, contest });
+      }
+    } else if ((eventType === 'PAYMENT.CAPTURE.DENIED' || eventType === 'PAYMENT.CAPTURE.DECLINED') && entity) {
+      const payments = await byOrder();
+      if (payments.length && !['CAPTURED', 'REFUNDED'].includes(payments[0].status)) {
+        relatedRef = payments[0].reference;
+        result = await svc.entities.Payment.update(payments[0].id, { status: 'FAILED', failure_reason: 'PayPal capture denied' });
+      }
+    } else if (eventType === 'PAYMENT.CAPTURE.REFUNDED' && entity) {
+      const payments = await byOrder();
+      if (payments.length) {
+        relatedRef = payments[0].reference;
+        const fresh = await svc.entities.Payment.get(payments[0].id);
+        const contest = await svc.entities.Contest.get(payments[0].contest_id);
+        result = await refundCapturedPayment(svc, { payment: fresh, contest });
       }
     }
   }

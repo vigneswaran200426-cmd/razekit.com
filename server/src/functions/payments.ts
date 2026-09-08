@@ -12,7 +12,14 @@ import {
 } from '../money/providers/razorpay.js';
 import { createCheckoutSession as stripeCheckout, fetchSession, createTransfer as stripeTransfer } from '../money/providers/stripe.js';
 import { createTransfer as razorpayTransfer } from '../money/providers/razorpay.js';
+import {
+  createOrder as paypalCreateOrder, captureOrder as paypalCaptureOrder,
+  fetchOrder as paypalFetchOrder, captureIdFromOrder as paypalCaptureId,
+  createPayout as paypalCreatePayout,
+} from '../money/providers/paypal.js';
 import { settleCapturedPayment } from '../money/settlement.js';
+
+const paypalCreds = (creds) => ({ clientId: creds.paypalClientId, clientSecret: creds.paypalClientSecret, env: creds.paypalEnv });
 
 const QUOTE_TTL_MINUTES = 15;
 
@@ -109,22 +116,40 @@ export async function paymentCreate(ctx) {
   await svc.entities.PaymentQuote.update(quote.id, { status: 'CONSUMED', consumed_by_payment_id: payment.id });
 
   let checkout;
-  if (route.provider === 'razorpay') {
-    const order = await createOrder(
-      { keyId: creds.razorpayKeyId, keySecret: creds.razorpayKeySecret },
-      { amountMinor: quote.total_minor, currency: quote.currency, receipt: reference, notes: { reference, contest_id: quote.contest_id } }
-    );
-    await svc.entities.Payment.update(payment.id, { status: 'PENDING', provider_order_id: order.id });
-    checkout = { provider: 'razorpay', key_id: creds.razorpayKeyId, order_id: order.id, amount_minor: quote.total_minor, currency: quote.currency };
-  } else {
-    const session = await stripeCheckout(
-      { secretKey: creds.stripeSecretKey },
-      { amountMinor: quote.total_minor, currency: quote.currency, reference, contestId: quote.contest_id,
-        successUrl: `${origin}/contest/${quote.contest_id}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${origin}/contest/${quote.contest_id}?payment=cancelled` }
-    );
-    await svc.entities.Payment.update(payment.id, { status: 'PENDING', provider_order_id: session.id });
-    checkout = { provider: 'stripe', redirect_url: session.url, session_id: session.id };
+  try {
+    if (route.provider === 'razorpay') {
+      const order = await createOrder(
+        { keyId: creds.razorpayKeyId, keySecret: creds.razorpayKeySecret },
+        { amountMinor: quote.total_minor, currency: quote.currency, receipt: reference, notes: { reference, contest_id: quote.contest_id } }
+      );
+      await svc.entities.Payment.update(payment.id, { status: 'PENDING', provider_order_id: order.id });
+      checkout = { provider: 'razorpay', key_id: creds.razorpayKeyId, order_id: order.id, amount_minor: quote.total_minor, currency: quote.currency };
+    } else if (route.provider === 'paypal') {
+      const order = await paypalCreateOrder(paypalCreds(creds), {
+        amountMinor: quote.total_minor, currency: quote.currency, reference,
+        returnUrl: `${origin}/contest/${quote.contest_id}/fund?paypal_return=1`,
+        cancelUrl: `${origin}/contest/${quote.contest_id}/fund?payment=cancelled`,
+      });
+      if (!order.approveUrl) throw new Error('PayPal did not return an approval URL');
+      await svc.entities.Payment.update(payment.id, { status: 'PENDING', provider_order_id: order.id });
+      checkout = { provider: 'paypal', redirect_url: order.approveUrl, order_id: order.id, paypal_env: creds.paypalEnv };
+    } else {
+      const session = await stripeCheckout(
+        { secretKey: creds.stripeSecretKey },
+        { amountMinor: quote.total_minor, currency: quote.currency, reference, contestId: quote.contest_id,
+          successUrl: `${origin}/contest/${quote.contest_id}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/contest/${quote.contest_id}?payment=cancelled` }
+      );
+      await svc.entities.Payment.update(payment.id, { status: 'PENDING', provider_order_id: session.id });
+      checkout = { provider: 'stripe', redirect_url: session.url, session_id: session.id };
+    }
+  } catch (e) {
+    // Provider rejected order creation (e.g. restricted account, bad key). Record
+    // it and return a friendly error rather than a 500 — the quote is consumed but
+    // no money moved, and the brand can retry with a fresh quote.
+    const reason = String(e.message || e).replace(/^PAYPAL_ERROR:|^RAZORPAY_ERROR:|^STRIPE_ERROR:/, '').slice(0, 300);
+    await svc.entities.Payment.update(payment.id, { status: 'FAILED', failure_reason: reason }).catch(() => {});
+    return json({ error: { code: 'PROVIDER_ERROR', message: `The payment provider could not start this payment (${reason}). Your contest is saved — please try again.` } }, 502);
   }
 
   return json({ payment_id: payment.id, reference, ...checkout });
@@ -138,9 +163,15 @@ export async function paymentConfirm(ctx) {
   const svc = ctx.svc;
 
   let payment;
+  const paypalOrderId = body.paypal && (body.paypal.order_id || body.paypal.token);
   if (body.payment_id) payment = await svc.entities.Payment.get(body.payment_id);
   else if (body.reference) {
     const list = await svc.entities.Payment.filter({ reference: body.reference }, '-created_date', 1);
+    if (!list.length) return json({ error: 'Payment not found' }, 404);
+    payment = list[0];
+  } else if (paypalOrderId) {
+    // PayPal redirect return — locate the pending payment by its order id.
+    const list = await svc.entities.Payment.filter({ provider_order_id: paypalOrderId }, '-created_date', 1);
     if (!list.length) return json({ error: 'Payment not found' }, 404);
     payment = list[0];
   } else return json({ error: 'payment_id or reference is required' }, 400);
@@ -169,6 +200,26 @@ export async function paymentConfirm(ctx) {
       const capturedPayment = (orderPayments.items || orderPayments || []).find?.((p) => p.status === 'captured');
       await svc.entities.Payment.update(payment.id, { provider_payment_id: (capturedPayment && capturedPayment.id) || null, status: 'AUTHORIZED' });
     }
+  } else if (payment.provider === 'paypal') {
+    const pc = paypalCreds(creds);
+    const orderId = paypalOrderId || payment.provider_order_id;
+    let order = await paypalFetchOrder(pc, orderId);
+    // Capture once the payer has approved; treat an already-captured order as success (idempotent).
+    if (order.status !== 'COMPLETED') {
+      if (['APPROVED', 'PAYER_ACTION_REQUIRED', 'CREATED', 'SAVED'].includes(order.status)) {
+        try {
+          order = await paypalCaptureOrder(pc, orderId);
+        } catch (e) {
+          order = await paypalFetchOrder(pc, orderId).catch(() => order);
+          if (order.status !== 'COMPLETED') {
+            await svc.entities.Payment.update(payment.id, { status: 'FAILED', failure_reason: String(e.message).slice(0, 300) });
+            return json({ error: { code: 'VERIFICATION_FAILED', message: "PayPal payment couldn't be captured." } }, 400);
+          }
+        }
+      }
+    }
+    if (order.status !== 'COMPLETED') return json({ status: 'PENDING', provider_status: order.status });
+    await svc.entities.Payment.update(payment.id, { provider_payment_id: paypalCaptureId(order), status: 'AUTHORIZED' });
   } else {
     const sessionId = (body.stripe && body.stripe.session_id) || payment.provider_order_id;
     const session = await fetchSession({ secretKey: creds.stripeSecretKey }, sessionId);
@@ -240,6 +291,10 @@ export async function payoutCreate(ctx) {
         { keyId: creds.razorpayKeyId, keySecret: creds.razorpayKeySecret },
         { amountMinor: payout.amount_minor, currency, linkedAccountId: account.provider_account_id, notes: { reference, contest_id: contestId } }
       );
+    } else if (route.provider === 'paypal') {
+      transfer = await paypalCreatePayout(paypalCreds(creds), {
+        amountMinor: payout.amount_minor, currency, receiverEmail: account.provider_account_id, reference,
+      });
     } else {
       transfer = await stripeTransfer(
         { secretKey: creds.stripeSecretKey },

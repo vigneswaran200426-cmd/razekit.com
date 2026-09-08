@@ -6,13 +6,18 @@ import { money } from '@/lib/format';
 import { PageHeader, Card, Button, Input, Label } from '@/components/ui';
 
 const CATEGORIES = ['Instagram Reel', 'YouTube Shorts', 'YouTube Video', 'Advertisement', 'Gaming', 'Wedding', 'Documentary', 'Corporate', 'Travel', 'Music Video'];
+const MARKETS = {
+  IN: { label: 'India (₹ INR)', currency: 'INR', region: 'IN', symbol: '₹' },
+  GLOBAL: { label: 'International ($ USD)', currency: 'USD', region: 'GLOBAL', symbol: '$' },
+};
 
 export default function CreateContest() {
   const navigate = useNavigate();
-  const [f, setF] = useState({ title: '', short_description: '', category: CATEGORIES[0], description: '', prize_amount: '', number_of_winners: 1, deadline: '' });
+  const [f, setF] = useState({ title: '', short_description: '', category: CATEGORIES[0], description: '', prize_amount: '', number_of_winners: 1, deadline: '', market: 'IN' });
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+  const mkt = MARKETS[f.market] || MARKETS.IN;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -25,7 +30,7 @@ export default function CreateContest() {
       const c = await entities.Contest.create({
         title: f.title.trim(), short_description: f.short_description.trim(), category: f.category,
         description: f.description.trim(), prize_amount: Number(f.prize_amount), number_of_winners: Number(f.number_of_winners) || 1,
-        deadline: new Date(f.deadline).toISOString(), currency: 'INR', settlement_region: 'IN', status: 'open',
+        deadline: new Date(f.deadline).toISOString(), currency: mkt.currency, settlement_region: mkt.region, status: 'open',
       });
       navigate(`/contest/${c.id}`);
     } catch (e2) { setErr(e2.message || 'Could not create the contest.'); }
@@ -53,12 +58,16 @@ export default function CreateContest() {
         </Card>
         <Card className="p-5 space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Prize &amp; timeline</h2>
+          <div><Label htmlFor="mk">Market &amp; currency</Label>
+            <select id="mk" value={f.market} onChange={set('market')} className="h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
+              {Object.entries(MARKETS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
+            <p className="mt-1 text-[11px] text-muted">{f.market === 'GLOBAL' ? 'Funded via PayPal / card checkout.' : 'Funded via UPI / cards (Razorpay).'}</p></div>
           <div className="grid sm:grid-cols-3 gap-4">
-            <div><Label htmlFor="p">Prize (₹)</Label><Input id="p" type="number" min="0" value={f.prize_amount} onChange={set('prize_amount')} placeholder="25000" className="nums" /></div>
+            <div><Label htmlFor="p">Prize ({mkt.symbol})</Label><Input id="p" type="number" min="0" value={f.prize_amount} onChange={set('prize_amount')} placeholder={f.market === 'GLOBAL' ? '300' : '25000'} className="nums" /></div>
             <div><Label htmlFor="w">Winners</Label><Input id="w" type="number" min="1" value={f.number_of_winners} onChange={set('number_of_winners')} className="nums" /></div>
             <div><Label htmlFor="d">Deadline</Label><Input id="d" type="datetime-local" value={f.deadline} onChange={set('deadline')} /></div>
           </div>
-          {Number(f.prize_amount) > 0 && <p className="text-sm text-muted">Prize pool: <span className="font-semibold text-ink nums">{money(f.prize_amount)}</span> · a platform fee is shown at funding.</p>}
+          {Number(f.prize_amount) > 0 && <p className="text-sm text-muted">Prize pool: <span className="font-semibold text-ink nums">{money(f.prize_amount, mkt.currency)}</span> · a platform fee is shown at funding.</p>}
         </Card>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" type="button" onClick={() => navigate(-1)}>Cancel</Button>

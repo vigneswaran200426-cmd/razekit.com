@@ -16,7 +16,7 @@ const DEMO_ENTITIES = ['Contest', 'Submission', 'Post', 'Review', 'UserProfile',
 async function removeAll() {
   for (const name of DEMO_ENTITIES) {
     const rows = await svc.entities[name].filter({ demo: true }, '-created_date', 500).catch(() => []);
-    for (const r of rows) await svc.entities[name].remove(r.id).catch(() => {});
+    for (const r of rows) await svc.entities[name].delete(r.id).catch(() => {});
     console.log(`removed ${rows.length} ${name}`);
   }
   const users = await prisma.appUser.findMany({ where: { email: { endsWith: '@razekit.demo' } } });
@@ -62,6 +62,16 @@ async function seed() {
     });
     contests.push(rec);
   }
+
+  // An International (USD) contest so PayPal funding is testable out of the box.
+  const usd = await svc.entities.Contest.create({
+    demo: true, created_by_id: brand.id, title: 'Global product ad — 15s (USD)', category: 'Advertisement',
+    short_description: 'A snappy 15s product ad for an international launch.',
+    description: 'Punchy 15s product ad — upbeat pacing, English captions, ready for paid social.',
+    prize_amount: 300, number_of_winners: 1, currency: 'USD', settlement_region: 'GLOBAL', status: 'open',
+    cover_image_url: img('contest-usd'), deadline: new Date(now + 5 * day).toISOString(),
+  });
+  contests.push(usd);
 
   // A completed contest won by the demo creator (for Winners / Leaderboard / Profile).
   const completed = await svc.entities.Contest.create({
