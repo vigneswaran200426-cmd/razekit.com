@@ -113,7 +113,7 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 
 | Item | State |
 |---|---|
-| GatePay provider adapter | **BLOCKED** — provider identity/API unknown, and all gateways were removed by owner instruction. The adapter boundary + state machine are built and tested; only the provider implementation is missing. |
+| Payment gateway | **REMOVED FROM SCOPE** — owner instruction. No gateway is integrated. Funding/payouts are handled off-platform. The provider-independent payment core (state machine + adapter boundary) remains, so a future provider is a single adapter file. |
 | `admin.razekit.com` separate deployment | **BLOCKED** — domain does not resolve; admin runs at `/admin`. |
 | Engagement collector (external platform APIs) | **BLOCKED** — no platform integration exists; `SocialCampaignPost.metrics` is seeded but not live-synced. |
 | File-upload hardening | **PLANNED** |
@@ -126,7 +126,7 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 | Item | Type | Detail |
 |---|---|---|
 | `CORS_ORIGINS` on `razekit-api` | **BLOCKED — needs you** | Apex `https://razekit.com` missing → production login broken. I have no Render access. Blocks all production verification. |
-| GatePay | **REQUIRES DECISION** | Not in the codebase; all gateways were deleted last session at your instruction. Building it contradicts that unless you confirm. |
+| Payment gateway | **REMOVED FROM SCOPE** | No gateway integrated, by owner instruction. |
 | `admin.razekit.com` | **BLOCKED** | Domain does not resolve; no separate admin app exists. Admin is `/admin` in the single frontend. |
 | Non-INR contest duration | **REQUIRES PRODUCT DECISION** | Tiers are INR-denominated. USD contests currently get only the 30-day cap (no invented FX). |
 | Prize below ₹5,000 | **REQUIRES PRODUCT DECISION** | Spec starts at ₹5,000; Tier A bounds applied. Is there a minimum prize? |

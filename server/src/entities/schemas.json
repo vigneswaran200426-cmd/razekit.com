@@ -3295,7 +3295,14 @@
       "scoring_version",
       "metric_snapshot",
       "finalized_at",
-      "score_state"
+      "score_state",
+      "contest_title",
+      "category",
+      "cover_image_url",
+      "prize_amount",
+      "currency",
+      "creator_name",
+      "brand_name"
     ],
     "rls": {
       "read": {

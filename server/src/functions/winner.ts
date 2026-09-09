@@ -106,9 +106,22 @@ export async function winnerFinalize(ctx) {
 
   // Immutable scoring snapshot (spec §11/§33) so historical results stay
   // reproducible even as live metrics keep moving.
+  // Denormalise display fields onto the snapshot so the public Winners page is
+  // a single query instead of a contest + two user lookups per winner.
+  const winnerUser = await svc.entities.User.get(winner.created_by_id).catch(() => null);
+  const brandUser = await svc.entities.User.get(contest.created_by_id).catch(() => null);
+
   for (const s of ranked) {
+    const su = s.id === winner.id ? winnerUser : await svc.entities.User.get(s.created_by_id).catch(() => null);
     await svc.entities.ScoreSnapshot.create({
       contest_id: contestId,
+      contest_title: contest.title || null,
+      category: contest.category || null,
+      cover_image_url: contest.cover_image_url || null,
+      prize_amount: contest.prize_amount || 0,
+      currency: contest.currency || 'INR',
+      creator_name: su?.full_name || null,
+      brand_name: brandUser?.full_name || null,
       submission_id: s.id,
       creator_id: s.created_by_id,
       client_id: contest.created_by_id,

@@ -43,7 +43,7 @@ Each requirement maps to its implementation and the evidence that it works.
 | Deterministic tie-break | **TESTED** | traffic → engagement → earliest → id; stable over 20 runs |
 | No popularity/preference override | **VERIFIED** | brand override attempt → **422 OVERRIDE_REJECTED** |
 
-## §8–10 Payment core + GatePay + replaceable gateway
+## §8–10 Payment core + replaceable gateway
 
 | Req | Status | Implementation |
 |---|---|---|
@@ -51,8 +51,8 @@ Each requirement maps to its implementation and the evidence that it works.
 | No backwards/terminal/forged transitions; idempotent replay | **TESTED** | `gateway.test.ts` |
 | Adapter boundary; capability flags; core free of provider conditionals | **TESTED** | `defineAdapter`, `activeGateway()` |
 | One-step safe disable, history preserved | **TESTED** | `GATEWAY_STATE` ACTIVE/DISABLED/MAINTENANCE/DEPRECATED |
-| **GatePay provider implementation** | 🔴 **BLOCKED** | Provider identity, API base, auth, webhook signature and payout support are all unknown, and every gateway was removed at the owner's instruction (`85e0f58`). Writing one would mean inventing an API. The boundary is built and tested; only the adapter body is missing. |
-| Server-verified payment, funding, refunds, reconciliation | **BLOCKED** | Depends on the above |
+| **Third-party gateway provider** | **REMOVED FROM SCOPE** | Owner instruction: no payment gateway is integrated. Prize funding and winner payouts are handled off-platform. The payment core is provider-independent, so adding one later is a single adapter file — no change to Contest, Winner, Tracker, Ledger or Admin. |
+| Server-verified payment, funding, refunds, reconciliation | **N/A** | No gateway in scope; the active adapter is `off_platform` and never fabricates success |
 
 ## §11–12 Admin Control Center
 
@@ -112,7 +112,7 @@ Each requirement maps to its implementation and the evidence that it works.
 | SSRF / open redirect | **VERIFIED** | `javascript:`, `169.254.169.254`, `localhost`, private ranges → 400 |
 | File upload: type, size, content, safe names, traversal | **TESTED** | `upload.test.ts` — 512 MB any-type → allowlist + magic bytes + generated names |
 | Secrets never in frontend/committed | **VERIFIED** | `.env` gitignored; only public client IDs exposed |
-| Webhook signature/replay/dedup | **BLOCKED** | No gateway configured; verification lives in the adapter contract |
+| Webhook signature/replay/dedup | **N/A** | No gateway in scope; verification is part of the adapter contract if one is ever added |
 
 ## §23–24 Simulation + QA accounts
 
@@ -159,7 +159,6 @@ Each requirement maps to its implementation and the evidence that it works.
 
 ## Blocked items (never silently omitted)
 
-2. **GatePay adapter** — provider unidentified; all gateways removed by owner instruction. Boundary + state machine ready.
 3. **`admin.razekit.com`** — domain does not resolve; no separate admin app exists.
 4. **Engagement collector** — no external platform integration exists, so `SocialCampaignPost.metrics` is seeded but not live-synced. Video Engagement stays `null` for real contests rather than being fabricated.
 5. **Resend domain** — unverified, so OTP/reset email only reaches the account owner.

@@ -281,6 +281,10 @@ async function seed() {
             ranked.forEach((e, i) => {
               add('ScoreSnapshot', {
                 contest_id: contestId, submission_id: e.id, creator_id: e.creator.id, client_id: brand.id,
+                // Denormalised so the public Winners page is a single query.
+                contest_title: contestRow.data.title, category, cover_image_url: contestRow.data.cover_image_url,
+                prize_amount: prize, currency: 'INR',
+                creator_name: e.creator.fullName, brand_name: brand.fullName,
                 engagement_score: e.engagement_score, traffic_score: e.traffic_score,
                 final_score: e.final_score, rank: i + 1, is_winner: e.id === winner.id,
                 tie_break_applied: ranked.some((o) => o.id !== e.id && o.final_score === e.final_score),
