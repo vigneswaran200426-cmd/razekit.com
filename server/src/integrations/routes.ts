@@ -2,11 +2,13 @@ import { Router } from 'express';
 import multer from 'multer';
 import { requireAuth } from '../auth/middleware.js';
 import { uploadPublic, uploadPrivate, createSignedUrl } from './storage.js';
+import { validateUpload, MAX_UPLOAD_BYTES } from './uploadGuard.js';
 import { sendEmail } from './email.js';
 import { invokeLLM } from './llm.js';
 import { generateImage } from './image.js';
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 512 * 1024 * 1024 } }); // 512MB
+// Hard ceiling at the parser; per-type limits + content sniffing in uploadGuard.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } });
 
 export const integrationsRouter = Router();
 
@@ -14,7 +16,9 @@ export const integrationsRouter = Router();
 integrationsRouter.post('/upload-file', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'file is required' });
-    const out = await uploadPublic(req.file.buffer, req.file.originalname, req.file.mimetype);
+    const check = validateUpload(req.file) as { ok: boolean; message?: string; storageName?: string; mimetype?: string };
+    if (!check.ok) return res.status(400).json({ error: check.message });
+    const out = await uploadPublic(req.file.buffer, check.storageName!, check.mimetype!);
     res.json(out);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Upload failed' });
@@ -25,7 +29,9 @@ integrationsRouter.post('/upload-file', requireAuth, upload.single('file'), asyn
 integrationsRouter.post('/upload-private-file', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'file is required' });
-    const out = await uploadPrivate(req.file.buffer, req.file.originalname, req.file.mimetype);
+    const check = validateUpload(req.file) as { ok: boolean; message?: string; storageName?: string; mimetype?: string };
+    if (!check.ok) return res.status(400).json({ error: check.message });
+    const out = await uploadPrivate(req.file.buffer, check.storageName!, check.mimetype!);
     res.json(out);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || 'Upload failed' });
