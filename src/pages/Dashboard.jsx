@@ -5,6 +5,7 @@ import { entities } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money, moneyMinor } from '@/lib/format';
 import { PageHeader, StatTile, Card, Button, EmptyState, Skeleton } from '@/components/ui';
+import CampaignCarousel from '@/components/CampaignCarousel';
 import ContestCard from '@/components/ContestCard';
 
 function greeting() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; }
@@ -51,7 +52,8 @@ export default function Dashboard() {
     const drafts = mine.filter((c) => c.status === 'draft');
     return (
       <div className="space-y-8">
-        <PageHeader eyebrow="Brand" title={`${greeting()}, ${firstName}`} description="Your campaigns at a glance."
+        <CampaignCarousel />
+        <PageHeader title={`${greeting()}, ${firstName}`} description="Your campaigns at a glance."
           actions={<Button to="/create-contest"><Plus className="w-4 h-4" /> New contest</Button>} />
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatTile label="Active contests" value={active.length} icon={Flag} />
@@ -77,7 +79,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <PageHeader eyebrow={role === 'admin' ? 'Admin' : 'Creator'} title={`${greeting()}, ${firstName}`} description="Here’s what’s happening and what to do next." />
+      <CampaignCarousel />
+        <PageHeader title={`${greeting()}, ${firstName}`} description="Here’s what’s happening and what to do next." />
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile label="Active" value={active.length} icon={Compass} />
         <StatTile label="Submitted" value={mySubs.length} icon={FileText} />

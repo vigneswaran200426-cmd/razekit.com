@@ -2,6 +2,8 @@
 import { visualAssetRequest, visualAssetAdmin, visualAssetWorker } from './visual.js';
 import { winnerFinalize } from './winner.js';
 import { trackingLinkCreate, trackingLinkList } from './tracking.js';
+import { adminOverview, adminContests, adminTraffic, adminUsers, adminAudit } from './admin.js';
+import { supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge } from './support.js';
 import { trackerCreatorOverview, trackerCreatorContests, trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail } from './tracker.js';
 
 // All handlers (name → fn(ctx)).
@@ -13,6 +15,8 @@ export const HANDLERS = {
   trackingLinkCreate, trackingLinkList,
   trackerCreatorOverview, trackerCreatorContests,
   trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail,
+  supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge,
+  adminOverview, adminContests, adminTraffic, adminUsers, adminAudit,
 };
 
 // Functions callable over HTTP via base44.functions.invoke(name, payload).
@@ -26,7 +30,14 @@ export const HTTP_ALLOWED = new Set([
   // Tracker is read-only; each handler enforces its own ownership check.
   'trackerCreatorOverview', 'trackerCreatorContests',
   'trackerBrandOverview', 'trackerBrandCampaigns', 'trackerCampaignDetail',
+  // Support: ownership is taken from the session, admin actions re-check role.
+  'supportTicketCreate', 'supportTicketList', 'supportTicketUpdate', 'supportAsk', 'supportKnowledge',
+  // Admin control center — gated below AND re-checked inside each handler.
+  'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',
 ]);
 
 // Require platform admin at the route boundary (handlers also re-check).
-export const ADMIN_ONLY = new Set(['visualAssetAdmin']);
+export const ADMIN_ONLY = new Set([
+  'visualAssetAdmin', 'supportTicketUpdate',
+  'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',
+]);

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/lib/auth';
 import { HomeGate, ProtectedRoute } from '@/components/routing';
 import AppShell from '@/components/AppShell';
+import { ToastProvider } from '@/components/Toast';
 
 import Landing from '@/pages/Landing';
 import Login from '@/pages/auth/Login';
@@ -21,7 +22,6 @@ import Wallet from '@/pages/Wallet';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Notifications from '@/pages/Notifications';
-import Social from '@/pages/Social';
 import Help from '@/pages/Help';
 import Admin from '@/pages/Admin';
 import CreateContest from '@/pages/CreateContest';
@@ -33,7 +33,8 @@ import NotFound from '@/pages/NotFound';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
         <Routes>
           {/* Standalone */}
           <Route path="/" element={<HomeGate landing={Landing} />} />
@@ -60,7 +61,6 @@ export default function App() {
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-            <Route path="/social" element={<ProtectedRoute roles={['client']}><Social /></ProtectedRoute>} />
             <Route path="/create-contest" element={<ProtectedRoute roles={['client']}><CreateContest /></ProtectedRoute>} />
             <Route path="/contest/:id/submit" element={<ProtectedRoute roles={['creator']}><SubmitWork /></ProtectedRoute>} />
             <Route path="/contest/:id/review" element={<ProtectedRoute roles={['client']}><Review /></ProtectedRoute>} />
@@ -71,6 +71,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

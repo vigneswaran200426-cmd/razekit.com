@@ -25,6 +25,8 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
     'scoring_version', 'scored_at', 'score_state',
   ],
   WinnerPublish: ['published_at'],
+  // A user files a ticket; only the server moves it through its lifecycle.
+  SupportTicket: ['status', 'admin_response', 'priority', 'user_id'],
   // Server-computed aggregates — never client-writable.
   CreatorStats: ['*'],
   PublicCreatorStats: ['*'],
