@@ -8,6 +8,7 @@ import { entities, uploads, fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Card, Button, Badge, Spinner, EmptyState, PageHeader, Skeleton } from '@/components/ui';
 import { ScoreBreakdown, ScorePill, ScoreStateBadge } from '@/components/Score';
+import { ComplianceResult } from '@/components/Requirements';
 import { cn } from '@/lib/cn';
 
 const STATUS_TONE = { won: 'success', shortlisted: 'primary', not_selected: 'neutral', submitted: 'warning', working: 'neutral' };
@@ -186,6 +187,9 @@ export default function Review() {
                   )}
                 </div>
               </Card>
+
+              {/* Requirement check comes BEFORE performance (spec 28). */}
+              <ComplianceResult submissionId={sel.id} />
 
               {/* Performance — inspectable, not editable (spec 27). */}
               <Card className="p-5 space-y-3">

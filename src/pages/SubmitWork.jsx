@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, UploadCloud, CheckCircle2, Film, Loader2, AlertCircle, Trophy, Clock } from 'lucide-react';
-import { entities, uploads } from '@/lib/api';
+import { entities, uploads, fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money, timeLeft } from '@/lib/format';
 import { Card, Button, Input, Label, Badge, Skeleton, PageHeader, EmptyState } from '@/components/ui';
+import { ContestRequirements, ComplianceResult } from '@/components/Requirements';
 
 const PLATFORMS = ['Instagram', 'YouTube', 'TikTok', 'Facebook', 'X', 'LinkedIn', 'Other'];
 
@@ -50,6 +51,8 @@ export default function SubmitWork() {
     } finally { setUploading(false); }
   };
 
+  const [submittedId, setSubmittedId] = useState(null);
+
   const submit = async () => {
     if (!f.final_asset_uri && !f.live_url.trim()) {
       setErr('Attach your final creative or paste the live URL before submitting.');
@@ -64,6 +67,10 @@ export default function SubmitWork() {
       if (s) await entities.Submission.update(s.id, payload);
       else s = await entities.Submission.create({ contest_id: id, client_id: contest?.created_by_id, ...payload });
       if (contest && ['open', 'joined', 'working'].includes(contest.status)) await entities.Contest.update(id, { status: 'submitted' }).catch(() => {});
+      // Check the entry against the contest's locked requirements straight away
+      // so the creator learns about a problem now, not at judging time.
+      setSubmittedId(s.id);
+      await fn('complianceEvaluate', { submission_id: s.id }).catch(() => {});
       await entities.Notification.create({ type: 'submission_uploaded', title: 'New submission', description: contest?.title, contest_id: id, recipient_user_id: contest?.created_by_id }).catch(() => {});
       setDone(true);
     } catch (e2) {
@@ -94,6 +101,8 @@ export default function SubmitWork() {
       <CheckCircle2 className="w-14 h-14 text-success mx-auto" aria-hidden="true" />
       <h1 className="mt-4 font-display text-2xl font-extrabold text-ink">Entry submitted</h1>
       <p className="mt-2 text-muted">Your work is in for “{contest?.title}”. You’ll be notified when the brand reviews it.</p>
+      {/* Requirement check result — the creator finds out now, not at judging. */}
+      {submittedId && <div className="mt-6 text-left"><ComplianceResult submissionId={submittedId} /></div>}
       <div className="mt-6 flex justify-center gap-3"><Button to="/work">My work</Button><Button to={`/contest/${id}`} variant="secondary">Contest</Button></div>
     </div>
   );
@@ -116,6 +125,8 @@ export default function SubmitWork() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <Link to={`/contest/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> Contest</Link>
+
+      <ContestRequirements contestId={id} />
 
       <PageHeader
         eyebrow="Submit your work"

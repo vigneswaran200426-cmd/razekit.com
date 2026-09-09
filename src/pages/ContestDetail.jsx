@@ -5,6 +5,7 @@ import { entities } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money, timeLeft, dateShort } from '@/lib/format';
 import { Card, Button, Badge, Skeleton, EmptyState, PageHeader } from '@/components/ui';
+import { ContestRequirements } from '@/components/Requirements';
 
 function parseList(json) { try { const v = JSON.parse(json); return Array.isArray(v) ? v : []; } catch { return []; } }
 
@@ -123,6 +124,7 @@ export default function ContestDetail() {
             <Card className="p-5"><h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">Brief</h2>
               <p className="text-sm text-ink/90 leading-relaxed whitespace-pre-line">{contest.description}</p></Card>
           )}
+          <ContestRequirements contestId={id} />
           {deliverables.length > 0 && (
             <Card className="p-5"><h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Deliverables</h2>
               <ul className="grid sm:grid-cols-2 gap-2.5">{deliverables.map((d, i) => (

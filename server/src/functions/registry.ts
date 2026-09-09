@@ -2,6 +2,8 @@
 import { visualAssetRequest, visualAssetAdmin, visualAssetWorker } from './visual.js';
 import { winnerFinalize } from './winner.js';
 import { trackingLinkCreate, trackingLinkList } from './tracking.js';
+import { criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet } from './criteria.js';
+import { complianceEvaluate, complianceGet, complianceReview } from './compliance.js';
 import { winnersShowcase, winnersLeaderboard, creatorPublicProfile } from './winners.js';
 import { adminOverview, adminContests, adminTraffic, adminUsers, adminAudit } from './admin.js';
 import { supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge } from './support.js';
@@ -19,6 +21,8 @@ export const HANDLERS = {
   supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge,
   adminOverview, adminContests, adminTraffic, adminUsers, adminAudit,
   winnersShowcase, winnersLeaderboard, creatorPublicProfile,
+  criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet,
+  complianceEvaluate, complianceGet, complianceReview,
 };
 
 // Functions callable over HTTP via base44.functions.invoke(name, payload).
@@ -38,6 +42,10 @@ export const HTTP_ALLOWED = new Set([
   'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',
   // Public winner results + leaderboard (finalized data only).
   'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile',
+  // Contest Intelligence. Each handler enforces its own ownership check;
+  // criteriaGet is readable by participants so creators can see the rules.
+  'criteriaLibrary', 'criteriaRecommend', 'criteriaConfirm', 'criteriaGet',
+  'complianceEvaluate', 'complianceGet', 'complianceReview',
 ]);
 
 // Callable WITHOUT authentication. Only finalized, intentionally public data:

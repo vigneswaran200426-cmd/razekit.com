@@ -19,6 +19,8 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   Contest: [
     'winner_user_id', 'winner_submission_id', 'winner_selected_at', 'completed_at',
     'platform_fee', 'duration_rule_version', 'min_duration_days', 'max_duration_days',
+    // Criteria confirmation is what unlocks payment — only the server sets it.
+    'criteria_version_id', 'criteria_confirmed_at',
   ],
   Submission: [
     'engagement_score', 'traffic_score', 'final_score', 'rank',
@@ -27,6 +29,14 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   WinnerPublish: ['published_at'],
   // A user files a ticket; only the server moves it through its lifecycle.
   SupportTicket: ['status', 'admin_response', 'priority', 'user_id'],
+  // Contest rules and compliance results are written only by the server.
+  // A client must never be able to post a PASS or forge eligibility.
+  ContestCriteriaVersion: ['*'],
+  ContestCriterion: ['*'],
+  SubmissionCompliance: ['*'],
+  SubmissionComplianceFinding: ['*'],
+  ComplianceReview: ['*'],
+  AgentRun: ['*'],
   // Server-computed aggregates — never client-writable.
   CreatorStats: ['*'],
   PublicCreatorStats: ['*'],

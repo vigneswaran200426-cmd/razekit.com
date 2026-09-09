@@ -13,6 +13,8 @@
 import { json } from './context.js';
 import { computeContestScores } from '../scoring/compute.js';
 import { SCORING_VERSION } from '../scoring/index.js';
+import { loadLockedCriteria } from './compliance.js';
+import { ELIGIBILITY, ENGINE_VERSION as COMPLIANCE_ENGINE_VERSION } from '../compliance/engine.js';
 
 const SCORED_STATES = ['submitted', 'shortlisted', 'won', 'not_selected'];
 
@@ -43,10 +45,55 @@ export async function winnerFinalize(ctx) {
     return json({ error: { code: 'NO_SUBMISSIONS', message: 'This contest has no eligible submissions to finalize.' } }, 409);
   }
 
+  // ── COMPLIANCE GATE (spec 11/28) ────────────────────────────────────────
+  // Rules come BEFORE performance: only submissions that satisfy the contest's
+  // locked mandatory requirements may enter scoring at all.
+  const { version: criteriaVersion } = await loadLockedCriteria(svc, contestId);
+  const complianceBySubmission = new Map();
+  let unresolved = 0;
+
+  if (criteriaVersion) {
+    for (const s of eligible) {
+      const rows = await svc.entities.SubmissionCompliance
+        .filter({ submission_id: s.id }, '-created_date', 5).catch(() => []);
+      const latest = rows.find((r) => r.criteria_version_id === criteriaVersion.id) || null;
+      complianceBySubmission.set(s.id, latest);
+      // Never silently finalize while a mandatory requirement is unevaluated
+      // or awaiting review (spec 23).
+      if (!latest || latest.status === ELIGIBILITY.REVIEW_REQUIRED || latest.status === ELIGIBILITY.PENDING) unresolved++;
+    }
+
+    if (unresolved > 0) {
+      return json({
+        error: {
+          code: 'COMPLIANCE_INCOMPLETE',
+          message: `${unresolved} submission(s) still need a requirement check or review before a winner can be finalized.`,
+          unresolved,
+        },
+      }, 409);
+    }
+  }
+
+  const compliant = criteriaVersion
+    ? eligible.filter((s) => complianceBySubmission.get(s.id)?.status === ELIGIBILITY.ELIGIBLE)
+    : eligible;
+
+  if (criteriaVersion && !compliant.length) {
+    return json({
+      error: {
+        code: 'NO_ELIGIBLE_SUBMISSIONS',
+        message: 'No submission met the mandatory contest requirements, so a winner cannot be finalized.',
+      },
+    }, 409);
+  }
+
+  const compliantIds = new Set(compliant.map((s) => s.id));
+
   // Recompute from authoritative signals at finalization time — never trust a
   // stored score that could be stale. The scoring engine is the only source.
   const computed = await computeContestScores(svc, contestId).catch(() => ({ ranked: [], scoredCount: 0 }));
-  const scored = computed.ranked || [];
+  // Ineligible submissions are excluded from ranking entirely.
+  const scored = (computed.ranked || []).filter((r) => !criteriaVersion || compliantIds.has(r.id));
 
   let winner;
   let method;
@@ -73,9 +120,17 @@ export async function winnerFinalize(ctx) {
     if (!submissionId) {
       return json({ error: { code: 'SELECTION_REQUIRED', message: 'Select a submission to finalize.' } }, 400);
     }
-    winner = eligible.find((s) => s.id === submissionId);
-    if (!winner) return json({ error: 'Submission does not belong to this contest.' }, 400);
-    ranked = [winner, ...eligible.filter((s) => s.id !== winner.id)];
+    winner = compliant.find((s) => s.id === submissionId);
+    if (!winner) {
+      // Either not in this contest, or it failed a mandatory requirement.
+      const exists = eligible.some((s) => s.id === submissionId);
+      return json({
+        error: exists
+          ? { code: 'SUBMISSION_INELIGIBLE', message: 'That submission did not meet the mandatory contest requirements and cannot be selected.' }
+          : 'Submission does not belong to this contest.',
+      }, exists ? 422 : 400);
+    }
+    ranked = [winner, ...compliant.filter((s) => s.id !== winner.id)];
     method = 'manual_pre_scoring';
   }
 
@@ -133,7 +188,13 @@ export async function winnerFinalize(ctx) {
       tie_break_applied: Boolean(
         s.final_score !== null && ranked.some((o) => o.id !== s.id && o.final_score === s.final_score)
       ),
-      scoring_version: method === 'scored' ? SCORING_VERSION : null,
+      scoring_version: SCORING_VERSION,
+      selection_method: method,
+      // Compliance context, so a finalized result stays reproducible.
+      criteria_version_id: criteriaVersion?.id || null,
+      compliance_status: complianceBySubmission.get(s.id)?.status || null,
+      compliance_id: complianceBySubmission.get(s.id)?.id || null,
+      compliance_evaluation_version: criteriaVersion ? COMPLIANCE_ENGINE_VERSION : null,
       metric_snapshot: s.metric_snapshot || null,
       score_state: s.score_state || null,
       finalized_at: now,
@@ -153,6 +214,8 @@ export async function winnerFinalize(ctx) {
       final_score: winner.final_score ?? null,
       scoring_version: winner.scoring_version ?? null,
       candidates: ranked.length,
+      criteria_version_id: criteriaVersion?.id || null,
+      excluded_for_compliance: criteriaVersion ? eligible.length - compliant.length : 0,
       finalized_at: now,
     }),
   }).catch(() => null);

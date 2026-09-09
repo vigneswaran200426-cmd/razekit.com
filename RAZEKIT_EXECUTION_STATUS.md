@@ -109,6 +109,31 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 | — | Bug found + fixed | **FIXED** | `activeGateway().accepts` was true for an adapter that supports no payments |
 | — | Bug found + fixed | **FIXED** | `adminUsers` counted from a 500-row page → wrong creator/brand totals |
 
+## Phase 6 — Contest Intelligence (criteria + compliance)
+
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 1-2 | Criteria step before publish; agent recommends, client decides | **VERIFIED** | `CreateContest.jsx` 3-step flow; live: 10 recommendations, all `mandatory=false` |
+| 2 | Structured criteria library | **TESTED** | `criteria/library.ts`, 8 categories, `auto` vs `manual` evaluability |
+| 3 | Collaboration / account handover section | **IMPLEMENTED** | recommended only when the brief implies it; test asserts it is absent otherwise |
+| 4 | Custom mandatory instructions | **TESTED** | always `manual`; never auto-passes |
+| 5 | Final confirmation gates publication | **VERIFIED** | confirm without checkbox → **400**; publish blocked until confirmed |
+| 6 | Immutable versioning + lock | **VERIFIED** | re-confirm on a live contest → **409 CRITERIA_LOCKED**; supersede is admin-only and creates a new version |
+| 7 | Contest Criteria Agent | **TESTED** | deterministic; parses real duration ranges; flags conflicts/gaps; marks unverifiable honestly |
+| 8 | Submission Compliance Agent | **IMPLEMENTED** | evidence only; no fabricated visual claims |
+| 9 | Deterministic Compliance Engine | **TESTED** | AI cannot auto-PASS a mandatory manual criterion |
+| 10 | Human review + override | **IMPLEMENTED** | reason required, audited, original assessment preserved |
+| 11/28 | Compliance precedes scoring | **VERIFIED** | ineligible → **422**; `409 COMPLIANCE_INCOMPLETE` if checks outstanding |
+| 12 | Evaluation snapshot | **VERIFIED** | `ScoreSnapshot` extended (no duplicate entity); carries compliance status + criteria version |
+| 17/18 | Creator sees rules + rejection reason | **IMPLEMENTED** | `components/Requirements.jsx` on ContestDetail, SubmitWork, Review |
+| 21 | Client cannot forge PASS / creator cannot edit criteria | **VERIFIED** | protected fields `'*'`; creator confirm → **403** |
+| 22 | Prompt-injection defense | **TESTED** | fencing + deterministic checks; malicious caption changes nothing |
+| 23 | Agent failure never creates a PASS | **TESTED** | falls back to REVIEW_REQUIRED |
+| 24 | Idempotent / cached evaluation | **IMPLEMENTED** | `content_hash` of submission + criteria hash |
+| — | Bug found + fixed | **FIXED** | `ScoreSnapshot.scoring_version` is required; manual mode wrote `null`, so the snapshot silently failed to save |
+
+**Not done:** Admin "Contest Intelligence" tab (AgentRun data is recorded, screen pending); dedicated review-queue UI.
+
 ## Still open
 
 | Item | State |

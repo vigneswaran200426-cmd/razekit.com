@@ -285,7 +285,9 @@
       "max_downloads",
       "otp_code",
       "max_editors",
-      "brand_destination_url"
+      "brand_destination_url",
+      "criteria_version_id",
+      "criteria_confirmed_at"
     ],
     "rls": {
       "read": {},
@@ -3302,7 +3304,12 @@
       "prize_amount",
       "currency",
       "creator_name",
-      "brand_name"
+      "brand_name",
+      "compliance_status",
+      "criteria_version_id",
+      "compliance_evaluation_version",
+      "compliance_id",
+      "selection_method"
     ],
     "rls": {
       "read": {
@@ -3319,6 +3326,327 @@
             }
           }
         ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ContestCriteriaVersion": {
+    "name": "ContestCriteriaVersion",
+    "required": [
+      "contest_id",
+      "version",
+      "status"
+    ],
+    "defaults": {
+      "status": "draft",
+      "version": 1,
+      "mandatory_count": 0
+    },
+    "fields": [
+      "contest_id",
+      "client_id",
+      "version",
+      "status",
+      "criteria_hash",
+      "confirmed_by",
+      "confirmed_at",
+      "locked_at",
+      "superseded_by",
+      "mandatory_count",
+      "collaboration_required",
+      "handover_required",
+      "handover_config",
+      "collaboration_config",
+      "source_agent_run_id",
+      "notes"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ContestCriterion": {
+    "name": "ContestCriterion",
+    "required": [
+      "criteria_version_id",
+      "contest_id",
+      "key",
+      "label"
+    ],
+    "defaults": {
+      "mandatory": false,
+      "source": "recommended",
+      "status": "active",
+      "evaluability": "manual",
+      "position": 0
+    },
+    "fields": [
+      "criteria_version_id",
+      "contest_id",
+      "key",
+      "category",
+      "label",
+      "description",
+      "mandatory",
+      "source",
+      "status",
+      "evaluability",
+      "evaluator",
+      "params",
+      "rationale",
+      "position"
+    ],
+    "rls": {
+      "read": {},
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "SubmissionCompliance": {
+    "name": "SubmissionCompliance",
+    "required": [
+      "submission_id",
+      "contest_id",
+      "criteria_version_id",
+      "status"
+    ],
+    "defaults": {
+      "status": "pending",
+      "engine_version": "rk-compliance-1.0.0",
+      "mandatory_failed": 0,
+      "review_required": 0
+    },
+    "fields": [
+      "submission_id",
+      "contest_id",
+      "creator_id",
+      "client_id",
+      "criteria_version_id",
+      "status",
+      "engine_version",
+      "agent_run_id",
+      "content_hash",
+      "evaluated_at",
+      "mandatory_failed",
+      "review_required",
+      "passed",
+      "not_evaluable",
+      "reason"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "SubmissionComplianceFinding": {
+    "name": "SubmissionComplianceFinding",
+    "required": [
+      "compliance_id",
+      "criterion_key",
+      "status"
+    ],
+    "defaults": {
+      "status": "not_evaluable",
+      "mandatory": false,
+      "overridden": false
+    },
+    "fields": [
+      "compliance_id",
+      "submission_id",
+      "contest_id",
+      "criterion_id",
+      "criterion_key",
+      "criterion_label",
+      "mandatory",
+      "status",
+      "evidence",
+      "confidence",
+      "evaluator",
+      "overridden",
+      "overridden_by",
+      "override_reason",
+      "evaluated_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.contest_id": "*"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "AgentRun": {
+    "name": "AgentRun",
+    "required": [
+      "agent_name",
+      "run_id",
+      "status"
+    ],
+    "defaults": {
+      "status": "queued",
+      "retry_count": 0,
+      "agent_version": "1.0.0"
+    },
+    "fields": [
+      "agent_name",
+      "agent_version",
+      "run_id",
+      "contest_id",
+      "submission_id",
+      "triggered_by",
+      "status",
+      "started_at",
+      "completed_at",
+      "duration_ms",
+      "provider",
+      "input_ref",
+      "output_summary",
+      "confidence",
+      "error",
+      "retry_count",
+      "review_status"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ComplianceReview": {
+    "name": "ComplianceReview",
+    "required": [
+      "compliance_id",
+      "reviewer_id",
+      "action"
+    ],
+    "defaults": {},
+    "fields": [
+      "compliance_id",
+      "finding_id",
+      "submission_id",
+      "contest_id",
+      "reviewer_id",
+      "reviewer_role",
+      "action",
+      "reason",
+      "previous_status",
+      "new_status",
+      "agent_status_at_review",
+      "created_at"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
       },
       "create": {
         "user_condition": {
