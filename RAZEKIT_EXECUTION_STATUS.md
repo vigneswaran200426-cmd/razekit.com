@@ -84,11 +84,40 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 | 47 | `prefers-reduced-motion` respected | **IMPLEMENTED** | global block in `index.css` |
 | — | Bug found + fixed during verification | **FIXED** | `Segmented` expects `t.key`; my tabs used `value` → tabs silently dead. Caught in live browser, not by the build. |
 
-## Later phases — INSPECTED / PLANNED
+## Phase 5 — Notifications, Help, Admin, Payment core, Simulation, Security
 
-Admin Control Center · Help/AI/Tickets · Notifications · Motion system ·
-Full UI polish · Security hardening sweep · One-month simulation · QA accounts ·
-Campaign carousel · Payment core/GatePay — all **INSPECTED**, **PLANNED**.
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 15 | 3s non-dismissible contextual notifications, one action, dedup | **IMPLEMENTED** | `components/Toast.jsx`, spec event table |
+| 16 | Fraud/security persistence + severity, no thresholds leaked | **IMPLEMENTED** | `SECURITY_EVENTS` + `SecurityWarnings` |
+| 19 | Motion system + logo reaction on meaningful events only | **IMPLEMENTED** | `Brand.jsx` `pulseLogo`; inert under reduced-motion |
+| 17 | Identity cleanup; "Social Tracker" removed | **IMPLEMENTED** | `/social` page + route deleted; decorative eyebrows dropped |
+| 25 | 3-slide campaign carousel, real deep-link only | **IMPLEMENTED** | `CampaignCarousel.jsx`; falls back to Discover when no contest exists |
+| 13 | Help Center 10-page guide (progress/prev-next/jump/resume/search) | **IMPLEMENTED** | `pages/Help.jsx`; duration tiers fetched from server |
+| 14 | AI support grounded; refuses to invent; escalation | **IMPLEMENTED** | `support/knowledge.ts` + `supportAsk` — deterministic KB match, no generative step |
+| 22 | Ticket lifecycle; ownership from session; IDOR-safe | **IMPLEMENTED** | `functions/support.ts`; status/response server-owned |
+| 11/12 | Admin control center | **VERIFIED** | `functions/admin.ts` + `pages/Admin.jsx`; live against seeded data |
+| 18/34 | Admin sees internal risk reasons; users never do | **VERIFIED** | `adminTraffic` risk_reasons admin-only |
+| 8/9/10 | Payment core + gateway adapter boundary + state machine | **TESTED** | `payments/gateway.ts`; 7 tests incl. illegal transitions, idempotent replay, honest degradation |
+| 10 | One-step safe gateway disable, history preserved | **TESTED** | `GATEWAY_STATE` + `activeGateway()` |
+| 23 | One-month simulation, 500 creators + 100 brands | **VERIFIED** | `scripts/seed-simulation.ts`; **615 accounts, 4,156 records**, 190 contests, 533 submissions, 475 links, 1,900 traffic events, 261 snapshots, 91 winners, 80 tickets |
+| 23 | Real duration rules + real scoring math in seed | **VERIFIED** | seed calls `allowedDuration()` and the live scoring engine |
+| 31 | One controlled, reversible seed reset | **VERIFIED** | `npm run clean:sim` — deletes only `seed_batch` rows; no truncate/drop |
+| 24 | 10 creator + 5 brand QA accounts | **VERIFIED** | exact spec credentials; `creator.qa01` + `brand.qa01` login → **200** |
+| 40 | Seed isolated from real reporting | **IMPLEMENTED** | `@razekit.sim` / `@razekit.test` tagged; admin flags seed identities |
+| 20/21 | Rate limits (login, OTP, reset, tracking, functions) | **VERIFIED** | live: 10×401 then **429**; other IPs unaffected; message leaks no account existence |
+| — | Bug found + fixed | **FIXED** | `activeGateway().accepts` was true for an adapter that supports no payments |
+| — | Bug found + fixed | **FIXED** | `adminUsers` counted from a 500-row page → wrong creator/brand totals |
+
+## Still open
+
+| Item | State |
+|---|---|
+| GatePay provider adapter | **BLOCKED** — provider identity/API unknown, and all gateways were removed by owner instruction. The adapter boundary + state machine are built and tested; only the provider implementation is missing. |
+| `admin.razekit.com` separate deployment | **BLOCKED** — domain does not resolve; admin runs at `/admin`. |
+| Engagement collector (external platform APIs) | **BLOCKED** — no platform integration exists; `SocialCampaignPost.metrics` is seeded but not live-synced. |
+| File-upload hardening | **PLANNED** |
+| Production CORS fix | **BLOCKED — needs owner** |
 
 ---
 

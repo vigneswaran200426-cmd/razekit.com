@@ -6,10 +6,11 @@
 import { Router } from 'express';
 import { recordClick, resolveLink } from './service.js';
 import { config } from '../config.js';
+import { trackingLimiter } from '../middleware/rateLimit.js';
 
 export const trafficRouter = Router();
 
-trafficRouter.get('/:code', async (req, res) => {
+trafficRouter.get('/:code', trackingLimiter, async (req, res) => {
   const code = String(req.params.code || '');
   let destination: string | null = null;
 

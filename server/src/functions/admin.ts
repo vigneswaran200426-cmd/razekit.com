@@ -164,20 +164,23 @@ export async function adminTraffic(ctx) {
 export async function adminUsers(ctx) {
   const denied = requireAdmin(ctx); if (denied) return denied;
   const svc = ctx.svc;
-  const users = await svc.entities.User.filter({}, '-created_date', 500).catch(() => []);
+  // Counts must reflect ALL accounts, not one page — a capped page produced
+  // wrong creator/brand totals.
+  const users = await svc.entities.User.filter({}, '-created_date', 5000).catch(() => []);
   return json({
     total: users.length,
+    counted_window: users.length,
     creators: count(users, (u) => u.user_role === 'creator'),
     clients: count(users, (u) => u.user_role === 'client'),
     admins: count(users, (u) => u.role === 'admin'),
     // Seed identities are tagged so they can be excluded from real reporting.
-    seeded: count(users, (u) => String(u.email || '').endsWith('@razekit.test') || String(u.email || '').endsWith('@razekit.demo')),
+    seeded: count(users, (u) => String(u.email || '').endsWith('@razekit.test') || String(u.email || '').endsWith('@razekit.demo') || String(u.email || '').endsWith('@razekit.sim')),
     users: users.slice(0, 200).map((u) => ({
       id: u.id, email: u.email, full_name: u.full_name || null,
       role: u.role, user_role: u.user_role || null,
       account_status: u.account_status || 'active',
       created_date: u.created_date,
-      is_seed: String(u.email || '').endsWith('@razekit.test') || String(u.email || '').endsWith('@razekit.demo'),
+      is_seed: String(u.email || '').endsWith('@razekit.test') || String(u.email || '').endsWith('@razekit.demo') || String(u.email || '').endsWith('@razekit.sim'),
     })),
   });
 }

@@ -3,11 +3,12 @@ import { HANDLERS, HTTP_ALLOWED, ADMIN_ONLY } from './registry.js';
 import { makeFnCtx } from './context.js';
 import { requireAuth } from '../auth/middleware.js';
 import { EntityError } from '../entities/service.js';
+import { functionsLimiter } from '../middleware/rateLimit.js';
 
 export const functionsRouter = Router();
 
 // base44.functions.invoke(name, payload) → POST /api/functions/:name
-functionsRouter.post('/:name', requireAuth, async (req, res) => {
+functionsRouter.post('/:name', functionsLimiter, requireAuth, async (req, res) => {
   const name = req.params.name;
   if (!HTTP_ALLOWED.has(name)) return res.status(404).json({ error: `Unknown function: ${name}` });
   if (ADMIN_ONLY.has(name) && req.user?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });

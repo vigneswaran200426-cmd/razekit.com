@@ -9,6 +9,7 @@ import { publicUser } from './users.js';
 import { requireAuth } from './middleware.js';
 import { sendEmail } from '../integrations/email.js';
 import { buildGoogleAuthUrl, exchangeGoogleCode, verifyGoogleState } from './oauth.js';
+import { authLimiter, otpLimiter } from '../middleware/rateLimit.js';
 
 export const authRouter = Router();
 
@@ -19,7 +20,7 @@ const norm = (e: string) => String(e || '').trim().toLowerCase();
 // verification. If email is in console mode (no provider), we can't deliver the
 // code — so create the account immediately and return a session. Adding
 // EMAIL_DRIVER=resend/smtp automatically re-enables OTP verification.
-authRouter.post('/register', async (req, res) => {
+authRouter.post('/register', authLimiter, async (req, res) => {
   const email = norm(req.body?.email);
   const password = String(req.body?.password || '');
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
@@ -49,7 +50,7 @@ authRouter.post('/register', async (req, res) => {
   }
 });
 
-authRouter.post('/verify-otp', async (req, res) => {
+authRouter.post('/verify-otp', otpLimiter, async (req, res) => {
   const email = norm(req.body?.email);
   const code = String(req.body?.code || req.body?.otpCode || '');
   if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
@@ -66,7 +67,7 @@ authRouter.post('/verify-otp', async (req, res) => {
   res.json({ access_token: signToken(user.id), user: publicUser(user) });
 });
 
-authRouter.post('/resend-otp', async (req, res) => {
+authRouter.post('/resend-otp', otpLimiter, async (req, res) => {
   const email = norm(req.body?.email);
   if (!email) return res.status(400).json({ error: 'Email is required' });
   const last = await prisma.authOtp.findFirst({ where: { email, purpose: 'register' }, orderBy: { createdAt: 'desc' } });
@@ -75,7 +76,7 @@ authRouter.post('/resend-otp', async (req, res) => {
   res.json({ ok: true });
 });
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', authLimiter, async (req, res) => {
   const email = norm(req.body?.email);
   const password = String(req.body?.password || '');
   const user = await prisma.appUser.findUnique({ where: { email } });
@@ -136,7 +137,7 @@ const updateMe = async (req: any, res: any) => {
 authRouter.patch('/me', requireAuth, updateMe);
 authRouter.post('/me', requireAuth, updateMe);
 
-authRouter.post('/password/reset-request', async (req, res) => {
+authRouter.post('/password/reset-request', otpLimiter, async (req, res) => {
   const email = norm(req.body?.email);
   if (email) {
     const user = await prisma.appUser.findUnique({ where: { email } });
@@ -151,7 +152,7 @@ authRouter.post('/password/reset-request', async (req, res) => {
   res.json({ ok: true });
 });
 
-authRouter.post('/password/reset', async (req, res) => {
+authRouter.post('/password/reset', otpLimiter, async (req, res) => {
   const token = String(req.body?.resetToken || req.body?.token || '');
   const newPassword = String(req.body?.newPassword || req.body?.password || '');
   if (!token || newPassword.length < 8) return res.status(400).json({ error: 'Invalid token or password too short' });
