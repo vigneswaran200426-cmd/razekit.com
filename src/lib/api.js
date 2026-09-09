@@ -91,7 +91,10 @@ export const uploads = {
   signedUrl: (file_uri, expires_in = 3600) => request('POST', '/api/integrations/core/create-file-signed-url', { body: { file_uri, expires_in } }),
 };
 
+// Contest fairness rule table (server-owned data; the server is the enforcer).
+export const contestRules = () => request('GET', '/api/contest-rules');
+
 export const analytics = { track: (evt) => { try { request('POST', '/api/analytics/track', { body: evt || {} }); } catch {} } };
 
-export const api = { BASE, token, request, entities, auth, fn, uploads, analytics };
+export const api = { BASE, token, request, entities, auth, fn, uploads, analytics, contestRules };
 export default api;

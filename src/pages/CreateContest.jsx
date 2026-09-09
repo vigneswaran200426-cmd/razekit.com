@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { entities } from '@/lib/api';
+import { ArrowLeft, ShieldCheck, CalendarClock } from 'lucide-react';
+import { entities, contestRules } from '@/lib/api';
 import { money } from '@/lib/format';
 import { PageHeader, Card, Button, Input, Label } from '@/components/ui';
 
@@ -13,7 +13,19 @@ const MARKETS = {
 
 export default function CreateContest() {
   const navigate = useNavigate();
-  const [f, setF] = useState({ title: '', short_description: '', category: CATEGORIES[0], description: '', prize_amount: '', number_of_winners: 1, deadline: '', market: 'IN' });
+  const [f, setF] = useState({ title: '', short_description: '', category: CATEGORIES[0], description: '', prize_amount: '', number_of_winners: 1, days: '', market: 'IN' });
+  const [rules, setRules] = useState(null);
+
+  useEffect(() => { contestRules().then(setRules).catch(() => {}); }, []);
+
+  // Allowed duration is looked up from the SERVER-provided tier table; the
+  // server re-validates on save, so this is guidance, never the enforcement.
+  const window_ = useMemo(() => {
+    const prize = Number(f.prize_amount);
+    if (!rules || !prize || f.market !== 'IN') return null;
+    const t = rules.tiers.find((x) => x.maxPrize === null || prize <= x.maxPrize);
+    return t ? { min: t.minDays, max: Math.min(t.maxDays, rules.globalMaxDays), tier: t.tier, label: t.label } : null;
+  }, [rules, f.prize_amount, f.market]);
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
@@ -24,13 +36,17 @@ export default function CreateContest() {
     setErr('');
     if (!f.title.trim()) return setErr('Give your contest a title.');
     if (!Number(f.prize_amount)) return setErr('Set a prize amount.');
-    if (!f.deadline) return setErr('Pick a deadline.');
+    const days = Number(f.days);
+    if (!days) return setErr('Choose how many days the contest runs.');
+    if (window_ && (days < window_.min || days > window_.max)) {
+      return setErr(`A ${mkt.symbol}${Number(f.prize_amount).toLocaleString('en-IN')} prize allows a ${window_.min}–${window_.max} day contest.`);
+    }
     setSaving(true);
     try {
       const c = await entities.Contest.create({
         title: f.title.trim(), short_description: f.short_description.trim(), category: f.category,
         description: f.description.trim(), prize_amount: Number(f.prize_amount), number_of_winners: Number(f.number_of_winners) || 1,
-        deadline: new Date(f.deadline).toISOString(), currency: mkt.currency, settlement_region: mkt.region, status: 'open',
+        deadline: new Date(Date.now() + days * 86400000).toISOString(), currency: mkt.currency, settlement_region: mkt.region, status: 'open',
       });
       navigate(`/contest/${c.id}`);
     } catch (e2) { setErr(e2.message || 'Could not create the contest.'); }
@@ -65,8 +81,29 @@ export default function CreateContest() {
           <div className="grid sm:grid-cols-3 gap-4">
             <div><Label htmlFor="p">Prize ({mkt.symbol})</Label><Input id="p" type="number" min="0" value={f.prize_amount} onChange={set('prize_amount')} placeholder={f.market === 'GLOBAL' ? '300' : '25000'} className="nums" /></div>
             <div><Label htmlFor="w">Winners</Label><Input id="w" type="number" min="1" value={f.number_of_winners} onChange={set('number_of_winners')} className="nums" /></div>
-            <div><Label htmlFor="d">Deadline</Label><Input id="d" type="datetime-local" value={f.deadline} onChange={set('deadline')} /></div>
+            <div><Label htmlFor="d">Duration (days)</Label>
+              <Input id="d" type="number" min={window_?.min || 1} max={window_?.max || 30} value={f.days} onChange={set('days')}
+                placeholder={window_ ? String(window_.min) : '—'} className="nums" disabled={!window_ && f.market === 'IN'} />
+            </div>
           </div>
+          {window_ && (
+            <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4">
+              <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+                <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted">Contest prize</p>
+                  <p className="mt-0.5 font-display text-xl font-extrabold text-ink nums">{money(f.prize_amount, mkt.currency)}</p></div>
+                <div><p className="text-[11px] font-semibold uppercase tracking-wider text-muted">Allowed duration</p>
+                  <p className="mt-0.5 font-display text-xl font-extrabold text-primary nums">{window_.min}–{window_.max} days</p></div>
+              </div>
+              <p className="mt-3 flex items-start gap-2 text-[12px] leading-relaxed text-muted">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-success mt-px" />
+                <span><span className="font-semibold text-ink">Fair duration rule.</span> RazeKit automatically sets the allowed
+                contest duration based on prize value. This keeps timelines fair and predictable for both clients and creators.</span>
+              </p>
+            </div>
+          )}
+          {Number(f.prize_amount) > 0 && !window_ && f.market === 'IN' && (
+            <p className="flex items-center gap-1.5 text-[12px] text-muted"><CalendarClock className="w-3.5 h-3.5" /> Loading the fair duration rule…</p>
+          )}
           {Number(f.prize_amount) > 0 && <p className="text-sm text-muted">Prize pool: <span className="font-semibold text-ink nums">{money(f.prize_amount, mkt.currency)}</span> · a platform fee is shown at funding.</p>}
         </Card>
         <div className="flex justify-end gap-3">

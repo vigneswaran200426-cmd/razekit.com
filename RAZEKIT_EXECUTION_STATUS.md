@@ -1,0 +1,80 @@
+# RazeKit — Master Execution Status
+
+Source of truth: `RazeKit_Master_Claude_Code_100pct_Specification.pdf` (27 sections)
+plus the verified read-only discovery report. States: NOT STARTED · INSPECTED ·
+PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPPED.
+
+"VERIFIED" requires observed production behaviour, never a green build alone.
+
+---
+
+## Phase 0 — Critical security remediation
+
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 3.1 | `user_role` self-assignment via `PATCH /api/auth/me` | **TESTED** | `auth/routes.ts` — locked after onboarding; admin-only thereafter; value whitelist |
+| 3.2 | `user_role` self-assignment via `PATCH /api/entities/User/:id` | **TESTED** | `entities/service.ts` — `delete cols.userRole` for non-admins (2nd path, found during impl) |
+| 3.3 | `role = admin` cannot be self-assigned | **TESTED** | already blocked; now in explicit `NEVER_SELF` set |
+| 3.4 | `isAdmin` / permissions cannot be self-assigned | **TESTED** | `NEVER_SELF` set |
+| 3.5 | Profile blob bounded (mass-assignment/storage abuse) | **IMPLEMENTED** | 16 KB cap in `updateMe` |
+| 4.1 | Winner finalization moved server-side | **TESTED** | `functions/winner.ts` + registry; `Review.jsx` now calls `fn('winnerFinalize')` |
+| 4.2 | Brand cannot PATCH `Contest.winner_user_id` | **TESTED** | `entities/protected.ts` + `security.test.ts` |
+| 4.3 | Creator cannot self-set `Submission.status='won'` | **TESTED** | `protected.ts` PROTECTED_STATUS; **new vulnerability found during impl** |
+| 4.4 | Scores not client-writable | **TESTED** | `protected.ts` |
+| 4.5 | Client cannot override computed winner | **IMPLEMENTED** | `winner.ts` → `OVERRIDE_REJECTED` (422) once scores exist |
+| 4.6 | Winner finalization writes audit record | **IMPLEMENTED** | `AuditLog` write in `winner.ts` |
+
+## Phase 1 — Contest fairness (prize → duration)
+
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 8.1 | Tier table + exact boundaries (20000/20001, 50000/50001, 100000/100001) | **TESTED** | `contest/duration.ts`, `duration.test.ts` |
+| 8.2 | Global 30-day maximum | **TESTED** | `duration.test.ts` |
+| 8.3 | Server-side enforcement (create) | **IMPLEMENTED** | `contest/guard.ts` wired into `service.ts create()` |
+| 8.4 | Server-side enforcement (update / prize change) | **IMPLEMENTED** | `service.ts update()`, only when fairness inputs change |
+| 8.5 | Existing contests not retro-broken | **IMPLEMENTED** | `touchesFairness()` gate |
+| 12/13 | Dynamic prize → allowed-duration UI + fairness copy | **IMPLEMENTED** | `CreateContest.jsx`; rule TABLE served by `GET /api/contest-rules` (no duplicated logic) |
+| 8.6 | Rule version stamped on contest | **IMPLEMENTED** | `duration_rule_version`, `min/max_duration_days` (server-only fields) |
+
+## Phase 2 — Brand Traffic infrastructure (greenfield)
+
+| # | Requirement | State |
+|---|---|---|
+| 5.x | `TrackingLink` + `TrafficEvent` entities | **PLANNED** |
+| 5.x | Secure redirect endpoint (open-redirect/SSRF safe) | **PLANNED** |
+| 5.x | Dedup + bot/self-click filtering before scoring | **PLANNED** |
+| 5.x | Verified vs suspicious vs rejected separation | **PLANNED** |
+
+## Phase 3 — Scoring engine
+
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 10.1 | Centralized engine, no duplicated formula | **TESTED** | `server/src/scoring/index.ts` |
+| 10.2 | `Final = (Engagement + Traffic) / 2`, both 0–100 | **TESTED** | `scoring.test.ts` (77.5 / 85.0 / 79.0, B wins) |
+| 10.3 | Deterministic tie-break (traffic → engagement → earliest → id) | **TESTED** | `scoring.test.ts` |
+| 10.4 | Popularity alone cannot win | **TESTED** | `scoring.test.ts` |
+| 10.5 | Missing data → `null`, never fake zero | **TESTED** | `scoring.test.ts` |
+| 11.x | Score snapshot + versioning (`ScoreSnapshot`) | **PLANNED** | `SCORING_VERSION` exists; snapshot entity pending Phase 2 data |
+| 18.x | Engagement input weights centralized | **IMPLEMENTED** | `ENGAGEMENT_WEIGHTS` |
+| 22.x | Outlier dampening in normalization | **IMPLEMENTED** | sqrt curve in `normalizeAgainstMax` |
+
+## Later phases — INSPECTED / PLANNED
+
+Tracker (Brand + Creator) · Admin Control Center · Help/AI/Tickets ·
+Notifications · Motion system · UI polish · Security hardening sweep ·
+One-month simulation · QA accounts · Campaign carousel · Payment core/GatePay —
+all **INSPECTED** (discovery complete), **PLANNED**, not yet implemented.
+
+---
+
+## BLOCKED / REQUIRES DECISION
+
+| Item | Type | Detail |
+|---|---|---|
+| `CORS_ORIGINS` on `razekit-api` | **BLOCKED — needs you** | Apex `https://razekit.com` missing → production login broken. I have no Render access. Blocks all production verification. |
+| GatePay | **REQUIRES DECISION** | Not in the codebase; all gateways were deleted last session at your instruction. Building it contradicts that unless you confirm. |
+| `admin.razekit.com` | **BLOCKED** | Domain does not resolve; no separate admin app exists. Admin is `/admin` in the single frontend. |
+| Non-INR contest duration | **REQUIRES PRODUCT DECISION** | Tiers are INR-denominated. USD contests currently get only the 30-day cap (no invented FX). |
+| Prize below ₹5,000 | **REQUIRES PRODUCT DECISION** | Spec starts at ₹5,000; Tier A bounds applied. Is there a minimum prize? |
+| Manual winner (pre-scoring) | **TRANSITIONAL** | Until traffic data exists, brand pick is recorded as `manual_pre_scoring` + audited. Auto-disables once scores exist. |
+| Base44 schema generator | **DECIDED — retire** | `gen-schemas.mjs` overwrites `schemas.json` from `base44/entities/`. Must be retired before new entities land (Phase 2 blocker). |

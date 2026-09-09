@@ -33,6 +33,9 @@ const SCHEMAS = JSON.parse(readFileSync(__schemasPath, 'utf8')) as Record<string
 
 const META_KEYS = new Set(['id', 'created_date', 'created_by_id', 'updated_date']);
 
+import { assertNoProtectedWrite } from './protected.js';
+import { enforceContestFairness, touchesFairness } from '../contest/guard.js';
+
 export class EntityError extends Error {
   status: number;
   constructor(message: string, status = 400) {
@@ -228,11 +231,16 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
     async create(obj: Record<string, unknown> = {}) {
       if (isUser) throw new EntityError('Users are created via the auth endpoints', 400);
       const data = applyDefaults(entity, stripMeta(obj));
+      if (!ctx.serviceRole) assertNoProtectedWrite(entity, stripMeta(obj));
       const createdById = (obj.created_by_id as string) || ctx.user?.id || null;
       if (!ctx.serviceRole && !canAccess(s.rls.create, ctx.user, { createdById, data })) {
         throw new EntityError('Forbidden', 403);
       }
       assertRequired(entity, data);
+      // Prize -> duration fairness is enforced here so no API path can bypass it.
+      if (entity === 'Contest') {
+        enforceContestFairness(data, (m: string, c: number) => { throw new EntityError(m, c); });
+      }
       const row = await prisma.record.create({ data: { entity, data: data as any, createdById } });
       // Event hook: new Contest → generate artwork (replaces the Base44
       // "Contest Visual Assets" entity-trigger workflow). Fire-and-forget.
@@ -251,7 +259,10 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
         if (!isAdmin(ctx) && ctx.user?.id !== id) throw new EntityError('Forbidden', 403);
         const { cols, profile } = userPatch(patch);
         // Non-admins may never change role/status via the entity API.
-        if (!isAdmin(ctx)) { delete cols.role; delete cols.accountStatus; }
+        // Non-admins may never change role/status/user_role via the entity API.
+        // user_role gates Contest/Submission/WinnerPublish creation, so letting a
+        // user self-assign it is a privilege escalation.
+        if (!isAdmin(ctx)) { delete cols.role; delete cols.accountStatus; delete cols.userRole; }
         const merged = { ...(u.profile as any), ...profile };
         const updated = await prisma.appUser.update({
           where: { id },
@@ -264,7 +275,15 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
       if (!ctx.serviceRole && !canAccess(s.rls.update, ctx.user, row)) {
         throw new EntityError('Forbidden', 403);
       }
+      if (!ctx.serviceRole) {
+        assertNoProtectedWrite(entity, stripMeta(patch), (row.data as any) || {});
+      }
       const data = { ...(row.data as any), ...stripMeta(patch) };
+      // Re-validate only when prize/deadline/start actually change, so existing
+      // contests created before this rule are never retro-broken.
+      if (entity === 'Contest' && touchesFairness(stripMeta(patch))) {
+        enforceContestFairness(data, (m: string, c: number) => { throw new EntityError(m, c); });
+      }
       const updated = await prisma.record.update({ where: { id }, data: { data: data as any } });
       return flatten(updated);
     },

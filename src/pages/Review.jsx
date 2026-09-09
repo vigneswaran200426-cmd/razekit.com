@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Trophy, Check, Film, ExternalLink } from 'lucide-react';
-import { entities, uploads } from '@/lib/api';
+import { entities, uploads, fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initials } from '@/lib/format';
 import { Card, Button, Badge, Spinner, EmptyState } from '@/components/ui';
@@ -18,6 +18,7 @@ export default function Review() {
   const [sel, setSel] = useState(null);
   const [media, setMedia] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
   const loadSubs = async () => {
     const s = await entities.Submission.filter({ contest_id: id }, '-created_date', 100).catch(() => []);
@@ -42,15 +43,19 @@ export default function Review() {
 
   const rate = async (sub, rating) => { await entities.Submission.update(sub.id, { rating }).catch(() => {}); setSel((p) => ({ ...p, rating })); loadSubs(); };
 
+  // Winner finalization is server-authoritative: the browser may only REQUEST it.
+  // The backend re-checks ownership and contest state, applies the RazeKit
+  // performance score (and refuses any override of it), writes the audit record
+  // and notifies the winner. See server/src/functions/winner.ts.
   const pickWinner = async (sub) => {
     if (!confirm('Select this entry as the winner? This finalizes judging.')) return;
-    setBusy(true);
+    setBusy(true); setErr('');
     try {
-      await entities.Submission.update(sub.id, { status: 'won' });
-      await Promise.all((subs || []).filter((x) => x.id !== sub.id && x.status !== 'won').map((x) => entities.Submission.update(x.id, { status: 'not_selected' }).catch(() => {})));
-      await entities.Contest.update(id, { winner_user_id: sub.created_by_id, winner_submission_id: sub.id, status: 'winner_selected', winner_selected_at: new Date().toISOString() });
-      await entities.Notification.create({ type: 'winner_announced', title: 'You won! 🏆', description: contest?.title, contest_id: id, recipient_user_id: sub.created_by_id }).catch(() => {});
+      const r = await fn('winnerFinalize', { contest_id: id, submission_id: sub.id });
+      if (r?.error) { setErr(r.error.message || 'Could not finalize the winner.'); return; }
       navigate(`/contest/${id}`);
+    } catch (e) {
+      setErr(e?.data?.error?.message || e.message || 'Could not finalize the winner.');
     } finally { setBusy(false); }
   };
 
@@ -64,6 +69,8 @@ export default function Review() {
           <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-ink">{contest?.title}</h1>
           <p className="text-sm text-muted mt-0.5 nums">{subs.length} {subs.length === 1 ? 'entry' : 'entries'}</p></div>
       </div>
+
+      {err && <div className="rounded-md bg-danger/8 text-danger text-sm px-3 py-2">{err}</div>}
 
       {subs.length === 0 ? (
         <EmptyState icon={Film} title="No entries yet" description="Submissions will appear here for you to review and judge." />

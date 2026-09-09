@@ -87,16 +87,50 @@ authRouter.post('/login', async (req, res) => {
 authRouter.get('/me', requireAuth, (req, res) => res.json(publicUser(req.appUser!)));
 
 const SELF_COLUMNS: Record<string, string> = { full_name: 'fullName', user_role: 'userRole', onboarding_completed: 'onboardingCompleted' };
+
+// Never settable by the account holder — these decide privilege or identity.
+const NEVER_SELF = new Set(['id', 'email', 'role', 'account_status', 'created_date', 'updated_date',
+  'is_admin', 'isAdmin', 'permissions', 'password', 'password_hash', 'passwordHash', 'google_id']);
+
+// `user_role` selects the CREATOR/CLIENT surface, and it is the only gate on
+// Contest / Submission / WinnerPublish creation. If a user could PATCH it at
+// will they could grant themselves brand privileges, so it is writable only:
+//   • once, while onboarding is still incomplete (the legitimate first choice), or
+//   • by a platform admin (this powers the admin "View as" mode switcher).
+const SELECTABLE_ROLES = new Set(['creator', 'client']);
+
 const updateMe = async (req: any, res: any) => {
   const body = req.body || {};
+  const me = req.appUser!;
+  const isAdmin = me.role === 'admin';
   const cols: Record<string, unknown> = {};
-  const profile: Record<string, unknown> = { ...(req.appUser!.profile as any) };
+  const profile: Record<string, unknown> = { ...(me.profile as any) };
+
   for (const [k, v] of Object.entries(body)) {
-    if (['id', 'email', 'role', 'account_status', 'created_date', 'updated_date'].includes(k)) continue;
+    if (NEVER_SELF.has(k)) continue;
+
+    if (k === 'user_role') {
+      if (v === me.userRole) continue; // no-op
+      if (!SELECTABLE_ROLES.has(String(v))) {
+        return res.status(400).json({ error: `Invalid role. Choose one of: ${[...SELECTABLE_ROLES].join(', ')}.` });
+      }
+      if (!isAdmin && me.onboardingCompleted) {
+        return res.status(403).json({ error: 'Your account type is already set. Contact support to change it.' });
+      }
+      cols.userRole = v;
+      continue;
+    }
+
     if (SELF_COLUMNS[k]) cols[SELF_COLUMNS[k]] = v;
     else profile[k] = v;
   }
-  const updated = await prisma.appUser.update({ where: { id: req.appUser!.id }, data: { ...cols, profile: profile as any } });
+
+  // Bound the free-form profile blob so it cannot be used as unlimited storage.
+  if (JSON.stringify(profile).length > 16384) {
+    return res.status(413).json({ error: 'Profile data is too large.' });
+  }
+
+  const updated = await prisma.appUser.update({ where: { id: me.id }, data: { ...cols, profile: profile as any } });
   res.json(publicUser(updated));
 };
 authRouter.patch('/me', requireAuth, updateMe);
