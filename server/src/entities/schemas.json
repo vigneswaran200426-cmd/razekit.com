@@ -2277,7 +2277,14 @@
       "retention_until",
       "deleted_at",
       "delivery_status",
-      "dispute_hold"
+      "dispute_hold",
+      "engagement_score",
+      "traffic_score",
+      "final_score",
+      "rank",
+      "scoring_version",
+      "scored_at",
+      "score_state"
     ],
     "rls": {
       "read": {

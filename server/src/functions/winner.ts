@@ -11,26 +11,10 @@
 // both 0-100, highest wins. Tie-break: Brand Traffic -> Video Engagement ->
 // earliest submission -> id (fully deterministic, never random).
 import { json } from './context.js';
+import { computeContestScores } from '../scoring/compute.js';
+import { SCORING_VERSION } from '../scoring/index.js';
 
 const SCORED_STATES = ['submitted', 'shortlisted', 'won', 'not_selected'];
-
-// A submission counts as scored once the engine has written a final_score.
-const isScored = (s) => typeof s.final_score === 'number' && !Number.isNaN(s.final_score);
-
-export function rankSubmissions(subs) {
-  return [...subs].sort((a, b) => {
-    const fs = (b.final_score ?? -1) - (a.final_score ?? -1);
-    if (fs !== 0) return fs;
-    const tr = (b.traffic_score ?? -1) - (a.traffic_score ?? -1);
-    if (tr !== 0) return tr;
-    const en = (b.engagement_score ?? -1) - (a.engagement_score ?? -1);
-    if (en !== 0) return en;
-    const ta = Date.parse(a.submitted_at || a.created_date || 0) || 0;
-    const tb = Date.parse(b.submitted_at || b.created_date || 0) || 0;
-    if (ta !== tb) return ta - tb; // earlier submission wins a dead tie
-    return String(a.id).localeCompare(String(b.id));
-  });
-}
 
 export async function winnerFinalize(ctx) {
   const user = ctx.user;
@@ -59,14 +43,18 @@ export async function winnerFinalize(ctx) {
     return json({ error: { code: 'NO_SUBMISSIONS', message: 'This contest has no eligible submissions to finalize.' } }, 409);
   }
 
-  const scored = eligible.filter(isScored);
+  // Recompute from authoritative signals at finalization time — never trust a
+  // stored score that could be stale. The scoring engine is the only source.
+  const computed = await computeContestScores(svc, contestId).catch(() => ({ ranked: [], scoredCount: 0 }));
+  const scored = computed.ranked || [];
+
   let winner;
   let method;
   let ranked;
 
   if (scored.length) {
     // Authoritative path — the score decides, not the brand.
-    ranked = rankSubmissions(scored);
+    ranked = scored;
     winner = ranked[0];
     method = 'scored';
     // A brand may not override the computed winner.
@@ -96,6 +84,14 @@ export async function winnerFinalize(ctx) {
   // Write results (service role — bypasses the browser-facing field guard).
   for (const [i, s] of ranked.entries()) {
     const patch = { rank: i + 1 };
+    if (method === 'scored') {
+      patch.engagement_score = s.engagement_score ?? null;
+      patch.traffic_score = s.traffic_score ?? null;
+      patch.final_score = s.final_score ?? null;
+      patch.scoring_version = SCORING_VERSION;
+      patch.score_state = s.score_state ?? null;
+      patch.scored_at = now;
+    }
     if (s.id === winner.id) patch.status = 'won';
     else if (s.status !== 'not_selected') patch.status = 'not_selected';
     await svc.entities.Submission.update(s.id, patch).catch(() => {});
@@ -107,6 +103,29 @@ export async function winnerFinalize(ctx) {
     winner_selected_at: now,
     status: 'winner_selected',
   });
+
+  // Immutable scoring snapshot (spec §11/§33) so historical results stay
+  // reproducible even as live metrics keep moving.
+  for (const s of ranked) {
+    await svc.entities.ScoreSnapshot.create({
+      contest_id: contestId,
+      submission_id: s.id,
+      creator_id: s.created_by_id,
+      client_id: contest.created_by_id,
+      engagement_score: s.engagement_score ?? null,
+      traffic_score: s.traffic_score ?? null,
+      final_score: s.final_score ?? null,
+      rank: s.rank ?? null,
+      is_winner: s.id === winner.id,
+      tie_break_applied: Boolean(
+        s.final_score !== null && ranked.some((o) => o.id !== s.id && o.final_score === s.final_score)
+      ),
+      scoring_version: method === 'scored' ? SCORING_VERSION : null,
+      metric_snapshot: s.metric_snapshot || null,
+      score_state: s.score_state || null,
+      finalized_at: now,
+    }).catch(() => null);
+  }
 
   await svc.entities.AuditLog.create({
     user_id: winner.created_by_id,

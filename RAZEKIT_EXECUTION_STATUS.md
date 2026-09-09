@@ -60,7 +60,10 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 | 10.3 | Deterministic tie-break (traffic → engagement → earliest → id) | **TESTED** | `scoring.test.ts` |
 | 10.4 | Popularity alone cannot win | **TESTED** | `scoring.test.ts` |
 | 10.5 | Missing data → `null`, never fake zero | **TESTED** | `scoring.test.ts` |
-| 11.x | Score snapshot + versioning (`ScoreSnapshot`) | **PLANNED** | `SCORING_VERSION` exists; snapshot entity pending Phase 2 data |
+| 10.6 | Scores computed from real traffic + engagement | **VERIFIED** | `scoring/compute.ts`; live E2E: 2 vs 6 verified visitors → traffic 57.74 vs 100 (sqrt dampening) |
+| 24.x | Client cannot override the computed winner | **VERIFIED** | live: brand picked the lower-traffic creator → **422 OVERRIDE_REJECTED**; correct finalize → `method=scored`, higher-traffic creator won |
+| 28.x | Provisional vs final score state | **VERIFIED** | engagement absent → `provisional`, never silently "final" |
+| 11.x | Score snapshot + versioning (`ScoreSnapshot`) | **VERIFIED** | written at finalization; brand PATCH → 403; live: rank1 final=50, rank2 final=28.87, version `rk-score-1.0.0` |
 | 18.x | Engagement input weights centralized | **IMPLEMENTED** | `ENGAGEMENT_WEIGHTS` |
 | 22.x | Outlier dampening in normalization | **IMPLEMENTED** | sqrt curve in `normalizeAgainstMax` |
 
