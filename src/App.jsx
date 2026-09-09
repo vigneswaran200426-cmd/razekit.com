@@ -8,6 +8,8 @@ import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import Onboarding from '@/pages/auth/Onboarding';
 import Explore from '@/pages/Explore';
+import Discover from '@/pages/Discover';
+import Tracker from '@/pages/Tracker';
 import Dashboard from '@/pages/Dashboard';
 import ContestDetail from '@/pages/ContestDetail';
 import Winners from '@/pages/Winners';
@@ -43,6 +45,7 @@ export default function App() {
           <Route element={<AppShell />}>
             {/* Public-in-shell */}
             <Route path="/explore" element={<Explore />} />
+            <Route path="/discover" element={<Discover />} />
             <Route path="/winners" element={<Winners />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/feed" element={<Feed />} />
@@ -50,6 +53,7 @@ export default function App() {
             <Route path="/contest/:id" element={<ContestDetail />} />
             <Route path="/help" element={<Help />} />
             {/* Authenticated */}
+            <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/work" element={<ProtectedRoute><Work /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />

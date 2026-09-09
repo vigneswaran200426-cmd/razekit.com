@@ -67,12 +67,28 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 | 18.x | Engagement input weights centralized | **IMPLEMENTED** | `ENGAGEMENT_WEIGHTS` |
 | 22.x | Outlier dampening in normalization | **IMPLEMENTED** | sqrt curve in `normalizeAgainstMax` |
 
+## Phase 4 — Tracker + navigation IA
+
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 29-31 | Brand Tracker + Creator Tracker | **VERIFIED** | `pages/Tracker.jsx`, `functions/tracker.ts`; both rendered live with real data |
+| 39/40 | Tracker API + per-role authorization | **VERIFIED** | 5 read-only endpoints; live IDOR test: brand B → **403**, sees 0 campaigns; creator → 0 campaigns |
+| 27 | Shared score component, no duplicated formula | **VERIFIED** | `components/Score.jsx` — presentation only |
+| 28 | Honest score states | **VERIFIED** | live: Video Engagement rendered **"No data yet"**, not a fake 0; badge `Provisional` |
+| 26 | Score transparency copy | **VERIFIED** | 50/50 explanation + "followers/views/likes do not independently determine the winner" |
+| 12/37 | Traffic aggregates only; fraud internals hidden | **VERIFIED** | total/verified/unique/excluded shown; no reasons or thresholds |
+| 29 | Data freshness | **VERIFIED** | "Updated 2m ago" |
+| 15/46 | Mobile treatment (cards, not shrunken tables) | **VERIFIED** | 375px viewport → stacked cards |
+| 3 | Navigation IA: Dashboard/Explore/Discover/Winners/Tracker | **IMPLEMENTED** | `AppShell.jsx` NAV rewritten, role-aware; Feed removed from nav |
+| 6 | DISCOVER (creator opportunity marketplace) | **IMPLEMENTED** | `pages/Discover.jsx` with filters/sort/participation badge |
+| 47 | `prefers-reduced-motion` respected | **IMPLEMENTED** | global block in `index.css` |
+| — | Bug found + fixed during verification | **FIXED** | `Segmented` expects `t.key`; my tabs used `value` → tabs silently dead. Caught in live browser, not by the build. |
+
 ## Later phases — INSPECTED / PLANNED
 
-Tracker (Brand + Creator) · Admin Control Center · Help/AI/Tickets ·
-Notifications · Motion system · UI polish · Security hardening sweep ·
-One-month simulation · QA accounts · Campaign carousel · Payment core/GatePay —
-all **INSPECTED** (discovery complete), **PLANNED**, not yet implemented.
+Admin Control Center · Help/AI/Tickets · Notifications · Motion system ·
+Full UI polish · Security hardening sweep · One-month simulation · QA accounts ·
+Campaign carousel · Payment core/GatePay — all **INSPECTED**, **PLANNED**.
 
 ---
 

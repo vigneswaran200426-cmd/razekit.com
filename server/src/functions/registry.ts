@@ -2,6 +2,7 @@
 import { visualAssetRequest, visualAssetAdmin, visualAssetWorker } from './visual.js';
 import { winnerFinalize } from './winner.js';
 import { trackingLinkCreate, trackingLinkList } from './tracking.js';
+import { trackerCreatorOverview, trackerCreatorContests, trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail } from './tracker.js';
 
 // All handlers (name → fn(ctx)).
 // NOTE: payment/payout/reconciliation handlers were removed with the payment
@@ -10,6 +11,8 @@ export const HANDLERS = {
   visualAssetRequest, visualAssetAdmin, visualAssetWorker,
   winnerFinalize,
   trackingLinkCreate, trackingLinkList,
+  trackerCreatorOverview, trackerCreatorContests,
+  trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail,
 };
 
 // Functions callable over HTTP via base44.functions.invoke(name, payload).
@@ -20,6 +23,9 @@ export const HTTP_ALLOWED = new Set([
   // is set, so it is exposed to authenticated callers rather than admin-only.
   'winnerFinalize',
   'trackingLinkCreate', 'trackingLinkList',
+  // Tracker is read-only; each handler enforces its own ownership check.
+  'trackerCreatorOverview', 'trackerCreatorContests',
+  'trackerBrandOverview', 'trackerBrandCampaigns', 'trackerCampaignDetail',
 ]);
 
 // Require platform admin at the route boundary (handlers also re-check).

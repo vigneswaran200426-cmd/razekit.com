@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Bell, HelpCircle, Menu, X, LayoutDashboard, Compass, Trophy, LineChart,
-  User, Settings, Wallet, FolderKanban, LogOut, Shield, ChevronDown, Video, Briefcase, Check, Newspaper,
+  Activity, Bell, Briefcase, Check, ChevronDown, Compass, FolderKanban, HelpCircle, LayoutDashboard, LineChart, LogOut, Menu, Newspaper, Search, Settings, Shield, Trophy, User, Video, Wallet, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { entities } from '@/lib/api';
@@ -12,28 +11,30 @@ import { initials } from '@/lib/format';
 import { RazekitMark, RazekitWordmark } from '@/components/Brand';
 
 const NAV = {
+  // Spec IA: Dashboard / Explore / Discover / Winners / Tracker.
+  // Discover is the creator's opportunity feed; Explore is brand-side discovery.
   creator: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/feed', label: 'Feed', icon: Newspaper },
+    { to: '/discover', label: 'Discover', icon: Compass },
     { to: '/winners', label: 'Winners', icon: Trophy },
+    { to: '/tracker', label: 'Tracker', icon: Activity },
   ],
   client: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/feed', label: 'Feed', icon: Newspaper },
+    { to: '/explore', label: 'Explore', icon: Search },
     { to: '/winners', label: 'Winners', icon: Trophy },
-    { to: '/social', label: 'Social Tracker', icon: LineChart },
+    { to: '/tracker', label: 'Tracker', icon: Activity },
   ],
   admin: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/feed', label: 'Feed', icon: Newspaper },
+    { to: '/explore', label: 'Explore', icon: Search },
+    { to: '/discover', label: 'Discover', icon: Compass },
     { to: '/winners', label: 'Winners', icon: Trophy },
+    { to: '/tracker', label: 'Tracker', icon: Activity },
   ],
   visitor: [
-    { to: '/explore', label: 'Explore', icon: Compass },
-    { to: '/feed', label: 'Feed', icon: Newspaper },
+    { to: '/explore', label: 'Explore', icon: Search },
+    { to: '/discover', label: 'Discover', icon: Compass },
     { to: '/winners', label: 'Winners', icon: Trophy },
   ],
 };
