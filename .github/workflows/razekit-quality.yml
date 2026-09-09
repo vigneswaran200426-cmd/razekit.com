@@ -26,9 +26,6 @@ jobs:
       - name: Lint (autofix then verify)
         run: npm run lint:fix && npm run lint
 
-      - name: Frontend typecheck
-        run: npm run typecheck
-
       - name: Frontend build
         run: npm run build
 

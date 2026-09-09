@@ -38,12 +38,18 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 
 ## Phase 2 — Brand Traffic infrastructure (greenfield)
 
-| # | Requirement | State |
-|---|---|---|
-| 5.x | `TrackingLink` + `TrafficEvent` entities | **PLANNED** |
-| 5.x | Secure redirect endpoint (open-redirect/SSRF safe) | **PLANNED** |
-| 5.x | Dedup + bot/self-click filtering before scoring | **PLANNED** |
-| 5.x | Verified vs suspicious vs rejected separation | **PLANNED** |
+| # | Requirement | State | Evidence |
+|---|---|---|---|
+| 7/38 | Retire Base44 schema generator (dual source of truth) | **VERIFIED** | script moved to `scripts/legacy/gen-schemas.RETIRED.mjs` + refuses to run; `gen:schemas` removed from package.json; `entities/SCHEMAS.md` documents ownership. Confirmed nothing automated invoked it (build/CI/Render all checked) |
+| 37.x | `TrackingLink`, `TrafficEvent`, `ScoreSnapshot` entities | **VERIFIED** | 53 → 56 entities in `schemas.json`, with deliberate RLS |
+| 5.x | Secure redirect endpoint | **VERIFIED** | `GET /r/:code` → 302 to stored destination; unknown code → safe fallback, never an open redirect |
+| 5.x | Destination validated (open-redirect + SSRF) | **VERIFIED** | `traffic/url.ts`; live: `javascript:`, `169.254.169.254`, `localhost` all 400 |
+| 21.x | Dedup + bot + self-click filtering before scoring | **VERIFIED** | `traffic/fraud.ts`; live: 7 clicks → 4 verified / 4 unique / 1 excluded |
+| 12.x | Verified vs suspicious vs rejected separated | **VERIFIED** | `TrackingLink` counters |
+| 13/37 | Raw events + fraud reasoning admin-only | **VERIFIED** | `TrafficEvent` RLS admin-only; creator + brand both read `[]` |
+| 5.x | Privacy: no raw IP/UA stored | **TESTED** | salted `visitor_hash`/`ua_hash` only |
+| 20.x | Link issuance authorization | **VERIFIED** | creator-owns-submission only; brand attempt → 403 |
+| CI | Broken workflow (`lint:fix`, `typecheck` missing) | **IMPLEMENTED** | `lint:fix` added; fictional frontend typecheck step removed |
 
 ## Phase 3 — Scoring engine
 
@@ -77,4 +83,4 @@ all **INSPECTED** (discovery complete), **PLANNED**, not yet implemented.
 | Non-INR contest duration | **REQUIRES PRODUCT DECISION** | Tiers are INR-denominated. USD contests currently get only the 30-day cap (no invented FX). |
 | Prize below ₹5,000 | **REQUIRES PRODUCT DECISION** | Spec starts at ₹5,000; Tier A bounds applied. Is there a minimum prize? |
 | Manual winner (pre-scoring) | **TRANSITIONAL** | Until traffic data exists, brand pick is recorded as `manual_pre_scoring` + audited. Auto-disables once scores exist. |
-| Base44 schema generator | **DECIDED — retire** | `gen-schemas.mjs` overwrites `schemas.json` from `base44/entities/`. Must be retired before new entities land (Phase 2 blocker). |
+| Base44 schema generator | **RESOLVED** | Retired. `schemas.json` is now the single application-owned source of truth. |

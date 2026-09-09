@@ -284,7 +284,8 @@
       "manual_approval",
       "max_downloads",
       "otp_code",
-      "max_editors"
+      "max_editors",
+      "brand_destination_url"
     ],
     "rls": {
       "read": {},
@@ -3118,6 +3119,185 @@
         "$or": [
           {
             "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "TrafficEvent": {
+    "name": "TrafficEvent",
+    "required": [
+      "tracking_code",
+      "contest_id",
+      "creator_id",
+      "occurred_at"
+    ],
+    "defaults": {
+      "verification_state": "pending",
+      "is_unique": false,
+      "risk_reasons": "[]"
+    },
+    "fields": [
+      "tracking_code",
+      "contest_id",
+      "creator_id",
+      "client_id",
+      "submission_id",
+      "occurred_at",
+      "visitor_hash",
+      "ua_hash",
+      "referrer_host",
+      "landing_path",
+      "verification_state",
+      "risk_reasons",
+      "dedupe_key",
+      "is_unique",
+      "country",
+      "source"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "TrackingLink": {
+    "name": "TrackingLink",
+    "required": [
+      "code",
+      "contest_id",
+      "creator_id",
+      "destination_url"
+    ],
+    "defaults": {
+      "status": "active",
+      "total_clicks": 0,
+      "verified_clicks": 0,
+      "unique_visitors": 0,
+      "suspicious_clicks": 0
+    },
+    "fields": [
+      "code",
+      "contest_id",
+      "creator_id",
+      "client_id",
+      "submission_id",
+      "destination_url",
+      "platform",
+      "status",
+      "total_clicks",
+      "verified_clicks",
+      "unique_visitors",
+      "suspicious_clicks",
+      "last_click_at",
+      "disabled_reason"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ScoreSnapshot": {
+    "name": "ScoreSnapshot",
+    "required": [
+      "contest_id",
+      "submission_id",
+      "scoring_version",
+      "finalized_at"
+    ],
+    "defaults": {
+      "is_winner": false,
+      "tie_break_applied": false
+    },
+    "fields": [
+      "contest_id",
+      "submission_id",
+      "creator_id",
+      "client_id",
+      "engagement_score",
+      "traffic_score",
+      "final_score",
+      "rank",
+      "is_winner",
+      "tie_break_applied",
+      "scoring_version",
+      "metric_snapshot",
+      "finalized_at",
+      "score_state"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "data.client_id": "{{user.id}}"
           },
           {
             "user_condition": {

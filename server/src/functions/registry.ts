@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { visualAssetRequest, visualAssetAdmin, visualAssetWorker } from './visual.js';
 import { winnerFinalize } from './winner.js';
+import { trackingLinkCreate, trackingLinkList } from './tracking.js';
 
 // All handlers (name → fn(ctx)).
 // NOTE: payment/payout/reconciliation handlers were removed with the payment
@@ -8,6 +9,7 @@ import { winnerFinalize } from './winner.js';
 export const HANDLERS = {
   visualAssetRequest, visualAssetAdmin, visualAssetWorker,
   winnerFinalize,
+  trackingLinkCreate, trackingLinkList,
 };
 
 // Functions callable over HTTP via base44.functions.invoke(name, payload).
@@ -17,6 +19,7 @@ export const HTTP_ALLOWED = new Set([
   // winnerFinalize does its own owner/admin check and is the ONLY way a winner
   // is set, so it is exposed to authenticated callers rather than admin-only.
   'winnerFinalize',
+  'trackingLinkCreate', 'trackingLinkList',
 ]);
 
 // Require platform admin at the route boundary (handlers also re-check).

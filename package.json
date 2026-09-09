@@ -3,12 +3,13 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "RazeKit — creator contest marketplace. Fresh frontend (Vite + React) on the self-hosted RazeKit API.",
+  "description": "RazeKit \u2014 creator contest marketplace. Fresh frontend (Vite + React) on the self-hosted RazeKit API.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --quiet"
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --fix --quiet"
   },
   "dependencies": {
     "clsx": "^2.1.1",

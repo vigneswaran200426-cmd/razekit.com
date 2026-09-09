@@ -10,6 +10,7 @@ import { functionsRouter } from './functions/routes.js';
 import { integrationsRouter } from './integrations/routes.js';
 import { filesRouter } from './integrations/files.js';
 import { miscRouter } from './misc/routes.js';
+import { trafficRouter } from './traffic/routes.js';
 import { startScheduler } from './scheduler.js';
 
 const app = express();
@@ -29,6 +30,9 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(attachUser);
 
+// Public campaign redirect (Brand Traffic attribution). Must stay above the
+// API routers so /r/:code is never shadowed.
+app.use('/r', trafficRouter);
 app.use('/files', filesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/entities', entitiesRouter);

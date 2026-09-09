@@ -3,8 +3,11 @@
 // Frontend validation is not sufficient: this runs inside the entity service so
 // no direct API call, script or internal mutation can bypass it.
 import { validatePrizeDuration, durationInDays, allowedDuration, DURATION_RULE_VERSION } from './duration.js';
+import { validateDestinationUrl } from '../traffic/url.js';
 
-const FAIRNESS_INPUTS = ['prize_amount', 'deadline', 'start_date'];
+// Any of these changing re-runs server-side validation. brand_destination_url
+// is included because it is a security boundary, not just a fairness input.
+const FAIRNESS_INPUTS = ['prize_amount', 'deadline', 'start_date', 'brand_destination_url'];
 
 /** True when a patch actually touches the fairness inputs. */
 export function touchesFairness(patch) {
@@ -19,6 +22,14 @@ export function touchesFairness(patch) {
  * fairness inputs change, so historical data stays safe.
  */
 export function enforceContestFairness(data, raise) {
+  // Campaign destination is a security boundary (open redirect / SSRF), so it
+  // is validated here — the click path only replays a value that passed.
+  if (data.brand_destination_url) {
+    const d = validateDestinationUrl(data.brand_destination_url);
+    if (!d.ok) raise(d.message, 400);
+    data.brand_destination_url = d.url;
+  }
+
   const prize = Number(data.prize_amount);
   if (!Number.isFinite(prize) || prize <= 0) raise('Enter a valid prize amount.', 400);
 

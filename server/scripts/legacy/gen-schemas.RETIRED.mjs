@@ -1,3 +1,26 @@
+// ============================================================================
+//  RETIRED — DO NOT RUN. This script is kept only for historical reference.
+// ============================================================================
+//  It regenerated server/src/entities/schemas.json from ../base44/entities/*.jsonc
+//  by WHOLESALE OVERWRITE. That made Base44 the source of truth for all entity
+//  schemas + RLS, so any entity added by RazeKit itself (TrackingLink,
+//  TrafficEvent, ScoreSnapshot, ...) was silently destroyed on the next run.
+//
+//  As of the master-spec execution, `server/src/entities/schemas.json` is the
+//  single, application-owned source of truth and is edited directly.
+//  See server/src/entities/SCHEMAS.md.
+//
+//  Nothing automated ever invoked this (not the build, not CI, not Render) —
+//  it was a manual npm script, now removed from package.json.
+// ============================================================================
+if (process.env.I_UNDERSTAND_THIS_DESTROYS_RAZEKIT_ENTITIES !== 'yes') {
+  console.error('
+  gen-schemas is RETIRED. It would overwrite schemas.json and delete
+  RazeKit-owned entities. See server/src/entities/SCHEMAS.md
+');
+  process.exit(1);
+}
+
 // Generates src/entities/schemas.json from the exported Base44 entity schemas
 // (../base44/entities/*.jsonc). Captures per-entity: field defaults, required
 // fields, and the RLS policy — so the backend enforces exactly what Base44 did.
