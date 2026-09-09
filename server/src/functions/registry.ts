@@ -2,7 +2,7 @@
 import { visualAssetRequest, visualAssetAdmin, visualAssetWorker } from './visual.js';
 import { winnerFinalize } from './winner.js';
 import { trackingLinkCreate, trackingLinkList } from './tracking.js';
-import { winnersShowcase, winnersLeaderboard } from './winners.js';
+import { winnersShowcase, winnersLeaderboard, creatorPublicProfile } from './winners.js';
 import { adminOverview, adminContests, adminTraffic, adminUsers, adminAudit } from './admin.js';
 import { supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge } from './support.js';
 import { trackerCreatorOverview, trackerCreatorContests, trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail } from './tracker.js';
@@ -18,7 +18,7 @@ export const HANDLERS = {
   trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail,
   supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge,
   adminOverview, adminContests, adminTraffic, adminUsers, adminAudit,
-  winnersShowcase, winnersLeaderboard,
+  winnersShowcase, winnersLeaderboard, creatorPublicProfile,
 };
 
 // Functions callable over HTTP via base44.functions.invoke(name, payload).
@@ -37,13 +37,13 @@ export const HTTP_ALLOWED = new Set([
   // Admin control center — gated below AND re-checked inside each handler.
   'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',
   // Public winner results + leaderboard (finalized data only).
-  'winnersShowcase', 'winnersLeaderboard',
+  'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile',
 ]);
 
 // Callable WITHOUT authentication. Only finalized, intentionally public data:
 // winning work and the leaderboard (a visitor can browse these before joining).
 // Everything else stays behind requireAuth.
-export const PUBLIC_FUNCTIONS = new Set(['winnersShowcase', 'winnersLeaderboard']);
+export const PUBLIC_FUNCTIONS = new Set(['winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile']);
 
 // Require platform admin at the route boundary (handlers also re-check).
 export const ADMIN_ONLY = new Set([

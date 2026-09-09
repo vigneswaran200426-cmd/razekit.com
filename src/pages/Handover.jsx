@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Check, Send, ShieldCheck, Clock } from 'lucide-react';
+import { ArrowLeft, Check, Send, ShieldCheck, Clock, MessagesSquare } from 'lucide-react';
 import { entities } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { initials, dateShort } from '@/lib/format';
-import { Card, Button, Badge, Spinner, Input } from '@/components/ui';
+import { dateShort } from '@/lib/format';
+import { Card, Button, Badge, Input, PageHeader, Skeleton, EmptyState } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
 const STEPS = ['Winner selected', 'Handover started', 'Winner confirms', 'Client confirms', 'Completed'];
@@ -69,7 +69,18 @@ export default function Handover() {
     if (m) setMsgs((p) => [...p, m]);
   };
 
-  if (ho === undefined || !contest) return <div className="min-h-[50vh] grid place-items-center"><Spinner className="w-7 h-7" /></div>;
+  if (ho === undefined || !contest) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-5">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-7 w-72" />
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
+          <Skeleton className="h-[420px] rounded-lg" />
+          <Skeleton className="h-[420px] rounded-lg" />
+        </div>
+      </div>
+    );
+  }
 
   // Step index
   let step = 1; // winner selected
@@ -78,12 +89,13 @@ export default function Handover() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      <Link to={`/contest/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft className="w-4 h-4" /> Contest</Link>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Account handover</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-ink">{contest.title}</h1></div>
-        <Badge tone={ho?.status === 'completed' ? 'success' : 'primary'} className="capitalize">{ho ? ho.status.replace('_', ' ') : 'Not started'}</Badge>
-      </div>
+      <Link to={`/contest/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> Contest</Link>
+      <PageHeader
+        eyebrow="Account handover"
+        title={contest.title}
+        description="Both parties confirm the transfer before the contest completes."
+        actions={<Badge tone={ho?.status === 'completed' ? 'success' : 'primary'} className="capitalize">{ho ? ho.status.replace('_', ' ') : 'Not started'}</Badge>}
+      />
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
         {/* Timeline */}
@@ -95,7 +107,7 @@ export default function Handover() {
                 <li key={label} className="flex gap-3 pb-6 last:pb-0 relative">
                   {i < STEPS.length - 1 && <span className={cn('absolute left-[15px] top-8 bottom-0 w-0.5', done ? 'bg-primary' : 'bg-line')} />}
                   <span className={cn('grid h-8 w-8 place-items-center rounded-full text-[13px] font-bold shrink-0 z-10', done ? 'bg-primary text-white' : current ? 'bg-primary/15 text-primary ring-2 ring-primary' : 'bg-surface-2 text-muted')}>
-                    {done ? <Check className="w-4 h-4" /> : n}
+                    {done ? <Check className="w-4 h-4" aria-hidden="true" /> : n}
                   </span>
                   <div className="pt-1"><p className={cn('font-semibold text-sm', done || current ? 'text-ink' : 'text-muted')}>{label}</p>
                     {n === 3 && ho?.creator_confirmed_at && <p className="text-xs text-muted mt-0.5">Confirmed {dateShort(ho.creator_confirmed_at)}</p>}
@@ -109,11 +121,11 @@ export default function Handover() {
             {!ho ? (
               (isClient || isWinner) ? <Button loading={busy} onClick={start}>Start handover</Button> : <p className="text-sm text-muted">Waiting for the handover to begin.</p>
             ) : ho.status === 'completed' ? (
-              <p className="flex items-center gap-2 text-sm text-success font-medium"><ShieldCheck className="w-4 h-4" /> Handover complete — payout is now eligible.</p>
+              <p className="flex items-center gap-2 text-sm text-success font-medium"><ShieldCheck className="w-4 h-4" aria-hidden="true" /> Handover complete — payout is now eligible.</p>
             ) : canConfirm ? (
-              <Button loading={busy} onClick={confirm}><Check className="w-4 h-4" /> Confirm {isWinner ? 'transfer complete' : 'receipt & ownership'}</Button>
+              <Button loading={busy} onClick={confirm}><Check className="w-4 h-4" aria-hidden="true" /> Confirm {isWinner ? 'transfer complete' : 'receipt & ownership'}</Button>
             ) : (
-              <p className="flex items-center gap-2 text-sm text-muted"><Clock className="w-4 h-4" /> Waiting on the other party to confirm.</p>
+              <p className="flex items-center gap-2 text-sm text-muted"><Clock className="w-4 h-4" aria-hidden="true" /> Waiting on the other party to confirm.</p>
             )}
           </div>
         </Card>
@@ -122,7 +134,14 @@ export default function Handover() {
         <Card className="flex flex-col h-[70vh]">
           <div className="px-4 py-3 border-b border-line"><p className="font-semibold text-sm text-ink">Private room</p><p className="text-xs text-muted">Only you and the other party can see this.</p></div>
           <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3">
-            {msgs.length === 0 && <p className="text-sm text-muted text-center mt-8">No messages yet. Coordinate the transfer here.</p>}
+            {msgs.length === 0 && (
+              <EmptyState
+                icon={MessagesSquare}
+                title="No messages yet"
+                description="Use this private room to coordinate the transfer with the other party."
+                className="border-0 bg-transparent py-8"
+              />
+            )}
             {msgs.map((m) => {
               const mine = m.sender_id === user.id;
               return (
@@ -135,8 +154,8 @@ export default function Handover() {
           </div>
           {ho && (
             <form onSubmit={send} className="p-3 border-t border-line flex gap-2">
-              <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Message…" className="flex-1" />
-              <Button type="submit" size="md" disabled={!text.trim()}><Send className="w-4 h-4" /></Button>
+              <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Message…" aria-label="Message the other party" className="flex-1" />
+              <Button type="submit" size="md" disabled={!text.trim()} aria-label="Send message"><Send className="w-4 h-4" aria-hidden="true" /></Button>
             </form>
           )}
         </Card>

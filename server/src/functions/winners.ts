@@ -104,3 +104,44 @@ export async function winnersLeaderboard(ctx) {
     basis: 'Ranked by finalized contest performance — wins, prize value and average Final Score. Never by followers or popularity.',
   });
 }
+
+/**
+ * Minimal PUBLIC creator profile.
+ *
+ * The User entity is deliberately not readable across accounts (the service
+ * layer restricts non-admins to their own record), so a public profile page
+ * cannot look up a name directly. This exposes only non-sensitive, already
+ * public facts derived from finalized results — never email, role or account
+ * status.
+ */
+export async function creatorPublicProfile(ctx) {
+  const svc = ctx.svc;
+  const creatorId = ctx.body?.creator_id;
+  if (!creatorId) return json({ error: 'creator_id is required' }, 400);
+
+  const snaps = await svc.entities.ScoreSnapshot.filter({ creator_id: creatorId }, '-created_date', 200).catch(() => []);
+
+  const finals = snaps.map((s) => s.final_score).filter((n) => typeof n === 'number');
+  const wins = snaps.filter((s) => s.is_winner);
+
+  return json({
+    creator_id: creatorId,
+    // Denormalised at finalization; falls back to null rather than a placeholder.
+    name: snaps.find((s) => s.creator_name)?.creator_name || null,
+    contests_scored: snaps.length,
+    wins: wins.length,
+    average_final_score: finals.length ? Math.round((finals.reduce((a, b) => a + b, 0) / finals.length) * 10) / 10 : null,
+    best_final_score: finals.length ? Math.max(...finals) : null,
+    winning_work: wins.slice(0, 12).map((s) => ({
+      contest_id: s.contest_id,
+      title: s.contest_title || 'Contest',
+      category: s.category || null,
+      cover_image_url: s.cover_image_url || null,
+      prize_amount: s.prize_amount || 0,
+      currency: s.currency || 'INR',
+      brand_name: s.brand_name || null,
+      final_score: s.final_score ?? null,
+      finalized_at: s.finalized_at || null,
+    })),
+  });
+}
