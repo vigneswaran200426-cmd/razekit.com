@@ -32,11 +32,30 @@ const DAY = 86400000;
 const NOW = Date.now();
 const MONTH_AGO = NOW - 30 * DAY;
 
-// Deterministic PRNG so reruns produce a comparable dataset.
-let _s = 1337;
-const rnd = () => ((_s = (_s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+// Deterministic PRNG (mulberry32). A textbook LCG was used here first, but
+// `_s * 1103515245` exceeds 2^53 in JS, so it lost precision and degenerated
+// into a near-repeating sequence — only ~21 of 500 creators ever got picked.
+let _s = 1337 >>> 0;
+const rnd = () => {
+  _s = (_s + 0x6d2b79f5) >>> 0;
+  let t = _s;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
 const pick = <T,>(a: T[]): T => a[Math.floor(rnd() * a.length)];
 const int = (lo: number, hi: number) => lo + Math.floor(rnd() * (hi - lo + 1));
+// Proper Fisher-Yates. `sort(() => rnd() - 0.5)` is a biased shuffle: with a
+// deterministic PRNG it kept surfacing the same creators, so a handful of them
+// entered (and won) far too many contests and the leaderboard looked rigged.
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 const CATEGORIES = ['Instagram Reel', 'YouTube Shorts', 'YouTube Video', 'Advertisement', 'Gaming', 'Wedding', 'Documentary', 'Corporate', 'Travel', 'Music Video'];
 const BRAND_WORDS = ['Nova', 'Astra', 'Vertex', 'Lumen', 'Orbit', 'Pulse', 'Quanta', 'Zenith', 'Aster', 'Kite', 'Vela', 'Ember', 'Onyx', 'Ridge', 'Halo'];
@@ -50,8 +69,11 @@ const img = (s: string) => `https://picsum.photos/seed/${s}/1200/800`;
 
 type Row = { entity: string; data: any; createdById: string | null; createdDate: Date };
 const rows: Row[] = [];
-const add = (entity: string, data: any, createdById: string | null = null, at: number = NOW) =>
-  rows.push({ entity, data: { ...data, demo: true, seed_batch: SEED_BATCH }, createdById, createdDate: new Date(at) });
+const add = (entity: string, data: any, createdById: string | null = null, at: number = NOW) => {
+  const row: Row = { entity, data: { ...data, demo: true, seed_batch: SEED_BATCH }, createdById, createdDate: new Date(at) };
+  rows.push(row);
+  return row; // returned so scoring can back-fill winner state consistently
+};
 
 async function removeBatch() {
   console.log(`Removing seed batch "${SEED_BATCH}"…`);
@@ -140,7 +162,7 @@ async function seed() {
       const category = pick(CATEGORIES);
       const contestId = crypto.randomUUID();
 
-      add('Contest', {
+      const contestRow = add('Contest', {
         title: `${pick(['Launch', 'Brand', 'Story', 'Hero', 'Promo', 'Teaser'])} ${category} — ${brand.fullName}`,
         short_description: `A ${category.toLowerCase()} brief from ${brand.fullName}.`,
         description: 'Deliver a polished cut that matches the brand tone. Include captions.',
@@ -158,7 +180,7 @@ async function seed() {
       nContests++;
 
       // ── Participation ────────────────────────────────────────────────────────
-      const entrants = [...creators].sort(() => rnd() - 0.5).slice(0, int(0, 9)); // includes zero-entry contests
+      const entrants = shuffled(creators).slice(0, int(0, 9)); // includes zero-entry contests
       const entries: any[] = [];
 
       for (const cr of entrants) {
@@ -179,9 +201,9 @@ async function seed() {
         const totalClicks = hasTraffic ? uniqueVisitors + int(0, 120) : 0;
         const excluded = hasTraffic ? int(0, 40) : 0;
 
-        entries.push({ id: subId, creator: cr, submittedAt, metrics, uniqueVisitors, disqualified });
+        // subRow is attached below once it exists.
 
-        add('Submission', {
+        const subRow = add('Submission', {
           contest_id: contestId, client_id: brand.id, created_by_id: cr.id,
           title: `${category} entry — ${cr.fullName}`,
           platform: pick(['Instagram', 'YouTube', 'TikTok']),
@@ -191,6 +213,7 @@ async function seed() {
           url_status: 'published',
           _id: subId,
         }, cr.id, submittedAt);
+        entries.push({ id: subId, creator: cr, submittedAt, metrics, uniqueVisitors, disqualified, row: subRow });
         nSubs++;
 
         if (metrics) {
@@ -273,6 +296,27 @@ async function seed() {
               reason: 'scored',
               result: JSON.stringify({ contest_id: contestId, submission_id: winner.id, final_score: winner.final_score, scoring_version: SCORING_VERSION }),
             }, null, finalizedAt);
+
+            // Keep the whole record set consistent: the snapshot said who won,
+            // so the contest and the submissions must say the same thing.
+            contestRow.data.winner_user_id = winner.creator.id;
+            contestRow.data.winner_submission_id = winner.id;
+            contestRow.data.winner_selected_at = new Date(finalizedAt).toISOString();
+            contestRow.data.completed_at = new Date(finalizedAt).toISOString();
+            for (const e of entries) {
+              if (!e.row) continue;
+              e.row.data.status = e.id === winner.id ? 'won' : 'not_selected';
+              const sc = ranked.find((r) => r.id === e.id);
+              if (sc) {
+                e.row.data.engagement_score = sc.engagement_score;
+                e.row.data.traffic_score = sc.traffic_score;
+                e.row.data.final_score = sc.final_score;
+                e.row.data.rank = ranked.indexOf(sc) + 1;
+                e.row.data.score_state = sc.score_state;
+                e.row.data.scoring_version = SCORING_VERSION;
+                e.row.data.scored_at = new Date(finalizedAt).toISOString();
+              }
+            }
 
             add('WinnerPublish', {
               contest_id: contestId, submission_id: winner.id, creator_id: winner.creator.id, client_id: brand.id,

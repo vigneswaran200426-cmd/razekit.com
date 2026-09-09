@@ -118,9 +118,9 @@ Each requirement maps to its implementation and the evidence that it works.
 
 | Req | Status | Evidence |
 |---|---|---|
-| 500 creators + 100 brands | **VERIFIED** | 615 accounts, 4,156 records |
+| 500 creators + 100 brands | **VERIFIED** | 615 accounts; 876 submissions across **421 distinct creators** |
 | Month-wide contest distribution incl. cancelled/expired | **VERIFIED** | 190 contests; 89 open, 91 winner-selected, 15 cancelled, 49 past deadline |
-| Submissions, winners, tracker history, notifications, tickets | **VERIFIED** | 533 / 91 / 261 snapshots / 91 / 80 |
+| Submissions, winners, tracker history, notifications, tickets | **VERIFIED** | 876 / 109 / 502 snapshots / 109 / 80; wins spread over **100 distinct winners** (max 2 each) |
 | Exact prize-duration rules + actual scoring math | **VERIFIED** | seed calls `allowedDuration()` and the live scoring engine |
 | Edge cases (zero traffic, delayed analytics, disqualified, suspicious) | **IMPLEMENTED** | all present in the generator |
 | Internally tagged; no "fake" label in product UI | **IMPLEMENTED** | `seed_batch` + `demo`; `@razekit.sim` / `@razekit.test` |
@@ -146,9 +146,19 @@ Each requirement maps to its implementation and the evidence that it works.
 
 ---
 
+## Production verification — PASSED
+
+`CORS_ORIGINS` was set by the owner and production is now verified end to end:
+
+* preflight → `204` with `access-control-allow-origin: https://razekit.com`
+* all three configured origins allowed; an unknown origin is blocked
+* real browser login on `https://razekit.com` → `/dashboard`, token stored
+* Tracker renders live production data (`Vikram Sharma's performance`, Final 100.0, 13,145 verified visitors)
+* campaign carousel renders on the dashboard
+* rate limiting fired in production during testing (60 logins from one IP → `429`)
+
 ## Blocked items (never silently omitted)
 
-1. **`CORS_ORIGINS` on `razekit-api`** — missing the apex `https://razekit.com`, so browser login fails in production. Requires Render access I do not have. **This blocks every production verification.**
 2. **GatePay adapter** — provider unidentified; all gateways removed by owner instruction. Boundary + state machine ready.
 3. **`admin.razekit.com`** — domain does not resolve; no separate admin app exists.
 4. **Engagement collector** — no external platform integration exists, so `SocialCampaignPost.metrics` is seeded but not live-synced. Video Engagement stays `null` for real contests rather than being fabricated.
