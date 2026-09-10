@@ -9,7 +9,7 @@ import { serviceClient } from '../src/entities/service.js';
 import { emit, emitEvent, CATEGORY, SEVERITY } from '../src/notify/emit.js';
 import { notificationFeed, notificationRead } from '../src/functions/notifications.js';
 import { campaignReport, creatorTrackRecord, fraudSignals } from '../src/functions/reports.js';
-import { trackerCampaignDetail } from '../src/functions/tracker.js';
+import { trackerCampaignDetail, trackerCreatorOverview } from '../src/functions/tracker.js';
 
 const svc = serviceClient();
 const ctx = (u: any, b: any = {}) => ({ user: u, svc, body: b, req: {} });
@@ -161,6 +161,25 @@ ok('and never the placeholder word', detail.json.entries.every((e: any) => e.cre
 ok('the scoring rules are included so ranking is explainable', Boolean(detail.json.scoring));
 ok('disqualification state is exposed', detail.json.entries.every((e: any) => 'disqualified' in e));
 ok('the lifecycle state is labelled', Boolean(detail.json.campaign.state_label));
+
+// ── Tracker never claims money that has not moved ───────────────────────────
+// The failure this guards against: a creator wins a ₹20,000 contest, the payout
+// has not been made, and the Tracker greets them with "₹20,000 earned" while
+// their balance page truthfully says ₹0. Two screens, two answers, one angry
+// support ticket. Won VALUE and PAID OUT are different facts and stay separate.
+console.log('\n-- Tracker earnings honesty --');
+const winSub = await svc.entities.Submission.create({
+  contest_id: contest.id, title: `${RUN} winning entry`, status: 'won',
+  created_by_id: creator.id, submitted_at: new Date().toISOString(), demo: RUN,
+});
+const kpi: any = await trackerCreatorOverview(ctx(creator));
+eq('the creator overview loads', kpi.status, 200);
+eq('the value of what they won is reported', kpi.json.kpis.prize_value_won, 20000);
+eq('but paid out is ZERO, because no payout has happened', kpi.json.kpis.paid_out, 0);
+eq('and nothing is owed either, because no payout was authorised', kpi.json.kpis.awaiting_payout, 0);
+ok('the two figures are separate fields, never merged',
+  'prize_value_won' in kpi.json.kpis && 'paid_out' in kpi.json.kpis);
+ok('and the old conflated field is gone', !('prizes_earned' in kpi.json.kpis));
 
 // ── Fraud signals ───────────────────────────────────────────────────────────
 console.log('\n-- Anti-fraud signals --');

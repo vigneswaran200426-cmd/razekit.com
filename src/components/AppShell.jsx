@@ -9,6 +9,8 @@ import { entities } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
 import { RazekitMark, RazekitWordmark } from '@/components/Brand';
+import Footer from '@/components/Footer';
+import { NotificationBell } from '@/components/Notifications';
 
 const NAV = {
   // Spec IA: Dashboard / Explore / Discover / Winners / Tracker.
@@ -42,7 +44,7 @@ const NAV = {
 const QUICK = {
   // "Balance", never "Wallet": RazeKit is not a wallet provider and the product
   // language must not imply one.
-  creator: [{ to: '/work', label: 'My Work', icon: FolderKanban }, { to: '/balance', label: 'Earnings', icon: Wallet }],
+  creator: [{ to: '/work', label: 'My Work', icon: FolderKanban }, { to: '/track-record', label: 'Track record', icon: Trophy }, { to: '/balance', label: 'Earnings', icon: Wallet }],
   client: [{ to: '/work', label: 'My Contests', icon: FolderKanban }, { to: '/balance', label: 'Balance', icon: Wallet }],
 };
 
@@ -192,6 +194,7 @@ export default function AppShell() {
                 <Bell className="w-5 h-5" />
               </IconBtn>
             )}
+            <NotificationBell />
             <IconBtn to="/help" label="Help"><HelpCircle className="w-5 h-5 hidden sm:block" /></IconBtn>
 
             {isVisitor ? (
@@ -243,6 +246,9 @@ export default function AppShell() {
           </motion.div>
         </div>
       </main>
+
+      {/* Legal and real support channels reachable from anywhere. */}
+      <Footer />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { json } from './context.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { configFor } from '../scoring/weights.js';
 import { inferLifecycle, LIFECYCLE_COPY } from '../contest/lifecycle.js';
+import { razekitBalance } from '../finance/balances.js';
 
 /** A malformed stored breakdown must not break the whole Tracker page. */
 function safeParse(v) {
@@ -69,7 +70,19 @@ export async function trackerCreatorOverview(ctx) {
   });
 
   const finals = snaps.map((s) => num(s.final_score)).filter((v) => v !== null);
-  const earned = wins.reduce((a, s) => a + Number(byId.get(s.contest_id)?.prize_amount || 0), 0);
+  // What the won contests were WORTH. Not what the creator has received —
+  // conflating the two is how a Tracker ends up claiming "₹50,000 earned"
+  // beside a balance page showing ₹0 because the payout has not happened.
+  const prizeValueWon = wins.reduce((a, s) => a + Number(byId.get(s.contest_id)?.prize_amount || 0), 0);
+
+  // What actually reached their bank. Read through razekitBalance rather than
+  // re-summing the ledger here, so the Tracker and the balance page are the
+  // SAME computation and cannot drift into disagreeing about one creator.
+  const currency = contests[0]?.currency || 'INR';
+  const bal = await razekitBalance(svc, { userId: user.id, currency, role: user.user_role })
+    .catch(() => ({ paid_out_minor: 0, available_minor: 0 }));
+  const paidOut = bal.paid_out_minor / 100;
+  const owedNow = bal.available_minor / 100;
 
   return json({
     role: 'creator',
@@ -80,8 +93,13 @@ export async function trackerCreatorOverview(ctx) {
       submissions: subs.length,
       wins: wins.length,
       win_rate: completed.length ? Math.round((wins.length / completed.length) * 1000) / 10 : null,
-      prizes_earned: earned,
-      currency: contests[0]?.currency || 'INR',
+      // Three different facts, kept separate rather than merged into one
+      // flattering number: what the wins were worth, what has actually been
+      // transferred, and what is owed but not yet sent.
+      prize_value_won: prizeValueWon,
+      paid_out: paidOut,
+      awaiting_payout: owedNow,
+      currency,
       average_final_score: avg(finals),
     },
     traffic: trafficBlock(links),

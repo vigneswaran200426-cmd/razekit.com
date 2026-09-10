@@ -740,7 +740,11 @@ function CreatorTracker() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Kpi label="Contests joined" value={nf(k.contests_joined)} sub={`${nf(k.active_contests)} active`} icon={Target} />
             <Kpi label="Wins" value={nf(k.wins)} sub={k.win_rate === null ? 'No completed contests yet' : `${k.win_rate}% win rate`} icon={Trophy} accent />
-            <Kpi label="Prizes earned" value={k.prizes_earned ? money(k.prizes_earned, k.currency) : 'None yet'} sub="From won contests" icon={Wallet} />
+            {/* Two separate facts. What you WON is not what has reached your
+                bank — merging them would contradict the balance page. */}
+            <Kpi label="Prize value won" value={k.prize_value_won ? money(k.prize_value_won, k.currency) : 'None yet'} sub={`${nf(k.wins)} ${k.wins === 1 ? 'win' : 'wins'}`} icon={Trophy} />
+            <Kpi label="Paid out" value={k.paid_out ? money(k.paid_out, k.currency) : 'Nothing yet'}
+              sub={k.awaiting_payout > 0 ? `${money(k.awaiting_payout, k.currency)} owed to you` : 'Transferred to your bank'} icon={Wallet} />
             <Kpi label="Avg final score" value={one(k.average_final_score) ?? 'Not scored yet'}
               sub={k.average_final_score === null ? 'No finalized scores yet' : 'Across finalized contests'} icon={TrendingUp} />
           </div>
