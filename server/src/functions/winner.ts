@@ -15,6 +15,7 @@ import { computeContestScores } from '../scoring/compute.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { loadLockedCriteria } from './compliance.js';
 import { ELIGIBILITY, ENGINE_VERSION as COMPLIANCE_ENGINE_VERSION } from '../compliance/engine.js';
+import { ensurePayoutForWinner } from './payouts.js';
 
 const SCORED_STATES = ['submitted', 'shortlisted', 'won', 'not_selected'];
 
@@ -220,6 +221,17 @@ export async function winnerFinalize(ctx) {
     }),
   }).catch(() => null);
 
+  // Turn the contest's committed prize into a debt owed to this creator.
+  // Deliberately after the winner is recorded and deliberately best-effort:
+  // a bookkeeping problem must not undo a finalised, audited result. If it
+  // fails, the payout is created on first read of the payout overview and the
+  // contest still shows a correct winner.
+  const payoutRecord = await ensurePayoutForWinner(svc, {
+    contest: { ...contest, funding_id: contest.funding_id, id: contestId },
+    submission: winner,
+    creatorId: winner.created_by_id,
+  }).catch(() => null);
+
   await svc.entities.Notification.create({
     type: 'contest_won',
     title: 'You won!',
@@ -236,5 +248,10 @@ export async function winnerFinalize(ctx) {
     selection_method: method,
     final_score: winner.final_score ?? null,
     finalized_at: now,
+    // Says plainly whether the prize can actually be paid, rather than
+    // implying a payout that no verified money stands behind.
+    payout: payoutRecord
+      ? { id: payoutRecord.id, status: payoutRecord.status, reason: payoutRecord.eligibility_reason || null }
+      : null,
   });
 }

@@ -56,17 +56,44 @@ export async function uploadPublic(buffer: Buffer, filename: string, mime: strin
   return { file_url: `${config.storage.publicBaseUrl.replace(/\/$/, '')}/public/${key}` };
 }
 
-export async function uploadPrivate(buffer: Buffer, filename: string, mime: string): Promise<{ file_uri: string }> {
-  const key = safeName(filename);
+/**
+ * Build a foldered object key, e.g. payments/<contest>/funding/<funding>/proof.
+ *
+ * The prefix must be assembled from ids the SERVER owns — never from a filename
+ * or any other client string. It is sanitised again here so a stray value can
+ * still not escape the bucket, and the local driver flattens it (its file route
+ * serves a single directory) while S3/R2 keeps the real folder structure.
+ */
+export function storagePrefix(...segments: string[]): string {
+  return segments
+    .map((s) => String(s || '').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 64))
+    .filter(Boolean)
+    .join('/');
+}
+
+export async function uploadPrivate(
+  buffer: Buffer,
+  filename: string,
+  mime: string,
+  prefix?: string
+): Promise<{ file_uri: string; storage_path: string }> {
+  const name = safeName(filename);
+  const clean = prefix ? storagePrefix(...prefix.split('/')) : '';
+  // S3/R2 gets real folders; the local dev driver flattens them so the existing
+  // single-directory file route keeps working unchanged.
+  const key = clean
+    ? (config.storage.driver === 's3' ? `${clean}/${name}` : `${clean.replace(/\//g, '__')}__${name}`)
+    : name;
+  const storage_path = clean ? `${clean}/${name}` : name;
   if (config.storage.driver === 's3') {
     const { client, mod } = await s3();
     await client.send(new mod.PutObjectCommand({ Bucket: config.storage.s3.bucketPrivate, Key: key, Body: buffer, ContentType: mime }));
-    return { file_uri: `s3:${key}` };
+    return { file_uri: `s3:${key}`, storage_path };
   }
   const dir = join(ROOT, 'private');
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, key), buffer);
-  return { file_uri: `local:${key}` };
+  return { file_uri: `local:${key}`, storage_path };
 }
 
 export async function createSignedUrl(fileUri: string, expiresInSec = 3600): Promise<{ signed_url: string }> {

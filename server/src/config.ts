@@ -69,6 +69,27 @@ export const config = {
   },
 
   enableScheduler: (process.env.ENABLE_SCHEDULER || 'true') === 'true',
+
+  // ── Beta manual payment ────────────────────────────────────────────────────
+  // Server-only. `bank` is never serialised into a public response, a client
+  // bundle, or a log line; payments/config.ts is the single reader and it masks
+  // the account number everywhere except the authorised instructions response.
+  payments: {
+    mode: (process.env.PAYMENT_MODE || 'MANUAL_BETA') as 'MANUAL_BETA' | 'GATEWAY' | 'MAINTENANCE',
+    verificationHours: Number(process.env.BETA_FUNDING_VERIFICATION_HOURS || 24),
+    support: {
+      phone: process.env.BETA_SUPPORT_PHONE || '',
+      email: process.env.BETA_SUPPORT_EMAIL || process.env.SUPPORT_EMAIL || '',
+    },
+    bank: {
+      accountName: process.env.BETA_BANK_ACCOUNT_NAME || '',
+      bankName: process.env.BETA_BANK_NAME || '',
+      branch: process.env.BETA_BANK_BRANCH || '',
+      accountNumber: process.env.BETA_BANK_ACCOUNT_NUMBER || '',
+      ifsc: process.env.BETA_BANK_IFSC || '',
+      upiId: process.env.BETA_BANK_UPI_ID || '',
+    },
+  },
 };
 
 export type AppConfig = typeof config;

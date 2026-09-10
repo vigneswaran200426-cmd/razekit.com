@@ -11,6 +11,8 @@ import { integrationsRouter } from './integrations/routes.js';
 import { filesRouter } from './integrations/files.js';
 import { miscRouter } from './misc/routes.js';
 import { trafficRouter } from './traffic/routes.js';
+import { paymentsRouter } from './payments/routes.js';
+import { ensureFinanceConstraints } from './db.js';
 import { startScheduler } from './scheduler.js';
 
 const app = express();
@@ -38,6 +40,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/entities', entitiesRouter);
 app.use('/api/functions', functionsRouter);
 app.use('/api/integrations/core', integrationsRouter);
+// Multipart money routes (funding proof, admin UPI QR). Each re-checks
+// ownership or the finance permission itself.
+app.use('/api/payments', paymentsRouter);
 app.use('/api', miscRouter);
 
 app.get('/', (_req, res) => res.json({ service: 'razekit-api', ok: true }));
@@ -62,5 +67,12 @@ process.on('uncaughtException', (e) => console.error('[uncaughtException]', e));
 app.listen(config.port, () => {
   console.log(`\n🚀 RazeKit API on http://localhost:${config.port}  (env: ${config.env})`);
   console.log(`   CORS origins: ${config.corsOrigins.join(', ')}`);
+  // Database-level duplicate protection for the ledger. Application checks
+  // race; a unique index does not. A failure here is reported loudly rather
+  // than silently downgrading the guarantee.
+  ensureFinanceConstraints().then((r) => {
+    if (r.ok) console.log('   Finance constraints: ok');
+    else console.error('   Finance constraints NOT applied — duplicate protection is application-level only:', r.error);
+  });
   startScheduler();
 });

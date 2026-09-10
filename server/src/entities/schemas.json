@@ -220,7 +220,8 @@
       "drive_link_removed": false,
       "require_otp": false,
       "manual_approval": false,
-      "max_downloads": 1
+      "max_downloads": 1,
+      "funding_status": "FUNDING_REQUIRED"
     },
     "fields": [
       "title",
@@ -287,7 +288,12 @@
       "max_editors",
       "brand_destination_url",
       "criteria_version_id",
-      "criteria_confirmed_at"
+      "criteria_confirmed_at",
+      "funding_status",
+      "funding_id",
+      "funded_at",
+      "prize_committed_minor",
+      "payment_mode"
     ],
     "rls": {
       "read": {},
@@ -1438,7 +1444,8 @@
       "status"
     ],
     "defaults": {
-      "status": "READY_FOR_PAYOUT"
+      "status": "PAYOUT_NOT_ELIGIBLE",
+      "payment_mode": "MANUAL_BETA"
     },
     "fields": [
       "reference",
@@ -1456,7 +1463,34 @@
       "idempotency_key",
       "failure_reason",
       "initiated_at",
-      "completed_at"
+      "completed_at",
+      "payment_mode",
+      "submission_id",
+      "funding_id",
+      "prize_amount_minor",
+      "payout_account_id",
+      "bank_account_masked",
+      "bank_ifsc",
+      "bank_name",
+      "account_holder_name",
+      "upi_id_masked",
+      "eligibility_reason",
+      "eligible_at",
+      "requested_at",
+      "approved_by",
+      "approved_at",
+      "approval_note",
+      "paid_by",
+      "paid_at",
+      "payment_reference",
+      "payment_method",
+      "payout_note",
+      "rejected_by",
+      "rejected_at",
+      "rejection_reason",
+      "ledger_txn_id",
+      "liability_txn_id",
+      "contest_title"
     ],
     "rls": {
       "read": {
@@ -1499,9 +1533,12 @@
       "onboarding_status"
     ],
     "defaults": {
-      "onboarding_status": "not_started",
+      "onboarding_status": "SUBMITTED",
       "charges_enabled": false,
-      "payouts_enabled": false
+      "payouts_enabled": false,
+      "payment_mode": "MANUAL_BETA",
+      "verified": false,
+      "is_default": true
     },
     "fields": [
       "user_id",
@@ -1512,7 +1549,21 @@
       "charges_enabled",
       "payouts_enabled",
       "requirements_status",
-      "last_synced_at"
+      "last_synced_at",
+      "account_holder_name",
+      "bank_name",
+      "account_number_masked",
+      "account_number_last4",
+      "ifsc",
+      "upi_id_masked",
+      "account_type",
+      "payment_mode",
+      "verified",
+      "verified_at",
+      "verified_by",
+      "is_default",
+      "submitted_at",
+      "account_number"
     ],
     "rls": {
       "read": {
@@ -1778,7 +1829,7 @@
       "status"
     ],
     "defaults": {
-      "status": "OPEN"
+      "status": "UNRESOLVED"
     },
     "fields": [
       "reference",
@@ -1790,7 +1841,21 @@
       "provider_status",
       "mismatch_summary",
       "status",
-      "resolution_notes"
+      "resolution_notes",
+      "contest_id",
+      "funding_id",
+      "payout_id",
+      "currency",
+      "expected_amount_minor",
+      "actual_amount_minor",
+      "difference_minor",
+      "bank_reference",
+      "period_start",
+      "period_end",
+      "resolved_by",
+      "resolved_at",
+      "checked_by",
+      "checked_at"
     ],
     "rls": {
       "read": {
@@ -2806,7 +2871,13 @@
       "reserved_funds",
       "total_deposits",
       "lifetime_earnings",
-      "currency"
+      "currency",
+      "available_balance_minor",
+      "pending_balance_minor",
+      "reserved_funds_minor",
+      "total_deposits_minor",
+      "lifetime_earnings_minor",
+      "projected_at"
     ],
     "rls": {
       "read": {
@@ -3053,10 +3124,13 @@
     "name": "WithdrawalRequest",
     "required": [
       "user_id",
-      "amount"
+      "amount_minor",
+      "currency",
+      "status"
     ],
     "defaults": {
-      "status": "pending",
+      "status": "REQUESTED",
+      "payment_mode": "MANUAL_BETA",
       "commission": 0,
       "fees": 0,
       "net_amount": 0
@@ -3074,7 +3148,51 @@
       "net_amount",
       "requested_at",
       "processed_at",
-      "rejection_reason"
+      "rejection_reason",
+      "reference",
+      "amount_minor",
+      "currency",
+      "payment_mode",
+      "payout_account_id",
+      "account_holder_name",
+      "bank_ifsc",
+      "upi_id_masked",
+      "available_at_request_minor",
+      "reserved_txn_id",
+      "paid_txn_id",
+      "released_txn_id",
+      "reviewed_by",
+      "reviewed_at",
+      "review_note",
+      "approved_by",
+      "approved_at",
+      "approval_note",
+      "transfer_sent_by",
+      "transfer_sent_at",
+      "transfer_amount_minor",
+      "transfer_date",
+      "payment_reference",
+      "payment_method",
+      "transfer_note",
+      "confirmed_by",
+      "confirmed_at",
+      "paid_at",
+      "failed_at",
+      "failure_reason",
+      "hold_reason",
+      "hold_by",
+      "hold_at",
+      "cancelled_at",
+      "cancelled_by",
+      "cancellation_reason",
+      "reversed_at",
+      "reversed_by",
+      "reversal_reason",
+      "reversal_txn_id",
+      "idempotency_key",
+      "contest_id",
+      "payout_id",
+      "note"
     ],
     "rls": {
       "read": {
@@ -3090,7 +3208,9 @@
         ]
       },
       "create": {
-        "data.user_id": "{{user.id}}"
+        "user_condition": {
+          "role": "admin"
+        }
       },
       "update": {
         "user_condition": {
@@ -3647,6 +3767,522 @@
         "user_condition": {
           "role": "admin"
         }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "LedgerAccount": {
+    "name": "LedgerAccount",
+    "required": [
+      "account_code",
+      "account_class",
+      "currency"
+    ],
+    "defaults": {
+      "status": "active",
+      "balance_minor": 0,
+      "owner_type": "PLATFORM"
+    },
+    "fields": [
+      "account_code",
+      "account_class",
+      "label",
+      "owner_type",
+      "owner_id",
+      "contest_id",
+      "currency",
+      "status",
+      "balance_minor",
+      "last_txn_id",
+      "last_posted_at"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "LedgerTransaction": {
+    "name": "LedgerTransaction",
+    "required": [
+      "reference",
+      "txn_type",
+      "currency",
+      "amount_minor",
+      "posted_at"
+    ],
+    "defaults": {
+      "status": "POSTED"
+    },
+    "fields": [
+      "reference",
+      "txn_type",
+      "status",
+      "currency",
+      "amount_minor",
+      "contest_id",
+      "funding_id",
+      "payout_id",
+      "brand_id",
+      "creator_id",
+      "idempotency_key",
+      "description",
+      "actor_id",
+      "actor_role",
+      "posted_at",
+      "reverses_txn_id",
+      "reversed_by_txn_id",
+      "metadata",
+      "entry_count",
+      "withdrawal_id"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "LedgerEntry": {
+    "name": "LedgerEntry",
+    "required": [
+      "transaction_id",
+      "account_id",
+      "direction",
+      "amount_minor",
+      "currency",
+      "posted_at"
+    ],
+    "defaults": {
+      "sequence": 0
+    },
+    "fields": [
+      "transaction_id",
+      "transaction_reference",
+      "account_id",
+      "account_code",
+      "account_class",
+      "entry_type",
+      "direction",
+      "amount_minor",
+      "currency",
+      "balance_after_minor",
+      "contest_id",
+      "funding_id",
+      "payout_id",
+      "owner_type",
+      "owner_id",
+      "sequence",
+      "posted_at",
+      "description",
+      "withdrawal_id"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ContestFunding": {
+    "name": "ContestFunding",
+    "required": [
+      "reference",
+      "contest_id",
+      "brand_id",
+      "currency",
+      "total_amount_minor",
+      "status"
+    ],
+    "defaults": {
+      "payment_mode": "MANUAL_BETA",
+      "status": "FUNDING_REQUIRED",
+      "platform_fee_minor": 0,
+      "tax_minor": 0,
+      "fee_percentage_bps": 0
+    },
+    "fields": [
+      "reference",
+      "contest_id",
+      "brand_id",
+      "currency",
+      "payment_mode",
+      "prize_amount_minor",
+      "platform_fee_minor",
+      "tax_minor",
+      "total_amount_minor",
+      "fee_rule_version",
+      "fee_percentage_bps",
+      "status",
+      "instructions_shown_at",
+      "reported_at",
+      "reported_amount_minor",
+      "reported_reference",
+      "reported_method",
+      "reported_transfer_date",
+      "reported_sender_name",
+      "reported_note",
+      "verified_by",
+      "verified_at",
+      "verified_amount_minor",
+      "verification_note",
+      "bank_reference",
+      "rejected_by",
+      "rejected_at",
+      "rejection_reason",
+      "cancelled_at",
+      "cancelled_by",
+      "refund_requested_at",
+      "refund_reason",
+      "refunded_at",
+      "refunded_by",
+      "refund_amount_minor",
+      "refund_reference",
+      "ledger_txn_id",
+      "reservation_txn_id",
+      "idempotency_key",
+      "duplicate_of_funding_id",
+      "expires_at",
+      "reminder_sent_at",
+      "settings_version",
+      "qr_version",
+      "needs_information_reason",
+      "needs_information_at",
+      "receipts_total_minor",
+      "shortfall_minor",
+      "overpaid_minor",
+      "last_receipt_reference"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.brand_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FundingProof": {
+    "name": "FundingProof",
+    "required": [
+      "funding_id",
+      "file_uri"
+    ],
+    "defaults": {},
+    "fields": [
+      "funding_id",
+      "contest_id",
+      "brand_id",
+      "file_uri",
+      "storage_path",
+      "file_name",
+      "mime_type",
+      "size_bytes",
+      "uploaded_by",
+      "uploaded_at",
+      "checksum"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.brand_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "AdminPermission": {
+    "name": "AdminPermission",
+    "required": [
+      "user_id",
+      "permission"
+    ],
+    "defaults": {
+      "active": true
+    },
+    "fields": [
+      "user_id",
+      "permission",
+      "active",
+      "granted_by",
+      "granted_at",
+      "revoked_by",
+      "revoked_at",
+      "note"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "PaymentSettings": {
+    "name": "PaymentSettings",
+    "required": [
+      "version",
+      "payment_mode"
+    ],
+    "defaults": {
+      "payment_mode": "MANUAL_BETA",
+      "active": true,
+      "bank_transfer_enabled": true,
+      "upi_enabled": false,
+      "upi_qr_enabled": false
+    },
+    "fields": [
+      "version",
+      "payment_mode",
+      "active",
+      "bank_transfer_enabled",
+      "upi_enabled",
+      "upi_qr_enabled",
+      "bank_account_name",
+      "bank_account_number",
+      "bank_ifsc",
+      "bank_name",
+      "bank_branch",
+      "upi_id",
+      "upi_qr_file_uri",
+      "upi_qr_storage_path",
+      "upi_qr_version",
+      "upi_qr_uploaded_at",
+      "upi_qr_uploaded_by",
+      "upi_qr_mime",
+      "upi_qr_size_bytes",
+      "payment_instructions",
+      "support_phone",
+      "support_email",
+      "verification_hours",
+      "created_by_admin",
+      "superseded_at",
+      "superseded_by",
+      "change_reason"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "PaymentQrVersion": {
+    "name": "PaymentQrVersion",
+    "required": [
+      "version",
+      "file_uri"
+    ],
+    "defaults": {
+      "active": false
+    },
+    "fields": [
+      "version",
+      "file_uri",
+      "storage_path",
+      "mime_type",
+      "size_bytes",
+      "checksum",
+      "uploaded_by",
+      "uploaded_at",
+      "active",
+      "retired_at",
+      "retired_by"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "FundingReceipt": {
+    "name": "FundingReceipt",
+    "required": [
+      "funding_id",
+      "amount_minor",
+      "bank_reference",
+      "verified_by"
+    ],
+    "defaults": {},
+    "fields": [
+      "funding_id",
+      "contest_id",
+      "brand_id",
+      "currency",
+      "amount_minor",
+      "bank_reference",
+      "received_date",
+      "verified_by",
+      "verified_at",
+      "note",
+      "ledger_txn_id",
+      "match_class"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.brand_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
       },
       "create": {
         "user_condition": {

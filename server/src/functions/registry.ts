@@ -8,10 +8,33 @@ import { winnersShowcase, winnersLeaderboard, creatorPublicProfile } from './win
 import { adminOverview, adminContests, adminTraffic, adminUsers, adminAudit } from './admin.js';
 import { supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge } from './support.js';
 import { trackerCreatorOverview, trackerCreatorContests, trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail } from './tracker.js';
+import { fundingQuote, fundingInstructions, fundingReportTransfer, fundingStatus, fundingCancel, paymentModeInfo } from './funding.js';
+import {
+  financeOverview, financeFundingQueue, financeFundingDetail, financeVerifyFunding,
+  financeRejectFunding, financeUserBalances, financePrizeCommitments, financeLedger,
+  financeReconcile, financeResolveReconciliation, financeRefund, financeAdjust,
+  financeAudit, financePermissions,
+} from './finance.js';
+import {
+  withdrawalRequest, withdrawalCancel, withdrawalList,
+  financeWithdrawalQueue, financeWithdrawalDetail, financeWithdrawalReview,
+  financeWithdrawalApprove, financeWithdrawalTransferSent, financeWithdrawalConfirm,
+  financeWithdrawalFail, financeWithdrawalReverse,
+} from './withdrawals.js';
+import {
+  payoutAccountSave, payoutOverview, payoutRequest,
+  financePayoutQueue, financePayoutDetail, financeApprovePayout, financeRecordPayout,
+} from './payouts.js';
+import { paymentSettingsGet, paymentSettingsUpdate, paymentSettingsQr } from './paymentSettings.js';
+import { balanceOverview } from './balance.js';
 
 // All handlers (name → fn(ctx)).
-// NOTE: payment/payout/reconciliation handlers were removed with the payment
-// gateways. The wallet/escrow/fees/payout DOMAIN (money/*.ts + entities) remains.
+//
+// The beta manual payment system spans funding (client side), finance (admin
+// control centre), withdrawals (creator side + admin transfer), payouts (per
+// contest win) and paymentSettings (configurable instructions). The
+// wallet/escrow/fees domain in money/*.ts is reused underneath, and ledger/*.ts
+// is the single book of record — there is no second ledger.
 export const HANDLERS = {
   visualAssetRequest, visualAssetAdmin, visualAssetWorker,
   winnerFinalize,
@@ -23,9 +46,28 @@ export const HANDLERS = {
   winnersShowcase, winnersLeaderboard, creatorPublicProfile,
   criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet,
   complianceEvaluate, complianceGet, complianceReview,
+
+  // Beta manual payment — client side.
+  fundingQuote, fundingInstructions, fundingReportTransfer, fundingStatus, fundingCancel, paymentModeInfo,
+  // Admin → Finance control centre.
+  financeOverview, financeFundingQueue, financeFundingDetail, financeVerifyFunding,
+  financeRejectFunding, financeUserBalances, financePrizeCommitments, financeLedger,
+  financeReconcile, financeResolveReconciliation, financeRefund, financeAdjust,
+  financeAudit, financePermissions,
+  paymentSettingsGet, paymentSettingsUpdate, paymentSettingsQr,
+  // Creator withdrawals + the admin side of the manual transfer.
+  withdrawalRequest, withdrawalCancel, withdrawalList,
+  financeWithdrawalQueue, financeWithdrawalDetail, financeWithdrawalReview,
+  financeWithdrawalApprove, financeWithdrawalTransferSent, financeWithdrawalConfirm,
+  financeWithdrawalFail, financeWithdrawalReverse,
+  // Per-contest payout eligibility.
+  payoutAccountSave, payoutOverview, payoutRequest,
+  financePayoutQueue, financePayoutDetail, financeApprovePayout, financeRecordPayout,
+  // The RazeKit balance, one definition for every surface.
+  balanceOverview,
 };
 
-// Functions callable over HTTP via base44.functions.invoke(name, payload).
+// Functions callable over HTTP via the /api/functions/:name route.
 // visualAssetWorker is intentionally NOT here — it runs only from the scheduler.
 export const HTTP_ALLOWED = new Set([
   'visualAssetRequest', 'visualAssetAdmin',
@@ -46,14 +88,39 @@ export const HTTP_ALLOWED = new Set([
   // criteriaGet is readable by participants so creators can see the rules.
   'criteriaLibrary', 'criteriaRecommend', 'criteriaConfirm', 'criteriaGet',
   'complianceEvaluate', 'complianceGet', 'complianceReview',
+
+  // Funding: every handler re-checks contest ownership. fundingInstructions is
+  // the only one that returns the payment details, and it checks three things
+  // before doing so.
+  'fundingQuote', 'fundingInstructions', 'fundingReportTransfer', 'fundingStatus', 'fundingCancel',
+  'paymentModeInfo',
+  // Creator money. Ownership is taken from the session, never from the payload.
+  'balanceOverview', 'withdrawalRequest', 'withdrawalCancel', 'withdrawalList',
+  'payoutAccountSave', 'payoutOverview', 'payoutRequest',
+
+  // Finance: deliberately NOT in ADMIN_ONLY, because these are gated on
+  // granular finance permissions instead — an operator can hold finance.view
+  // without being a platform admin. Each handler calls requireFinance() itself.
+  'financeOverview', 'financeFundingQueue', 'financeFundingDetail', 'financeVerifyFunding',
+  'financeRejectFunding', 'financeUserBalances', 'financePrizeCommitments', 'financeLedger',
+  'financeReconcile', 'financeResolveReconciliation', 'financeRefund', 'financeAdjust',
+  'financeAudit', 'financePermissions',
+  'paymentSettingsGet', 'paymentSettingsUpdate', 'paymentSettingsQr',
+  'financeWithdrawalQueue', 'financeWithdrawalDetail', 'financeWithdrawalReview',
+  'financeWithdrawalApprove', 'financeWithdrawalTransferSent', 'financeWithdrawalConfirm',
+  'financeWithdrawalFail', 'financeWithdrawalReverse',
+  'financePayoutQueue', 'financePayoutDetail', 'financeApprovePayout', 'financeRecordPayout',
 ]);
 
 // Callable WITHOUT authentication. Only finalized, intentionally public data:
-// winning work and the leaderboard (a visitor can browse these before joining).
-// Everything else stays behind requireAuth.
-export const PUBLIC_FUNCTIONS = new Set(['winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile']);
+// winning work, the leaderboard, and the fact that payments are manual — a
+// visitor is entitled to know that before committing to a contest.
+export const PUBLIC_FUNCTIONS = new Set([
+  'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile', 'paymentModeInfo',
+]);
 
 // Require platform admin at the route boundary (handlers also re-check).
+// Finance handlers are absent by design — see the note above.
 export const ADMIN_ONLY = new Set([
   'visualAssetAdmin', 'supportTicketUpdate',
   'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',

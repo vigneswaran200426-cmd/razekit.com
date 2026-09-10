@@ -134,9 +134,29 @@ export function listAdapters() {
  * env/admin change that stops new operations while leaving every historical
  * record, ledger entry and payout untouched (spec 10 removal rule).
  */
+function defaultAdapterId() {
+  // PAYMENT_MODE is the product-level switch; PAYMENT_GATEWAY names a specific
+  // provider adapter and wins when set. MANUAL_BETA is a real, configured way
+  // to take money (a bank transfer with a person in the loop), so it resolves
+  // to its own adapter rather than to "no gateway".
+  //
+  // The registry check matters: the manual adapter only exists once
+  // payments/manualBeta.js has been loaded. If it has not been, the honest
+  // answer is "no gateway", not a dangling id — the core must degrade to
+  // something that provably cannot take money.
+  const mode = String(process.env.PAYMENT_MODE || 'MANUAL_BETA').toUpperCase();
+  if (mode === 'MANUAL_BETA' && REGISTRY.has('manual_beta')) return 'manual_beta';
+  return offPlatformAdapter.id;
+}
+
 export function activeGateway() {
-  const id = process.env.PAYMENT_GATEWAY || offPlatformAdapter.id;
-  const state = process.env.PAYMENT_GATEWAY_STATE || GATEWAY_STATE.ACTIVE;
+  const id = process.env.PAYMENT_GATEWAY || defaultAdapterId();
+  // PAYMENT_MODE=MAINTENANCE pauses new operations everywhere at once while
+  // leaving every historical record, ledger entry and payout readable.
+  const maintenance = String(process.env.PAYMENT_MODE || '').toUpperCase() === 'MAINTENANCE';
+  const state = maintenance
+    ? GATEWAY_STATE.MAINTENANCE
+    : process.env.PAYMENT_GATEWAY_STATE || GATEWAY_STATE.ACTIVE;
   const adapter = REGISTRY.get(id) || offPlatformAdapter;
   // "Configured" is not the same as "can take money": the off-platform adapter
   // is a valid, configured choice that deliberately supports no payments.

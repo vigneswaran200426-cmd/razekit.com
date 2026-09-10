@@ -17,7 +17,8 @@ import Winners from '@/pages/Winners';
 import Feed from '@/pages/Feed';
 import CreatorProfile from '@/pages/CreatorProfile';
 import Work from '@/pages/Work';
-import Wallet from '@/pages/Wallet';
+import Balance from '@/pages/Balance';
+import FundContest from '@/pages/FundContest';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Notifications from '@/pages/Notifications';
@@ -55,13 +56,18 @@ export default function App() {
             <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/work" element={<ProtectedRoute><Work /></ProtectedRoute>} />
-            <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+            {/* The RazeKit balance. /wallet is kept as an alias so existing links
+                and bookmarks keep working, but the product no longer uses the
+                word "wallet" anywhere a user can see. */}
+            <Route path="/balance" element={<ProtectedRoute><Balance /></ProtectedRoute>} />
+            <Route path="/wallet" element={<ProtectedRoute><Balance /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/create-contest" element={<ProtectedRoute roles={['client']}><CreateContest /></ProtectedRoute>} />
             <Route path="/contest/:id/submit" element={<ProtectedRoute roles={['creator']}><SubmitWork /></ProtectedRoute>} />
             <Route path="/contest/:id/review" element={<ProtectedRoute roles={['client']}><Review /></ProtectedRoute>} />
+            <Route path="/contest/:id/fund" element={<ProtectedRoute roles={['client']}><FundContest /></ProtectedRoute>} />
             <Route path="/contest/:id/handover" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} />
           </Route>

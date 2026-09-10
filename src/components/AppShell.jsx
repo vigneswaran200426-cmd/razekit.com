@@ -40,8 +40,10 @@ const NAV = {
 };
 
 const QUICK = {
-  creator: [{ to: '/work', label: 'My Work', icon: FolderKanban }, { to: '/wallet', label: 'Earnings', icon: Wallet }],
-  client: [{ to: '/work', label: 'My Contests', icon: FolderKanban }, { to: '/wallet', label: 'Wallet', icon: Wallet }],
+  // "Balance", never "Wallet": RazeKit is not a wallet provider and the product
+  // language must not imply one.
+  creator: [{ to: '/work', label: 'My Work', icon: FolderKanban }, { to: '/balance', label: 'Earnings', icon: Wallet }],
+  client: [{ to: '/work', label: 'My Contests', icon: FolderKanban }, { to: '/balance', label: 'Balance', icon: Wallet }],
 };
 
 function useClickOutside(ref, onOut) {

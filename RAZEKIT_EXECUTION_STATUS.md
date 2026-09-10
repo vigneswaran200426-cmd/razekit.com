@@ -134,11 +134,61 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 
 **Not done:** Admin "Contest Intelligence" tab (AgentRun data is recorded, screen pending); dedicated review-queue UI.
 
+---
+
+# Beta manual payment + ledger system
+
+Real money, one operator, no gateway. Full documentation in
+[`RAZEKIT_BETA_PAYMENT_SYSTEM.md`](RAZEKIT_BETA_PAYMENT_SYSTEM.md).
+
+The ordering the system enforces and refuses to shortcut:
+
+```
+CLIENT SENDS REAL MONEY -> RAZEKIT BANK ACCOUNT -> ADMIN VERIFIES RECEIPT
+   -> LEDGER CREDIT -> CLIENT BALANCE -> CONTEST PRIZE RESERVED -> CONTEST LIVE
+
+CREATOR REQUESTS WITHDRAWAL -> AMOUNT RESERVED (not debited) -> ADMIN REVIEWS
+   -> ADMIN TRANSFERS MANUALLY -> ADMIN ENTERS UTR -> ADMIN CONFIRMS
+   -> LEDGER DEBIT -> CREATOR BALANCE DROPS -> PAID
+```
+
+| Requirement | State | Evidence |
+|---|---|---|
+| A submitted payment form creates no money | **VERIFIED** | live: reporting a transfer posts zero ledger transactions; contest stays `draft` |
+| Only a verified receipt creates a credit | **VERIFIED** | `financeVerifyFunding` is the only writer; creator and client both get **403** |
+| Repeated verify creates zero extra credits | **VERIFIED** | live: second click returns `already_verified`, credit count stays 1 |
+| Two simultaneous verifies cannot both succeed | **VERIFIED** | live: Postgres `Serializable` + `SELECT … FOR UPDATE` aborted the loser; exactly 1 credit |
+| Requesting a withdrawal does not debit | **VERIFIED** | live: total unchanged, available -> 0, pending -> full amount, no `WITHDRAWAL_PAID` txn |
+| Only a confirmed transfer creates a debit | **VERIFIED** | live: approve and transfer-sent both post nothing; confirm posts exactly 1 |
+| Repeated confirm creates zero extra debits | **VERIFIED** | live: second click returns `already_paid`, debit count stays 1 |
+| Immutable ledger, no `balance = balance + x` | **VERIFIED** | balances replayed from entries; reconciliation reports 0 drifted accounts |
+| Double-entry always balances | **VERIFIED** | live reconciliation: 0 unbalanced transactions |
+| Client funds / platform fee / prize commitment / payout liability separated | **IMPLEMENTED** | 8 account classes in `ledger/accounts.ts` |
+| Atomic verification | **VERIFIED** | one `withTransaction`; a mid-flight failure wrote nothing (proved by a real bug during the run) |
+| Granular finance permissions | **IMPLEMENTED** | 10 permissions; each handler calls `requireFinance()` |
+| Bank details server-side only | **VERIFIED** | gitignored env -> DB `PaymentSettings`; masked everywhere but one audited endpoint |
+| Creator cannot forge a balance | **VERIFIED** | live: `LedgerEntry` create -> refused; `Wallet` patch -> refused |
+| IDOR on funding + proofs | **VERIFIED** | live: another user reading a funding request -> **403** |
+| Admin notified on funding + withdrawal | **IMPLEMENTED** | `finance/notify.ts`, deduplicated, real names |
+| Configurable instructions (bank/UPI/QR) | **IMPLEMENTED** | versioned `PaymentSettings`; disabling hides a method without deleting history |
+| Audit trail, never deleted | **IMPLEMENTED** | every financial action, success or refusal |
+
+**Verification:** `npm run verify:payments` in `server/` — 86 live checks against the real database, all passing,
+self-cleaning. Plus the unit suite in `server/test/`.
+
+**Known limitations**
+1. **Separation of duties is reported, not enforced.** RazeKit has one operator, so the same person can approve
+   and confirm a payout. Every such case is flagged in the queue and stamped on the audit record.
+2. **No bank API.** Nothing reconciles automatically against the bank; a person reads the statement.
+3. **Legal characterisation unconfirmed.** Holding client funds in an ordinary business account has not been
+   reviewed against Indian payment-aggregator rules. The product says "RazeKit balance", never wallet or escrow,
+   and this must be settled before scaling.
+
 ## Still open
 
 | Item | State |
 |---|---|
-| Payment gateway | **REMOVED FROM SCOPE** — owner instruction. No gateway is integrated. Funding/payouts are handled off-platform. The provider-independent payment core (state machine + adapter boundary) remains, so a future provider is a single adapter file. |
+| Payment gateway | **SUPERSEDED** — replaced by the beta manual payment system above. `PAYMENT_MODE=MANUAL_BETA` with a real adapter behind the existing boundary; switching to a provider is one adapter file plus a mode change. |
 | `admin.razekit.com` separate deployment | **BLOCKED** — domain does not resolve; admin runs at `/admin`. |
 | Engagement collector (external platform APIs) | **BLOCKED** — no platform integration exists; `SocialCampaignPost.metrics` is seeded but not live-synced. |
 | File-upload hardening | **PLANNED** |
@@ -151,7 +201,8 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 | Item | Type | Detail |
 |---|---|---|
 | `CORS_ORIGINS` on `razekit-api` | **BLOCKED — needs you** | Apex `https://razekit.com` missing → production login broken. I have no Render access. Blocks all production verification. |
-| Payment gateway | **REMOVED FROM SCOPE** | No gateway integrated, by owner instruction. |
+| Payment gateway | **SUPERSEDED** | Manual beta is live. An automated gateway remains a future adapter. |
+| Legal status of holding client funds | **REQUIRES DECISION** | Not reviewed against payment-aggregator rules. Confirm before scaling. |
 | `admin.razekit.com` | **BLOCKED** | Domain does not resolve; no separate admin app exists. Admin is `/admin` in the single frontend. |
 | Non-INR contest duration | **REQUIRES PRODUCT DECISION** | Tiers are INR-denominated. USD contests currently get only the 30-day cap (no invented FX). |
 | Prize below ₹5,000 | **REQUIRES PRODUCT DECISION** | Spec starts at ₹5,000; Tier A bounds applied. Is there a minimum prize? |

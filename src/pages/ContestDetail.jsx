@@ -176,6 +176,23 @@ export default function ContestDetail() {
             <div className="mt-5 space-y-2">
               {isOwner ? (
                 <>
+                  {/* Funding is the publication gate: a contest only goes live
+                      once a person has verified the transfer against the bank.
+                      The owner needs a route to that screen from here. */}
+                  {!['VERIFIED', 'OVERPAID', 'REFUNDED'].includes(contest.funding_status) && !ended && (
+                    <>
+                      <Button to={`/contest/${id}/fund`} className="w-full" size="lg">
+                        {['TRANSFER_REPORTED', 'PENDING_VERIFICATION', 'PARTIAL'].includes(contest.funding_status)
+                          ? 'View funding status'
+                          : 'Fund this contest'}
+                      </Button>
+                      <p className="text-center text-[12px] text-muted leading-relaxed">
+                        {contest.funding_status === 'PENDING_VERIFICATION'
+                          ? 'We are checking your transfer against our bank records.'
+                          : 'Your contest goes live once the prize funding is verified.'}
+                      </p>
+                    </>
+                  )}
                   {subs.length > 0 && !ended && <Button to={`/contest/${id}/review`} className="w-full" size="lg" variant={contest.status === 'open' ? 'secondary' : 'primary'}>Review entries ({subs.filter((s) => s.status !== 'working').length})</Button>}
                   {ended && <Button to={`/contest/${id}/handover`} className="w-full" size="lg">Account handover</Button>}
                   {ended && <Button to={`/contest/${id}/review`} className="w-full" variant="secondary">View entries</Button>}
