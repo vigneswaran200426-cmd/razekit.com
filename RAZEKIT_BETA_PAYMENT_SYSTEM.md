@@ -1,5 +1,22 @@
 # RazeKit Beta Manual Payment + Ledger
 
+> **STATUS: PARKED — `PAYMENT_MODE=MAINTENANCE`.**
+> Manual bank-transfer funding is **not in use**. Every bank credential has been
+> removed: the `BETA_BANK_*` environment values are empty, and the
+> `PaymentSettings` row that held them was deleted from the database. The
+> platform accepts no funding — `fundingInstructions` returns
+> **503 `FUNDING_PAUSED`** and the funding button does not render.
+>
+> The ledger, balances, withdrawals, Admin → Finance and the audit trail are
+> **provider-independent and stay in place**. They are what an automated gateway
+> plugs into. When the gateway API key arrives, the work is: write one adapter
+> in `server/src/payments/`, register it, set `PAYMENT_MODE=GATEWAY`. Contest,
+> Winner, Tracker, Ledger, Admin, Finance and Audit are unchanged.
+>
+> The rest of this document describes the manual flow as built, so it can be
+> re-enabled or referenced later.
+
+
 RazeKit is in beta and no payment gateway is connected. A client transfers the
 prize to RazeKit's bank account, a person checks it against the bank statement,
 and only then does the money exist in RazeKit's books. Creator payouts work the

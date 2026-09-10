@@ -152,7 +152,7 @@ export async function fundingInstructions(ctx) {
   if (!contestId) return err('CONTEST_ID_REQUIRED', 'contest_id is required.');
 
   if (!acceptsNewFunding()) {
-    return err('FUNDING_PAUSED', 'Contest funding is paused for maintenance. Existing contests are unaffected.', 503, { payment_mode: paymentMode() });
+    return err('FUNDING_PAUSED', 'Contest funding is not available yet. RazeKit is connecting an automated payment provider, and prize funding will open once that is live. Existing contests are unaffected.', 503, { payment_mode: paymentMode() });
   }
 
   const loaded = await loadOwnedContest(ctx, contestId);
@@ -168,7 +168,7 @@ export async function fundingInstructions(ctx) {
   const methods = enabledMethods(settings, qr);
   if (!Object.values(methods).some(Boolean)) {
     // Better an honest error than a transfer form with nothing on it.
-    return err('PAYMENT_NOT_CONFIGURED', 'Manual funding is not configured yet. Please contact RazeKit support.', 503, {
+    return err('PAYMENT_NOT_CONFIGURED', 'No payment method is available yet. Prize funding opens once RazeKit has connected a payment provider.', 503, {
       support: { phone: settings.support_phone, email: settings.support_email },
     });
   }

@@ -138,7 +138,13 @@ PLANNED · IMPLEMENTING · IMPLEMENTED · TESTED · VERIFIED · BLOCKED · SKIPP
 
 # Beta manual payment + ledger system
 
-Real money, one operator, no gateway. Full documentation in
+> **PARKED (2026-09-10).** Manual bank-transfer funding is switched off
+> (`PAYMENT_MODE=MAINTENANCE`) and every bank credential has been deleted from
+> both the environment and the database, pending a payment gateway API key. The
+> ledger, balances, withdrawals and Admin → Finance remain — they are
+> provider-independent and are what a gateway will plug into.
+
+Full documentation in
 [`RAZEKIT_BETA_PAYMENT_SYSTEM.md`](RAZEKIT_BETA_PAYMENT_SYSTEM.md).
 
 The ordering the system enforces and refuses to shortcut:
@@ -203,6 +209,7 @@ self-cleaning. Plus the unit suite in `server/test/`.
 | `CORS_ORIGINS` on `razekit-api` | **BLOCKED — needs you** | Apex `https://razekit.com` missing → production login broken. I have no Render access. Blocks all production verification. |
 | Payment gateway | **SUPERSEDED** | Manual beta is live. An automated gateway remains a future adapter. |
 | Legal status of holding client funds | **REQUIRES DECISION** | Not reviewed against payment-aggregator rules. Confirm before scaling. |
+| Payment gateway API key | **WAITING ON OWNER** | Manual funding is off until a provider key is supplied. Then: one adapter file + `PAYMENT_MODE=GATEWAY`. |
 | `admin.razekit.com` | **BLOCKED** | Domain does not resolve; no separate admin app exists. Admin is `/admin` in the single frontend. |
 | Non-INR contest duration | **REQUIRES PRODUCT DECISION** | Tiers are INR-denominated. USD contests currently get only the 30-day cap (no invented FX). |
 | Prize below ₹5,000 | **REQUIRES PRODUCT DECISION** | Spec starts at ₹5,000; Tier A bounds applied. Is there a minimum prize? |

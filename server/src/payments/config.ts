@@ -126,6 +126,25 @@ export function verificationHours(): number {
  */
 export function betaNotice() {
   const h = verificationHours();
+
+  // Payments are parked while an automated provider is being connected. Saying
+  // so plainly is better than describing a manual flow nobody can use.
+  if (paymentMode() === PAYMENT_MODE.MAINTENANCE) {
+    return {
+      mode: paymentMode(),
+      title: 'Prize funding is not open yet',
+      body: [
+        'RazeKit is connecting an automated payment provider. Contest funding will open once that is live.',
+        'You can create and prepare a contest now; it goes live when its prize has been funded.',
+      ],
+      disclaimers: [
+        'RazeKit is not a bank, an escrow service or a regulated payment institution.',
+        'No payment method is currently accepting funds.',
+      ],
+      support: support(),
+    };
+  }
+
   return {
     mode: paymentMode(),
     title: 'RazeKit is in beta — payments are handled manually',

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, Trophy, ShieldCheck, Flag, FileText } from 'lucide-react';
-import { entities } from '@/lib/api';
+import { entities, fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money, timeLeft, dateShort } from '@/lib/format';
 import { Card, Button, Badge, Skeleton, EmptyState, PageHeader } from '@/components/ui';
@@ -50,6 +50,15 @@ export default function ContestDetail() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  // Whether the platform is accepting prize funding at all. Public endpoint,
+  // no payment details in it — just the mode and the honest notice.
+  const [payments, setPayments] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    fn('paymentModeInfo').then((p) => alive && setPayments(p)).catch(() => alive && setPayments(null));
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -180,18 +189,29 @@ export default function ContestDetail() {
                       once a person has verified the transfer against the bank.
                       The owner needs a route to that screen from here. */}
                   {!['VERIFIED', 'OVERPAID', 'REFUNDED'].includes(contest.funding_status) && !ended && (
-                    <>
-                      <Button to={`/contest/${id}/fund`} className="w-full" size="lg">
-                        {['TRANSFER_REPORTED', 'PENDING_VERIFICATION', 'PARTIAL'].includes(contest.funding_status)
-                          ? 'View funding status'
-                          : 'Fund this contest'}
-                      </Button>
-                      <p className="text-center text-[12px] text-muted leading-relaxed">
-                        {contest.funding_status === 'PENDING_VERIFICATION'
-                          ? 'We are checking your transfer against our bank records.'
-                          : 'Your contest goes live once the prize funding is verified.'}
-                      </p>
-                    </>
+                    payments && payments.accepts_funding === false ? (
+                      // Funding is closed platform-wide. Offering a button that
+                      // can only 503 would waste the client's time.
+                      <div className="rounded-md border border-line bg-surface-2 px-3 py-2.5">
+                        <p className="text-[12px] font-medium text-ink">{payments.beta_notice?.title || 'Prize funding is not open yet'}</p>
+                        <p className="mt-0.5 text-[12px] leading-relaxed text-muted">
+                          {payments.beta_notice?.body?.[0] || 'Contest funding will open once a payment provider is connected.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <Button to={`/contest/${id}/fund`} className="w-full" size="lg">
+                          {['TRANSFER_REPORTED', 'PENDING_VERIFICATION', 'PARTIAL'].includes(contest.funding_status)
+                            ? 'View funding status'
+                            : 'Fund this contest'}
+                        </Button>
+                        <p className="text-center text-[12px] text-muted leading-relaxed">
+                          {contest.funding_status === 'PENDING_VERIFICATION'
+                            ? 'We are checking your transfer against our bank records.'
+                            : 'Your contest goes live once the prize funding is verified.'}
+                        </p>
+                      </>
+                    )
                   )}
                   {subs.length > 0 && !ended && <Button to={`/contest/${id}/review`} className="w-full" size="lg" variant={contest.status === 'open' ? 'secondary' : 'primary'}>Review entries ({subs.filter((s) => s.status !== 'working').length})</Button>}
                   {ended && <Button to={`/contest/${id}/handover`} className="w-full" size="lg">Account handover</Button>}

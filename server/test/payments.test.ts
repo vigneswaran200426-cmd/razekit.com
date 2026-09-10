@@ -761,14 +761,44 @@ test('a settings change is audited by which field moved, never by its value', ()
   assert.ok(auditActionsFor([{ field: 'upi_qr_enabled', sensitive: false }]).includes('PAYMENT_METHOD_TOGGLED'));
 });
 
-test('the beta notice claims nothing RazeKit cannot deliver', () => {
-  const n = betaNotice();
-  const blob = [n.title, ...n.body, ...n.disclaimers].join(' ').toLowerCase();
-  for (const forbidden of ['instant', 'guaranteed', 'escrow service is provided', 'regulated wallet is']) {
-    assert.equal(blob.includes(forbidden), false, `the notice must not claim "${forbidden}"`);
+test('the payment notice claims nothing RazeKit cannot deliver, in every mode', () => {
+  const original = process.env.PAYMENT_MODE;
+  try {
+    // The notice changes with the mode, so check the guarantee in each one
+    // rather than pinning the wording of whichever mode happens to be set.
+    for (const mode of ['MANUAL_BETA', 'MAINTENANCE', 'GATEWAY']) {
+      process.env.PAYMENT_MODE = mode;
+      const n = betaNotice();
+      const blob = [n.title, ...n.body, ...n.disclaimers].join(' ').toLowerCase();
+      for (const forbidden of ['instant', 'guaranteed', 'escrow service is provided', 'regulated wallet is', 'protected funds']) {
+        assert.equal(blob.includes(forbidden), false, `${mode}: the notice must not claim "${forbidden}"`);
+      }
+      assert.ok(blob.includes('not a bank'), `${mode}: it must say plainly what RazeKit is not`);
+      assert.ok(n.disclaimers.length >= 2, `${mode}: the notice must carry its disclaimers`);
+      assert.ok(n.title.length > 5 && n.body.length > 0, `${mode}: the notice must actually say something`);
+    }
+  } finally {
+    if (original === undefined) delete process.env.PAYMENT_MODE;
+    else process.env.PAYMENT_MODE = original;
   }
-  assert.ok(blob.includes('not a bank'), 'it says plainly what RazeKit is not');
-  assert.ok(n.disclaimers.length >= 3);
+});
+
+test('with payments paused the notice says funding is closed, and offers no method', () => {
+  const original = process.env.PAYMENT_MODE;
+  try {
+    process.env.PAYMENT_MODE = 'MAINTENANCE';
+    const n = betaNotice();
+    assert.equal(n.mode, 'MAINTENANCE');
+    const blob = [n.title, ...n.body, ...n.disclaimers].join(' ').toLowerCase();
+    assert.ok(blob.includes('not open yet') || blob.includes('not currently accepting'),
+      'a paused platform must say so');
+    // It must not describe a manual bank-transfer flow nobody can use.
+    assert.equal(blob.includes('bank transfer to razekit'), false);
+    assert.equal(blob.includes('report it'), false);
+  } finally {
+    if (original === undefined) delete process.env.PAYMENT_MODE;
+    else process.env.PAYMENT_MODE = original;
+  }
 });
 
 // ═══ Permissions ════════════════════════════════════════════════════════════
