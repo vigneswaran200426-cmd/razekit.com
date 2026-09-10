@@ -2362,7 +2362,9 @@
       "disqualified",
       "disqualification_id",
       "disqualified_at",
-      "disqualification_reason"
+      "disqualification_reason",
+      "score_breakdown",
+      "scoring_config_version"
     ],
     "rls": {
       "read": {
@@ -3440,7 +3442,9 @@
       "criteria_version_id",
       "compliance_evaluation_version",
       "compliance_id",
-      "selection_method"
+      "selection_method",
+      "score_breakdown",
+      "scoring_config_version"
     ],
     "rls": {
       "read": {

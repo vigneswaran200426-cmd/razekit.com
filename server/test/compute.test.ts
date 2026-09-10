@@ -45,15 +45,35 @@ test('no data anywhere => insufficient_data, never a fake zero winner', () => {
   assert.equal(unscored[0].score_state, 'insufficient_data');
 });
 
-test('one dimension missing => provisional, not silently final', () => {
+test('a missing dimension is EXCLUDED, not scored as zero', () => {
   const { ranked } = computeScores(build([
-    { id: '1', unique: 10 },            // traffic only
+    { id: '1', unique: 10 },            // traffic only — no engagement anywhere
     { id: '2', unique: 5 },
   ]));
-  assert.equal(ranked[0].score_state, 'provisional');
-  assert.equal(ranked[0].engagement_score, null);
+  assert.equal(ranked[0].score_state, 'provisional', 'the gap is still flagged');
+  assert.equal(ranked[0].engagement_score, null, 'no engagement data is not a zero');
   assert.equal(ranked[0].traffic_score, 100);
-  assert.equal(ranked[0].final_score, 50);          // (0 + 100)/2, state flags the gap
+  // Previously this produced (0 + 100)/2 = 50, which punished the best
+  // performer in the contest for a dimension the CAMPAIGN never tracked.
+  // Engagement is excluded and traffic carries the full re-proportioned
+  // weight, so the top traffic performer scores 100.
+  assert.equal(ranked[0].final_score, 100);
+  const breakdown = JSON.parse(ranked[0].score_breakdown);
+  assert.equal(breakdown.weights_reproportioned, true);
+  assert.equal(breakdown.components.length, 1);
+  assert.equal(breakdown.components[0].effective_weight, 100);
+  assert.equal(breakdown.excluded[0].dimension, 'Video Engagement');
+});
+
+test('a creator is never ranked below a rival for data neither of them had', () => {
+  // Both have traffic only. Their relative order must come from traffic alone.
+  const { ranked } = computeScores(build([
+    { id: 'low', unique: 5 }, { id: 'high', unique: 20 },
+  ]));
+  assert.equal(ranked[0].id, 'high');
+  assert.ok(ranked[0].final_score > ranked[1].final_score);
+  // And the winner's score reflects their actual standing, not a halved one.
+  assert.equal(ranked[0].final_score, ranked[0].traffic_score);
 });
 
 test('ranks are dense and ordered', () => {

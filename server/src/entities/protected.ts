@@ -33,6 +33,9 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
     'scoring_version', 'scored_at', 'score_state',
     // Only an authorised review can disqualify an entry, and only with a reason.
     'disqualified', 'disqualification_id', 'disqualified_at', 'disqualification_reason',
+    // The engine writes the breakdown; a browser must not be able to author
+    // an explanation for a score it did not compute.
+    'score_breakdown', 'scoring_config_version',
   ],
   WinnerPublish: ['published_at'],
   // A user files a ticket; only the server moves it through its lifecycle.

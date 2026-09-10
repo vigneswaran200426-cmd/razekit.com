@@ -28,6 +28,10 @@ import {
 import { paymentSettingsGet, paymentSettingsUpdate, paymentSettingsQr } from './paymentSettings.js';
 import { balanceOverview } from './balance.js';
 import {
+  scoringConfigGet, scoringConfigSave,
+  submissionDisqualify, submissionReinstate, disqualificationList,
+} from './scoring.js';
+import {
   winnerVerificationStatus, winnerVerificationStart, winnerVerificationSubmit,
   winnerVerificationReview, winnerVerificationQueue,
 } from './winnerVerification.js';
@@ -125,6 +129,11 @@ export const HTTP_ALLOWED = new Set([
   // winnerVerificationReview and ...Queue re-check admin.
   'winnerVerificationStatus', 'winnerVerificationStart', 'winnerVerificationSubmit',
   'winnerVerificationReview', 'winnerVerificationQueue',
+  // scoringConfigGet is readable by any authenticated user: a creator is
+  // entitled to know how they will be judged before entering. The rest
+  // re-check contest ownership.
+  'scoringConfigGet', 'scoringConfigSave',
+  'submissionDisqualify', 'submissionReinstate', 'disqualificationList',
   'payoutAccountSave', 'payoutOverview', 'payoutRequest',
 
   // Finance: deliberately NOT in ADMIN_ONLY, because these are gated on
