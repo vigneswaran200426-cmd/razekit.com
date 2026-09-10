@@ -28,6 +28,10 @@ import {
 import { paymentSettingsGet, paymentSettingsUpdate, paymentSettingsQr } from './paymentSettings.js';
 import { balanceOverview } from './balance.js';
 import {
+  winnerVerificationStatus, winnerVerificationStart, winnerVerificationSubmit,
+  winnerVerificationReview, winnerVerificationQueue,
+} from './winnerVerification.js';
+import {
   adminUsersList, adminUserDetail, adminUserAction,
   adminTrustSafety, adminTrustAction, adminEnforcement, adminEnforcementAction,
   adminVisualAssets, adminSystemHealth, platformStats,
@@ -70,6 +74,10 @@ export const HANDLERS = {
   financePayoutQueue, financePayoutDetail, financeApprovePayout, financeRecordPayout,
   // The RazeKit balance, one definition for every surface.
   balanceOverview,
+  // Winner verification. Reachable only AFTER a winner is finalized, and only
+  // by that winner — a creator never connects an account to enter or submit.
+  winnerVerificationStatus, winnerVerificationStart, winnerVerificationSubmit,
+  winnerVerificationReview, winnerVerificationQueue,
   // Admin console — purpose-built endpoints so the operations UI never has to
   // read the generic entity API.
   adminUsersList, adminUserDetail, adminUserAction,
@@ -113,6 +121,10 @@ export const HTTP_ALLOWED = new Set([
   'paymentModeInfo',
   // Creator money. Ownership is taken from the session, never from the payload.
   'balanceOverview', 'withdrawalRequest', 'withdrawalCancel', 'withdrawalList',
+  // Winner verification. Each handler re-checks that the caller IS the winner;
+  // winnerVerificationReview and ...Queue re-check admin.
+  'winnerVerificationStatus', 'winnerVerificationStart', 'winnerVerificationSubmit',
+  'winnerVerificationReview', 'winnerVerificationQueue',
   'payoutAccountSave', 'payoutOverview', 'payoutRequest',
 
   // Finance: deliberately NOT in ADMIN_ONLY, because these are gated on

@@ -293,7 +293,14 @@
       "funding_id",
       "funded_at",
       "prize_committed_minor",
-      "payment_mode"
+      "payment_mode",
+      "lifecycle_state",
+      "winner_verification_id",
+      "winner_verified_at",
+      "submission_closed_at",
+      "review_started_at",
+      "scoring_config_version",
+      "completed_report_id"
     ],
     "rls": {
       "read": {},
@@ -2351,7 +2358,11 @@
       "rank",
       "scoring_version",
       "scored_at",
-      "score_state"
+      "score_state",
+      "disqualified",
+      "disqualification_id",
+      "disqualified_at",
+      "disqualification_reason"
     ],
     "rls": {
       "read": {
@@ -4394,6 +4405,240 @@
           "role": "admin"
         }
       },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "WinnerVerification": {
+    "name": "WinnerVerification",
+    "required": [
+      "contest_id",
+      "creator_id",
+      "status"
+    ],
+    "defaults": {
+      "status": "PENDING",
+      "attempts": 0,
+      "method": "CHALLENGE_CODE"
+    },
+    "fields": [
+      "contest_id",
+      "submission_id",
+      "creator_id",
+      "brand_id",
+      "payout_id",
+      "status",
+      "method",
+      "platform",
+      "challenge_code",
+      "challenge_issued_at",
+      "challenge_expires_at",
+      "profile_url",
+      "post_url",
+      "handle",
+      "submitted_at",
+      "attempts",
+      "last_attempt_at",
+      "verified_at",
+      "verified_by",
+      "verification_note",
+      "verification_evidence",
+      "failed_at",
+      "failure_reason",
+      "not_supported_reason",
+      "manual_review_requested_at",
+      "requires_payout_account",
+      "payout_account_id",
+      "completed_at"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "SocialAccount": {
+    "name": "SocialAccount",
+    "required": [
+      "user_id",
+      "platform",
+      "handle"
+    ],
+    "defaults": {
+      "status": "CONNECTED",
+      "verified": false
+    },
+    "fields": [
+      "user_id",
+      "platform",
+      "handle",
+      "profile_url",
+      "display_name",
+      "status",
+      "verified",
+      "verified_at",
+      "verified_by",
+      "verification_id",
+      "connected_at",
+      "last_checked_at",
+      "check_failure_reason",
+      "notes"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.user_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "Disqualification": {
+    "name": "Disqualification",
+    "required": [
+      "submission_id",
+      "contest_id",
+      "reason",
+      "actor_id"
+    ],
+    "defaults": {
+      "status": "ACTIVE"
+    },
+    "fields": [
+      "submission_id",
+      "contest_id",
+      "creator_id",
+      "reason",
+      "reason_code",
+      "details",
+      "status",
+      "actor_id",
+      "actor_role",
+      "applied_at",
+      "reverted_at",
+      "reverted_by",
+      "revert_reason",
+      "evidence"
+    ],
+    "rls": {
+      "read": {
+        "$or": [
+          {
+            "data.creator_id": "{{user.id}}"
+          },
+          {
+            "user_condition": {
+              "role": "admin"
+            }
+          }
+        ]
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "ScoringConfig": {
+    "name": "ScoringConfig",
+    "required": [
+      "contest_id",
+      "version"
+    ],
+    "defaults": {
+      "engagement_weight": 50,
+      "traffic_weight": 50,
+      "quality_weight": 0,
+      "winner_method": "BRAND_SELECTED",
+      "tie_break": "TRAFFIC_THEN_ENGAGEMENT",
+      "locked": false
+    },
+    "fields": [
+      "contest_id",
+      "version",
+      "engagement_weight",
+      "traffic_weight",
+      "quality_weight",
+      "winner_method",
+      "tie_break",
+      "minimum_submissions",
+      "requires_verified_metrics",
+      "locked",
+      "locked_at",
+      "created_by",
+      "notes"
+    ],
+    "rls": {
+      "read": {},
       "create": {
         "user_condition": {
           "role": "admin"

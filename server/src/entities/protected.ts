@@ -24,10 +24,15 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
     // Funding state is decided by an admin verifying a real bank transfer.
     // A brand must never be able to mark its own contest funded.
     'funding_status', 'funding_id', 'funded_at', 'prize_committed_minor', 'payment_mode',
+    // The lifecycle is advanced by the server as real events happen.
+    'lifecycle_state', 'winner_verification_id', 'winner_verified_at',
+    'submission_closed_at', 'review_started_at', 'scoring_config_version',
   ],
   Submission: [
     'engagement_score', 'traffic_score', 'final_score', 'rank',
     'scoring_version', 'scored_at', 'score_state',
+    // Only an authorised review can disqualify an entry, and only with a reason.
+    'disqualified', 'disqualification_id', 'disqualified_at', 'disqualification_reason',
   ],
   WinnerPublish: ['published_at'],
   // A user files a ticket; only the server moves it through its lifecycle.
@@ -80,6 +85,15 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
     'reviewed_by', 'reviewed_at', 'resolution', 'resolution_notes', 'closed_at', 'source'],
   // Enforcement history is written only by an audited admin function.
   EnforcementAction: ['*'],
+
+  // Winner verification is created only by winnerFinalize and advanced only by
+  // the verification handlers. A creator may never mark themselves verified.
+  WinnerVerification: ['*'],
+  // A creator connects an account through a server function that validates the
+  // handle and issues a challenge; the row is never client-writable.
+  SocialAccount: ['*'],
+  Disqualification: ['*'],
+  ScoringConfig: ['*'],
 
   // Server-computed aggregates — never client-writable.
   CreatorStats: ['*'],

@@ -25,7 +25,8 @@
     "clean:sim": "tsx scripts/seed-simulation.ts --clean",
     "verify:payments": "tsx scripts/verify-beta-payments.ts",
     "verify:admin": "tsx scripts/verify-admin.ts",
-    "verify:split-db": "tsx scripts/verify-split-db.ts"
+    "verify:split-db": "tsx scripts/verify-split-db.ts",
+    "verify:winner": "tsx scripts/verify-winner-flow.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

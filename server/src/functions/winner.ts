@@ -16,6 +16,7 @@ import { SCORING_VERSION } from '../scoring/index.js';
 import { loadLockedCriteria } from './compliance.js';
 import { ELIGIBILITY, ENGINE_VERSION as COMPLIANCE_ENGINE_VERSION } from '../compliance/engine.js';
 import { ensurePayoutForWinner } from './payouts.js';
+import { ensureVerificationForWinner } from './winnerVerification.js';
 
 const SCORED_STATES = ['submitted', 'shortlisted', 'won', 'not_selected'];
 
@@ -232,6 +233,17 @@ export async function winnerFinalize(ctx) {
     creatorId: winner.created_by_id,
   }).catch(() => null);
 
+  // RazeKit's hard rule: a creator never connects a social account to enter or
+  // submit. Verification is created HERE, the moment they win, and the prize
+  // cannot be paid until they prove they control the account they published
+  // from. This also moves the contest to WINNER_PENDING_VERIFICATION.
+  const verificationRecord = await ensureVerificationForWinner(svc, {
+    contest: { ...contest, id: contestId },
+    submission: winner,
+    creatorId: winner.created_by_id,
+    payoutId: payoutRecord?.id || null,
+  }).catch(() => null);
+
   await svc.entities.Notification.create({
     type: 'contest_won',
     title: 'You won!',
@@ -252,6 +264,10 @@ export async function winnerFinalize(ctx) {
     // implying a payout that no verified money stands behind.
     payout: payoutRecord
       ? { id: payoutRecord.id, status: payoutRecord.status, reason: payoutRecord.eligibility_reason || null }
+      : null,
+    // The winner must verify before any money moves.
+    verification: verificationRecord
+      ? { id: verificationRecord.id, status: verificationRecord.status, required: true }
       : null,
   });
 }

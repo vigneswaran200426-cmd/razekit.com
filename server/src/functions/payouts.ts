@@ -79,6 +79,13 @@ export async function ensurePayoutForWinner(svc, { contest, submission, creatorI
   }).catch(() => ({ balance_minor: 0 }));
 
   const funded = funding?.status === FUNDING.VERIFIED && committed.balance_minor > 0;
+
+  // Money is gated on TWO independent facts: the prize was really funded, and
+  // the winner really controls the account they published from. Either one
+  // missing means the payout is not eligible — and says which.
+  const verifications = await svc.entities.WinnerVerification
+    .filter({ contest_id: contest.id }, '-created_date', 1).catch(() => []);
+  const verified = verifications[0]?.status === 'VERIFIED';
   const amountMinor = funded ? committed.balance_minor : toMinor(contest.prize_amount || 0, currency);
 
   const payout = await svc.entities.Payout.create({
@@ -95,15 +102,19 @@ export async function ensurePayoutForWinner(svc, { contest, submission, creatorI
     prize_amount_minor: amountMinor,
     provider: 'manual_beta',
     payment_mode: paymentMode(),
-    status: funded ? PAYOUT.PAYOUT_ELIGIBLE : PAYOUT.PAYOUT_NOT_ELIGIBLE,
-    eligible_at: funded ? nowIso() : null,
-    eligibility_reason: funded
-      ? 'Contest prize was funded and verified.'
-      : 'The prize for this contest has not been funded and verified, so it cannot be paid out yet.',
+    status: funded && verified ? PAYOUT.PAYOUT_ELIGIBLE : PAYOUT.PAYOUT_NOT_ELIGIBLE,
+    eligible_at: funded && verified ? nowIso() : null,
+    eligibility_reason: !funded
+      ? 'The prize for this contest has not been funded and verified, so it cannot be paid out yet.'
+      : !verified
+        ? 'Verify the account you published from to unlock this payout.'
+        : 'Contest prize was funded and the winner verified their account.',
   });
 
   if (funded) {
-    // The contest's committed prize becomes a named debt to this creator.
+    // The liability is recorded as soon as the prize is committed — RazeKit
+    // genuinely owes it. Whether the creator may DRAW it is the separate
+    // question that verification answers.
     await createPayoutLiability(svc, {
       payout, contestId: contest.id, brandId: contest.created_by_id, actorRole: 'system',
     }).catch(() => null);
