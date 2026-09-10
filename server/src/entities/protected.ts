@@ -74,6 +74,13 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   FundsTransaction: ['*'],
   MoneyRule: ['*'],
 
+  // Trust & Safety: a user may FILE a report (rls.create) but never set its
+  // status, severity, risk score or resolution — those are staff decisions.
+  TrustReport: ['status', 'severity', 'risk_score', 'signals', 'assigned_to',
+    'reviewed_by', 'reviewed_at', 'resolution', 'resolution_notes', 'closed_at', 'source'],
+  // Enforcement history is written only by an audited admin function.
+  EnforcementAction: ['*'],
+
   // Server-computed aggregates — never client-writable.
   CreatorStats: ['*'],
   PublicCreatorStats: ['*'],

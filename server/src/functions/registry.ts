@@ -27,6 +27,11 @@ import {
 } from './payouts.js';
 import { paymentSettingsGet, paymentSettingsUpdate, paymentSettingsQr } from './paymentSettings.js';
 import { balanceOverview } from './balance.js';
+import {
+  adminUsersList, adminUserDetail, adminUserAction,
+  adminTrustSafety, adminTrustAction, adminEnforcement, adminEnforcementAction,
+  adminVisualAssets, adminSystemHealth, platformStats,
+} from './adminConsole.js';
 
 // All handlers (name → fn(ctx)).
 //
@@ -65,6 +70,13 @@ export const HANDLERS = {
   financePayoutQueue, financePayoutDetail, financeApprovePayout, financeRecordPayout,
   // The RazeKit balance, one definition for every surface.
   balanceOverview,
+  // Admin console — purpose-built endpoints so the operations UI never has to
+  // read the generic entity API.
+  adminUsersList, adminUserDetail, adminUserAction,
+  adminTrustSafety, adminTrustAction, adminEnforcement, adminEnforcementAction,
+  adminVisualAssets, adminSystemHealth,
+  // Public, honest adoption counts for the homepage.
+  platformStats,
 };
 
 // Functions callable over HTTP via the /api/functions/:name route.
@@ -82,6 +94,11 @@ export const HTTP_ALLOWED = new Set([
   'supportTicketCreate', 'supportTicketList', 'supportTicketUpdate', 'supportAsk', 'supportKnowledge',
   // Admin control center — gated below AND re-checked inside each handler.
   'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',
+  'adminUsersList', 'adminUserDetail', 'adminUserAction',
+  'adminTrustSafety', 'adminTrustAction', 'adminEnforcement', 'adminEnforcementAction',
+  'adminVisualAssets', 'adminSystemHealth',
+  // Public adoption counts — no personal data, no financial data.
+  'platformStats',
   // Public winner results + leaderboard (finalized data only).
   'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile',
   // Contest Intelligence. Each handler enforces its own ownership check;
@@ -117,6 +134,8 @@ export const HTTP_ALLOWED = new Set([
 // visitor is entitled to know that before committing to a contest.
 export const PUBLIC_FUNCTIONS = new Set([
   'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile', 'paymentModeInfo',
+  // Aggregate counts only, seed accounts excluded. Nothing identifying.
+  'platformStats',
 ]);
 
 // Require platform admin at the route boundary (handlers also re-check).
@@ -124,4 +143,7 @@ export const PUBLIC_FUNCTIONS = new Set([
 export const ADMIN_ONLY = new Set([
   'visualAssetAdmin', 'supportTicketUpdate',
   'adminOverview', 'adminContests', 'adminTraffic', 'adminUsers', 'adminAudit',
+  'adminUsersList', 'adminUserDetail', 'adminUserAction',
+  'adminTrustSafety', 'adminTrustAction', 'adminEnforcement', 'adminEnforcementAction',
+  'adminVisualAssets', 'adminSystemHealth',
 ]);

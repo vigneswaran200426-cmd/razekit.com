@@ -4300,5 +4300,115 @@
         }
       }
     }
+  },
+  "TrustReport": {
+    "name": "TrustReport",
+    "required": [
+      "subject_type",
+      "subject_id",
+      "reason"
+    ],
+    "defaults": {
+      "status": "OPEN",
+      "severity": "medium",
+      "source": "user_report"
+    },
+    "fields": [
+      "subject_type",
+      "subject_id",
+      "subject_label",
+      "reporter_id",
+      "reason",
+      "details",
+      "category",
+      "severity",
+      "status",
+      "source",
+      "signals",
+      "risk_score",
+      "assigned_to",
+      "reviewed_by",
+      "reviewed_at",
+      "resolution",
+      "resolution_notes",
+      "closed_at",
+      "related_contest_id",
+      "related_submission_id",
+      "related_user_id"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": true,
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
+  },
+  "EnforcementAction": {
+    "name": "EnforcementAction",
+    "required": [
+      "subject_type",
+      "subject_id",
+      "action",
+      "reason"
+    ],
+    "defaults": {
+      "status": "ACTIVE"
+    },
+    "fields": [
+      "subject_type",
+      "subject_id",
+      "subject_label",
+      "action",
+      "reason",
+      "details",
+      "severity",
+      "status",
+      "duration_days",
+      "expires_at",
+      "actor_id",
+      "actor_name",
+      "applied_at",
+      "reverted_at",
+      "reverted_by",
+      "revert_reason",
+      "related_report_id",
+      "related_contest_id",
+      "related_user_id",
+      "audit_id"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
   }
 }

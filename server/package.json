@@ -23,7 +23,8 @@
     "test": "tsx --test test/*.test.ts",
     "seed:sim": "tsx scripts/seed-simulation.ts",
     "clean:sim": "tsx scripts/seed-simulation.ts --clean",
-    "verify:payments": "tsx scripts/verify-beta-payments.ts"
+    "verify:payments": "tsx scripts/verify-beta-payments.ts",
+    "verify:admin": "tsx scripts/verify-admin.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

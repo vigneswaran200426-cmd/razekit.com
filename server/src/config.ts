@@ -14,10 +14,21 @@ export const config = {
   port: Number(process.env.PORT || 4000),
   apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:4000',
   webBaseUrl: process.env.WEB_BASE_URL || 'http://localhost:5173',
-  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean),
+  // RazeKit's own production origins are always allowed. A missing or
+  // half-filled CORS_ORIGINS on the host previously broke production login, and
+  // would break the admin console the same way. These are first-party domains,
+  // not a wildcard; CORS_ORIGINS adds to them (preview deploys, staging).
+  corsOrigins: [
+    ...new Set([
+      'https://razekit.com',
+      'https://www.razekit.com',
+      'https://admin.razekit.com',
+      'https://razekit-web.onrender.com',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      ...(process.env.CORS_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    ]),
+  ],
 
   // Never run production with the development JWT fallback.
   jwtSecret: isProduction ? req('JWT_SECRET') : req('JWT_SECRET', 'dev-insecure-secret-change-me'),
