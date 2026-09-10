@@ -35,6 +35,10 @@ services:
       # Provided/synced in the dashboard (never commit real values):
       - key: DATABASE_URL
         sync: false
+      # Optional second Neon project for admin-only records. Leave unset to
+      # keep everything in one database.
+      - key: ADMIN_DATABASE_URL
+        sync: false
       - key: JWT_SECRET
         sync: false
       - key: API_BASE_URL          # e.g. https://api.razekit.com (or the onrender.com URL)

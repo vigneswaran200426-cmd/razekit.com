@@ -34,6 +34,14 @@ export const config = {
   jwtSecret: isProduction ? req('JWT_SECRET') : req('JWT_SECRET', 'dev-insecure-secret-change-me'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',
 
+  // ── Admin database (optional second Neon project) ──────────────────────────
+  // When set, the admin-only entities live here instead of the platform
+  // database. When unset, everything uses one database and nothing changes.
+  //
+  // Only entities with NO transactional relationship to platform data may live
+  // here — see entities/routing.ts for why AuditLog is not one of them.
+  adminDatabaseUrl: process.env.ADMIN_DATABASE_URL || '',
+
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',

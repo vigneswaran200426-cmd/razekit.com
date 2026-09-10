@@ -1,8 +1,27 @@
 import { PrismaClient } from '@prisma/client';
+import { config } from './config.js';
 
+/** The platform database: everything RazeKit actually is. */
 export const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
 });
+
+/**
+ * The admin database, when a second Neon project is configured.
+ *
+ * Falls back to the platform client when `ADMIN_DATABASE_URL` is unset, so a
+ * single-database deployment behaves exactly as before and no caller needs to
+ * know which mode it is running in.
+ */
+export const adminPrisma: PrismaClient = config.adminDatabaseUrl
+  ? new PrismaClient({
+      datasources: { db: { url: config.adminDatabaseUrl } },
+      log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+    })
+  : prisma;
+
+/** True when admin records are genuinely stored apart from platform records. */
+export const hasSeparateAdminDb = (): boolean => Boolean(config.adminDatabaseUrl);
 
 /**
  * Run `fn` inside one database transaction.

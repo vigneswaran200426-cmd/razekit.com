@@ -18,7 +18,7 @@
 // auth middleware. A browser cannot set it.
 import { json } from './context.js';
 import { config } from '../config.js';
-import { prisma } from '../db.js';
+import { prisma, adminPrisma, hasSeparateAdminDb } from '../db.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { paymentMode } from '../payments/config.js';
 import { displayName } from '../finance/notify.js';
@@ -406,15 +406,22 @@ export async function adminSystemHealth(ctx) {
   const svc = ctx.svc;
   const started = Date.now();
 
-  // Database: a real round trip, timed.
-  let database = { status: 'down', detail: '', latency_ms: null };
-  try {
-    const t0 = Date.now();
-    await prisma.$queryRawUnsafe('select 1');
-    database = { status: 'ok', detail: 'query round trip succeeded', latency_ms: Date.now() - t0 };
-  } catch (e) {
-    database = { status: 'down', detail: String(e?.message || e).split('\n')[0], latency_ms: null };
-  }
+  // Databases: a real round trip each, timed. RazeKit runs platform data and
+  // admin-only records in separate Neon projects, so BOTH are probed —
+  // reporting one as "ok" would hide an outage on the other.
+  const probe = async (client, label) => {
+    try {
+      const t0 = Date.now();
+      await client.$queryRawUnsafe('select 1');
+      return { status: 'ok', detail: `${label} round trip succeeded`, latency_ms: Date.now() - t0 };
+    } catch (e) {
+      return { status: 'down', detail: String(e?.message || e).split('\n')[0], latency_ms: null };
+    }
+  };
+  const database = await probe(prisma, 'platform database');
+  const adminDatabase = hasSeparateAdminDb()
+    ? await probe(adminPrisma, 'admin database')
+    : { status: 'shared', detail: 'ADMIN_DATABASE_URL not set — admin records share the platform database', latency_ms: null };
 
   // Storage / email / LLM: report the CONFIGURED driver honestly. A missing key
   // is "not configured", never "ok".
@@ -450,7 +457,9 @@ export async function adminSystemHealth(ctx) {
     took_ms: Date.now() - started,
     services: {
       api: { status: 'ok', detail: `${config.env} on port ${config.port}` },
-      database, storage, email, llm,
+      database,
+      admin_database: adminDatabase,
+      storage, email, llm,
       authentication: { status: config.jwtSecret ? 'ok' : 'down', detail: config.jwtSecret ? 'JWT signing key present' : 'JWT_SECRET missing' },
       scheduler: { status: config.enableScheduler ? 'ok' : 'disabled', detail: config.enableScheduler ? 'in-process cron running' : 'ENABLE_SCHEDULER=false' },
       payments: { status: paymentMode() === 'MAINTENANCE' ? 'paused' : 'ok', detail: `PAYMENT_MODE=${paymentMode()}` },

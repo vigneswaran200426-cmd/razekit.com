@@ -11,7 +11,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { prisma } from '../db.js';
+import { prisma, adminPrisma } from '../db.js';
+import { isAdminEntity } from './routing.js';
 import { canAccess, readWhere, type RlsUser } from './rls.js';
 import { publicUser } from '../auth/users.js';
 import { coreIntegrations } from '../integrations/core.js';
@@ -191,9 +192,11 @@ async function userFilter(ctx: Ctx, query: Record<string, unknown>, sort?: strin
 function makeEntityMethods(entity: string, ctx: Ctx) {
   const s = schema(entity);
   const isUser = entity === 'User';
-  // Inside a transaction this is the transaction client, so the whole operation
-  // shares one atomic unit; outside one it is the ordinary pooled client.
-  const db: any = ctx.db || prisma;
+  // Admin-only entities live in their own database and therefore can never
+  // join a platform transaction — passing them the tx client would silently
+  // write them to the wrong database. Everything else uses the transaction
+  // client when there is one, so the whole operation stays atomic.
+  const db: any = isAdminEntity(entity) ? adminPrisma : (ctx.db || prisma);
 
   return {
     async filter(query: Record<string, unknown> = {}, sort?: string, limit?: number) {
