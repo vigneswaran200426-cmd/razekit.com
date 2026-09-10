@@ -1125,7 +1125,10 @@
       "related_post_id",
       "related_submission_id",
       "related_winner_id",
-      "invitation_status"
+      "invitation_status",
+      "category",
+      "severity",
+      "action_url"
     ],
     "rls": {
       "read": {

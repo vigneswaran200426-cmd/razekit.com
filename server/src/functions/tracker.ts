@@ -11,6 +11,14 @@
 // a contest/creator id from the request without an ownership check (IDOR).
 import { json } from './context.js';
 import { SCORING_VERSION } from '../scoring/index.js';
+import { configFor } from '../scoring/weights.js';
+import { inferLifecycle, LIFECYCLE_COPY } from '../contest/lifecycle.js';
+
+/** A malformed stored breakdown must not break the whole Tracker page. */
+function safeParse(v) {
+  if (!v) return null;
+  try { return typeof v === 'string' ? JSON.parse(v) : v; } catch { return null; }
+}
 
 const freshest = (rows) => {
   const t = rows
@@ -244,10 +252,36 @@ export async function trackerCampaignDetail(ctx) {
         rank: snap?.rank ?? s.rank ?? null,
         score_state: snap?.score_state ?? s.score_state ?? 'not_started',
         verified_visitors: link ? Number(link.unique_visitors || 0) : null,
+        // Named separately from verified: excluded clicks are a real signal
+        // about an entry, and folding them into one number would hide it.
+        excluded_clicks: link ? Number(link.suspicious_clicks || 0) : null,
         is_winner: s.id === c.winner_submission_id,
+        // Disqualified entries stay visible with their reason — never silently
+        // dropped from the brand's view.
+        disqualified: Boolean(s.disqualified),
+        disqualification_reason: s.disqualification_reason || null,
+        // How the Final Score was produced, so the Tracker can answer "why is
+        // this creator ranked first?" without recomputing anything.
+        score_breakdown: safeParse(snap?.score_breakdown ?? s.score_breakdown),
+        live_url: s.live_url || null,
+        platform: s.platform || null,
       };
     })
-    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+    .sort((a, b) => {
+      // Disqualified entries sort last regardless of the score they achieved.
+      if (a.disqualified !== b.disqualified) return a.disqualified ? 1 : -1;
+      return (a.rank ?? 999) - (b.rank ?? 999);
+    });
+
+  // Resolve creator names once. The brand needs people, not ids.
+  for (const e of entries) {
+    const u = await svc.entities.User.get(e.creator_id).catch(() => null);
+    e.creator_name = u?.full_name || (u?.email ? String(u.email).split('@')[0] : 'A creator');
+  }
+
+  const config = await configFor(svc, contestId).catch(() => null);
+  const verification = (await svc.entities.WinnerVerification
+    .filter({ contest_id: contestId }, '-created_date', 1).catch(() => []))[0] || null;
 
   return json({
     campaign: {
@@ -265,9 +299,28 @@ export async function trackerCampaignDetail(ctx) {
       has_destination: Boolean(c.brand_destination_url),
       winner_submission_id: c.winner_submission_id || null,
       winner_selected_at: c.winner_selected_at || null,
+      lifecycle_state: inferLifecycle(c),
+      state_label: LIFECYCLE_COPY[inferLifecycle(c)]?.label || null,
+      state_detail: LIFECYCLE_COPY[inferLifecycle(c)]?.brand || null,
+      funding_status: c.funding_status || null,
     },
     traffic: trafficBlock(links),
     entries,
+    // The rules these entries were scored under, so the ranking is explainable.
+    scoring: config ? {
+      engagement_weight: config.engagement_weight,
+      traffic_weight: config.traffic_weight,
+      tie_break: config.tie_break,
+      winner_method: config.winner_method,
+      config_version: config.version,
+    } : null,
+    // Where the winner's verification stands. A brand needs to know whether
+    // the prize is actually releasable.
+    winner_verification: verification ? {
+      status: verification.status,
+      platform: verification.platform || null,
+      verified_at: verification.verified_at || null,
+    } : null,
     scoring_version: SCORING_VERSION,
   });
 }

@@ -27,6 +27,8 @@ import {
 } from './payouts.js';
 import { paymentSettingsGet, paymentSettingsUpdate, paymentSettingsQr } from './paymentSettings.js';
 import { balanceOverview } from './balance.js';
+import { notificationFeed, notificationRead } from './notifications.js';
+import { campaignReport, creatorTrackRecord, fraudSignals } from './reports.js';
 import {
   scoringConfigGet, scoringConfigSave,
   submissionDisqualify, submissionReinstate, disqualificationList,
@@ -134,6 +136,10 @@ export const HTTP_ALLOWED = new Set([
   // re-check contest ownership.
   'scoringConfigGet', 'scoringConfigSave',
   'submissionDisqualify', 'submissionReinstate', 'disqualificationList',
+  'notificationFeed', 'notificationRead',
+  // campaignReport re-checks contest ownership; creatorTrackRecord defaults to
+  // the caller; fraudSignals re-checks admin.
+  'campaignReport', 'creatorTrackRecord', 'fraudSignals',
   'payoutAccountSave', 'payoutOverview', 'payoutRequest',
 
   // Finance: deliberately NOT in ADMIN_ONLY, because these are gated on
