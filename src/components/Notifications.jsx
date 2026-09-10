@@ -99,6 +99,9 @@ export const SECURITY_EVENTS = {
 
 /* ── Context ────────────────────────────────────────────────────────────── */
 const FALLBACK = {
+  // `mounted` lets a consumer tell an unmounted provider from a real one and
+  // fall back to calling the API directly rather than silently doing nothing.
+  mounted: false,
   notify: () => {}, warnings: [], clearWarning: () => {},
   feed: null, unread: 0, unreadByCategory: {}, criticals: [], categories: [],
   error: '', refresh: () => {}, markRead: () => {}, markAllRead: () => {},
@@ -238,6 +241,7 @@ export function NotificationProvider({ children }) {
       category: src.category || (isSecurity ? 'security' : 'system'),
       to,
       action: src.action || src.actionLabel || preset?.action || actionLabel(to),
+      icon: src.icon || preset?.icon || null,
     };
 
     // Critical guidance is not a toast: it stays until it is acted on.
@@ -248,6 +252,7 @@ export function NotificationProvider({ children }) {
   const clearWarning = useCallback((id) => setWarnings((w) => w.filter((x) => x.id !== id)), []);
 
   const value = useMemo(() => ({
+    mounted: true,
     notify, warnings, clearWarning,
     feed, unread, unreadByCategory, criticals, categories, error,
     refresh: load, markRead, markAllRead,
@@ -288,7 +293,7 @@ function Viewport({ toasts, criticals, onHandled, reduce }) {
         <AnimatePresence initial={false}>
           {toasts.map((t) => {
             const meta = categoryMeta(t.category);
-            const Icon = meta.icon;
+            const Icon = t.icon || meta.icon;
             return (
               <motion.li
                 key={t.key}

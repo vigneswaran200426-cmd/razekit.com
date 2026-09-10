@@ -128,3 +128,7 @@ export function StatTile({ label, value, icon: Icon, className }) {
     </Card>
   );
 }
+
+/* Additional primitives live in primitives.jsx so this file stays a stable
+   surface; re-exported here so every screen still imports from one place. */
+export { Sheet, Metric, ScoreBar, Timeline, Field } from '@/components/primitives';

@@ -18,14 +18,19 @@ import { money, moneyMinor, dateShort } from '@/lib/format';
 import { Card, Button, Badge, Skeleton, EmptyState } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
+// Print: strip the app chrome so the page prints as the document it is. The
+// report's own footer carries the generation date, so it is explicitly kept.
 const PRINT_CSS = `
 @media print {
-  header, footer, nav, .rk-noprint { display: none !important; }
+  body > div > header, body > div > footer, nav, .rk-noprint { display: none !important; }
+  .rk-doc footer { display: block !important; }
   .rk-doc { max-width: none !important; padding: 0 !important; }
   .rk-sec { break-inside: avoid; page-break-inside: avoid; }
   .rk-doc, .rk-doc * { box-shadow: none !important; }
 }
-@media (prefers-reduced-motion: reduce) { .rk-doc * { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  .rk-doc [class*="animate-"] { animation: none !important; }
+}
 `;
 
 const nf = (n) => (typeof n === 'number' && Number.isFinite(n) ? n.toLocaleString('en-IN') : null);

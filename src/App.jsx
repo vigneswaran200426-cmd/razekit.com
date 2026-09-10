@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/lib/auth';
 import { HomeGate, ProtectedRoute } from '@/components/routing';
 import AppShell from '@/components/AppShell';
-import { ToastProvider } from '@/components/Toast';
+import { NotificationProvider } from '@/components/Notifications';
 
 import Landing from '@/pages/Landing';
 import Login from '@/pages/auth/Login';
@@ -20,6 +20,9 @@ import Work from '@/pages/Work';
 import Balance from '@/pages/Balance';
 import FundContest from '@/pages/FundContest';
 import WinnerVerify from '@/pages/WinnerVerify';
+import CampaignReport from '@/pages/CampaignReport';
+import TrackRecord from '@/pages/TrackRecord';
+import { Terms, Privacy, About, Contact } from '@/pages/Legal';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Notifications from '@/pages/Notifications';
@@ -34,7 +37,7 @@ import NotFound from '@/pages/NotFound';
 export default function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
+      <NotificationProvider>
         <BrowserRouter>
         <Routes>
           {/* Standalone */}
@@ -53,6 +56,11 @@ export default function App() {
             <Route path="/u/:id" element={<CreatorProfile />} />
             <Route path="/contest/:id" element={<ContestDetail />} />
             <Route path="/help" element={<Help />} />
+            {/* Public: anyone may read the terms they are agreeing to. */}
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
             {/* Authenticated */}
             <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -72,6 +80,10 @@ export default function App() {
             {/* Reachable only after winning — the handler re-checks that the
                 caller IS the winner, so the route is not the security boundary. */}
             <Route path="/contest/:id/verify" element={<ProtectedRoute><WinnerVerify /></ProtectedRoute>} />
+            {/* The brand's post-campaign report; the handler re-checks ownership. */}
+            <Route path="/contest/:id/report" element={<ProtectedRoute roles={['client']}><CampaignReport /></ProtectedRoute>} />
+            {/* A creator's own competition history. */}
+            <Route path="/track-record" element={<ProtectedRoute><TrackRecord /></ProtectedRoute>} />
             <Route path="/contest/:id/handover" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} />
           </Route>
@@ -79,7 +91,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-      </ToastProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
