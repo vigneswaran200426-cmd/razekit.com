@@ -223,6 +223,23 @@ export default function ContestDetail() {
               ) : isCreator ? (
                 <>
                   {contest.status === 'open' && !mySub && <Button className="w-full" size="lg" loading={busy} onClick={join}>Join contest</Button>}
+                  {/* Winning is the only thing that surfaces verification.
+                      A creator never sees it before that. */}
+                  {isWinner && !contest.winner_verified_at && (
+                    <>
+                      <Button to={`/contest/${id}/verify`} className="w-full" size="lg">
+                        <ShieldCheck className="w-4 h-4" aria-hidden="true" /> Verify your account
+                      </Button>
+                      <p className="text-center text-[12px] text-muted leading-relaxed">
+                        You won. Confirm you control the account you published from to release your prize.
+                      </p>
+                    </>
+                  )}
+                  {isWinner && contest.winner_verified_at && (
+                    <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-success leading-relaxed">
+                      <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" /> Verified — your payout is being arranged.
+                    </p>
+                  )}
                   {mySub && ['working', 'joined', 'open'].includes(mySub.status || contest.status) && <Button to={`/contest/${id}/submit`} className="w-full" size="lg">Submit work</Button>}
                   {mySub?.status === 'submitted' && <Button className="w-full" variant="secondary" disabled>Your entry is in review</Button>}
                   {ended && isWinner && <Button to={`/contest/${id}/handover`} className="w-full" size="lg">Account handover</Button>}

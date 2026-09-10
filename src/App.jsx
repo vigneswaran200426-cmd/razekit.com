@@ -19,6 +19,7 @@ import CreatorProfile from '@/pages/CreatorProfile';
 import Work from '@/pages/Work';
 import Balance from '@/pages/Balance';
 import FundContest from '@/pages/FundContest';
+import WinnerVerify from '@/pages/WinnerVerify';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Notifications from '@/pages/Notifications';
@@ -68,6 +69,9 @@ export default function App() {
             <Route path="/contest/:id/submit" element={<ProtectedRoute roles={['creator']}><SubmitWork /></ProtectedRoute>} />
             <Route path="/contest/:id/review" element={<ProtectedRoute roles={['client']}><Review /></ProtectedRoute>} />
             <Route path="/contest/:id/fund" element={<ProtectedRoute roles={['client']}><FundContest /></ProtectedRoute>} />
+            {/* Reachable only after winning — the handler re-checks that the
+                caller IS the winner, so the route is not the security boundary. */}
+            <Route path="/contest/:id/verify" element={<ProtectedRoute><WinnerVerify /></ProtectedRoute>} />
             <Route path="/contest/:id/handover" element={<ProtectedRoute><Handover /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Admin /></ProtectedRoute>} />
           </Route>
