@@ -8,6 +8,7 @@ import { fn, api } from '@/lib/api';
 import { moneyMinor, dateShort } from '@/lib/format';
 import { Button, Card, Input, Label, Badge, Skeleton, PageHeader, EmptyState, Segmented } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import UpiPayment from '@/components/UpiPayment';
 
 /* Statuses that mean "nothing reported yet" — anything else opens on the status view. */
 const AWAITING = new Set(['FUNDING_REQUIRED', 'PAYMENT_INSTRUCTIONS_SHOWN']);
@@ -347,6 +348,18 @@ export default function FundContest() {
           </table>
         </div>
       </Card>
+
+      {/* ── Pay by UPI ──────────────────────────────────────────────────
+          Renders itself away entirely when UroPay is not configured, so the
+          bank-transfer flow below is unchanged for everyone else. */}
+      {mode !== 'status' && fundingId && totalMinor > 0 && (
+        <UpiPayment
+          fundingId={fundingId}
+          totalMinor={totalMinor}
+          currency={quote?.currency || funding?.currency || 'INR'}
+          onFunded={load}
+        />
+      )}
 
       {/* ── Payment details ─────────────────────────────────────────────── */}
       {mode !== 'status' && instr?.instructions && (

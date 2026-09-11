@@ -18,6 +18,7 @@
 // auth middleware. A browser cannot set it.
 import { json } from './context.js';
 import { config } from '../config.js';
+import { uropayConfigured, uropayEnv, uropayLive } from '../payments/uropay.js';
 import { prisma, adminPrisma, hasSeparateAdminDb } from '../db.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { paymentMode } from '../payments/config.js';
@@ -463,6 +464,10 @@ export async function adminSystemHealth(ctx) {
       authentication: { status: config.jwtSecret ? 'ok' : 'down', detail: config.jwtSecret ? 'JWT signing key present' : 'JWT_SECRET missing' },
       scheduler: { status: config.enableScheduler ? 'ok' : 'disabled', detail: config.enableScheduler ? 'in-process cron running' : 'ENABLE_SCHEDULER=false' },
       payments: { status: paymentMode() === 'MAINTENANCE' ? 'paused' : 'ok', detail: `PAYMENT_MODE=${paymentMode()}` },
+      // The UPI provider. Reported by what is actually configured, never as a
+      // blanket "ok" — an operator looking at this page needs to be able to
+      // tell "working" from "nobody has finished setting it up".
+      uropay: uropayStatusLine(),
     },
     engines: { scoring_version: SCORING_VERSION },
     errors: {
@@ -473,6 +478,35 @@ export async function adminSystemHealth(ctx) {
     },
     cors_origins: config.corsOrigins,
   });
+}
+
+/**
+ * UroPay's line on the System Health page.
+ *
+ * It reports configuration, not reachability — probing the provider on every
+ * health-page load would spend our 60-per-minute rate limit on a dashboard.
+ * uropayAdminHealth does the live probe on demand instead.
+ */
+function uropayStatusLine() {
+  const env = uropayEnv();
+  if (!uropayConfigured()) {
+    return {
+      status: 'not_configured',
+      detail: `UroPay ${env} credentials are not set — UPI payment is unavailable and funding falls back to manual bank transfer`,
+    };
+  }
+  if (env === 'production' && !uropayLive()) {
+    return {
+      status: 'misconfigured',
+      detail: 'production credentials are present but UROPAY_PRODUCTION_ENABLED is not true — no payment will be taken',
+    };
+  }
+  return {
+    status: uropayLive() ? 'ok' : 'test',
+    detail: uropayLive()
+      ? 'UroPay production: UPI collection active'
+      : 'UroPay TEST mode: UPI flows work end to end but move no real money and fund no contest',
+  };
 }
 
 // ── Public platform stats ───────────────────────────────────────────────────

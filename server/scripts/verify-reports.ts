@@ -187,7 +187,10 @@ const byCreator: any = await fraudSignals(ctx(creator));
 eq('a creator cannot read fraud signals', byCreator.status, 403);
 
 // Two entries claiming the same published URL.
-const dupUrl = `https://example.com/${RUN}-same-post`;
+// A real Instagram reel shape. It has to be: submissions now run through the
+// publication guard, which rejects a host that is not a supported platform —
+// so a placeholder URL can no longer stand in for a published post here.
+const dupUrl = 'https://www.instagram.com/reel/Cz9XyAbCdEf/';
 await svc.entities.Submission.create({
   contest_id: contest.id, title: `${RUN} dup a`, status: 'submitted',
   created_by_id: creator.id, live_url: dupUrl, demo: RUN,

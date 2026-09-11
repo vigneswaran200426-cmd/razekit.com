@@ -37,6 +37,11 @@ import {
   winnerVerificationStatus, winnerVerificationStart, winnerVerificationSubmit,
   winnerVerificationReview, winnerVerificationQueue,
 } from './winnerVerification.js';
+import { pollList, pollVote, pollAdminList } from './polls.js';
+import {
+  uropayAvailability, uropayCreateOrder, uropayOrderStatus, uropaySubmitUtr,
+  uropayWebhook, uropayAdminHealth, uropayAdminRefresh,
+} from './uropay.js';
 import {
   adminUsersList, adminUserDetail, adminUserAction,
   adminTrustSafety, adminTrustAction, adminEnforcement, adminEnforcementAction,
@@ -61,6 +66,15 @@ export const HANDLERS = {
   winnersShowcase, winnersLeaderboard, creatorPublicProfile,
   criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet,
   complianceEvaluate, complianceGet, complianceReview,
+
+  // Upcoming tournament polls. A separate system from contests on purpose:
+  // these have no submissions, no winner and no money.
+  pollList, pollVote, pollAdminList,
+
+  // UroPay — India UPI collection. Importing this module is also what
+  // registers the adapter with payments/gateway.ts.
+  uropayAvailability, uropayCreateOrder, uropayOrderStatus, uropaySubmitUtr,
+  uropayWebhook, uropayAdminHealth, uropayAdminRefresh,
 
   // Beta manual payment — client side.
   fundingQuote, fundingInstructions, fundingReportTransfer, fundingStatus, fundingCancel, paymentModeInfo,
@@ -125,6 +139,14 @@ export const HTTP_ALLOWED = new Set([
   // before doing so.
   'fundingQuote', 'fundingInstructions', 'fundingReportTransfer', 'fundingStatus', 'fundingCancel',
   'paymentModeInfo',
+  // UroPay. Each handler re-checks that the caller owns the funding request;
+  // uropayWebhook is public because the provider cannot hold a session, and it
+  // verifies an HMAC signature instead.
+  'uropayAvailability', 'uropayCreateOrder', 'uropayOrderStatus', 'uropaySubmitUtr',
+  'uropayWebhook', 'uropayAdminHealth', 'uropayAdminRefresh',
+  // Polls. pollVote derives voter identity server-side and re-checks admin in
+  // pollAdminList; the vote tally is never taken from the request.
+  'pollList', 'pollVote', 'pollAdminList',
   // Creator money. Ownership is taken from the session, never from the payload.
   'balanceOverview', 'withdrawalRequest', 'withdrawalCancel', 'withdrawalList',
   // Winner verification. Each handler re-checks that the caller IS the winner;
@@ -163,6 +185,17 @@ export const PUBLIC_FUNCTIONS = new Set([
   'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile', 'paymentModeInfo',
   // Aggregate counts only, seed accounts excluded. Nothing identifying.
   'platformStats',
+  // The upcoming-tournament banners are on the public home page, and a visitor
+  // can vote — pollVote derives an anti-abuse voter key rather than requiring
+  // an account, so both are reachable without a session.
+  'pollList', 'pollVote',
+  // Names no credential and returns no user data — a visitor deciding how to
+  // pay is entitled to know whether UPI is available.
+  'uropayAvailability',
+  // The provider cannot authenticate as a user. Gated on an HMAC signature
+  // inside the handler, and it trusts nothing in the body but an order id to
+  // go and ask the provider about.
+  'uropayWebhook',
 ]);
 
 // Require platform admin at the route boundary (handlers also re-check).
@@ -173,4 +206,6 @@ export const ADMIN_ONLY = new Set([
   'adminUsersList', 'adminUserDetail', 'adminUserAction',
   'adminTrustSafety', 'adminTrustAction', 'adminEnforcement', 'adminEnforcementAction',
   'adminVisualAssets', 'adminSystemHealth',
+  'uropayAdminHealth', 'uropayAdminRefresh',
+  'pollAdminList',
 ]);

@@ -36,6 +36,7 @@ const META_KEYS = new Set(['id', 'created_date', 'created_by_id', 'updated_date'
 
 import { assertNoProtectedWrite } from './protected.js';
 import { enforceContestFairness, touchesFairness } from '../contest/guard.js';
+import { enforceSubmissionPublication, touchesPublication } from '../social/publication.js';
 
 export class EntityError extends Error {
   status: number;
@@ -165,6 +166,17 @@ function isAdmin(ctx: Ctx) {
   return ctx.serviceRole || ctx.user?.role === 'admin';
 }
 
+// The contest a submission belongs to, read only when a write actually touches
+// the published link — it is needed for Contest.required_platform, and nothing
+// else in the write path needs it.
+async function contestForSubmission(db: any, contestId: unknown) {
+  if (!contestId || typeof contestId !== 'string') return null;
+  const row = await db.record.findFirst({ where: { id: contestId, entity: 'Contest' } }).catch(() => null);
+  return row ? flatten(row) : null;
+}
+
+const raiseEntity = (m: string, c: number) => { throw new EntityError(m, c); };
+
 async function userFilter(ctx: Ctx, query: Record<string, unknown>, sort?: string, limit?: number) {
   const db: any = ctx.db || prisma;
   // Admin (or service) may list/query all users; a normal user may only read self.
@@ -243,8 +255,9 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
 
     async create(obj: Record<string, unknown> = {}) {
       if (isUser) throw new EntityError('Users are created via the auth endpoints', 400);
-      const data = applyDefaults(entity, stripMeta(obj));
-      if (!ctx.serviceRole) assertNoProtectedWrite(entity, stripMeta(obj));
+      const incoming = stripMeta(obj);
+      const data = applyDefaults(entity, incoming);
+      if (!ctx.serviceRole) assertNoProtectedWrite(entity, incoming);
       const createdById = (obj.created_by_id as string) || ctx.user?.id || null;
       if (!ctx.serviceRole && !canAccess(s.rls.create, ctx.user, { createdById, data })) {
         throw new EntityError('Forbidden', 403);
@@ -252,7 +265,14 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
       assertRequired(entity, data);
       // Prize -> duration fairness is enforced here so no API path can bypass it.
       if (entity === 'Contest') {
-        enforceContestFairness(data, (m: string, c: number) => { throw new EntityError(m, c); });
+        enforceContestFairness(data, raiseEntity);
+      }
+      // A published link is evidence the Winners Hub will show publicly, so it
+      // is parsed here rather than trusted: the stored platform comes from the
+      // URL, never from what the client called it.
+      if (entity === 'Submission' && touchesPublication(incoming)) {
+        const contest = await contestForSubmission(db, data.contest_id);
+        enforceSubmissionPublication(data, { contest, prev: null }, raiseEntity);
       }
       const row = await db.record.create({ data: { entity, data: data as any, createdById } });
       // Event hook: new Contest → generate artwork (replaces the Base44
@@ -291,11 +311,20 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
       if (!ctx.serviceRole) {
         assertNoProtectedWrite(entity, stripMeta(patch), (row.data as any) || {});
       }
-      const data = { ...(row.data as any), ...stripMeta(patch) };
+      const changes = stripMeta(patch);
+      const prev = (row.data as any) || {};
+      const data = { ...prev, ...changes };
       // Re-validate only when prize/deadline/start actually change, so existing
       // contests created before this rule are never retro-broken.
-      if (entity === 'Contest' && touchesFairness(stripMeta(patch))) {
-        enforceContestFairness(data, (m: string, c: number) => { throw new EntityError(m, c); });
+      if (entity === 'Contest' && touchesFairness(changes)) {
+        enforceContestFairness(data, raiseEntity);
+      }
+      // Same discipline for a submission's published link: re-derived only when
+      // the link (or a field derived from it) actually changes, so an entry
+      // that predates this rule is never broken by an unrelated edit.
+      if (entity === 'Submission' && touchesPublication(changes, prev)) {
+        const contest = await contestForSubmission(db, data.contest_id);
+        enforceSubmissionPublication(data, { contest, prev }, raiseEntity);
       }
       const updated = await db.record.update({ where: { id }, data: { data: data as any } });
       return flatten(updated);

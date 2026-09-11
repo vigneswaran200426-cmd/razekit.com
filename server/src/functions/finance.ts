@@ -269,6 +269,162 @@ export async function financeFundingDetail(ctx) {
  *               the shortfall is recorded and the client is asked to top up
  *   MISMATCH  → nothing is credited; reject it instead
  */
+/**
+ * Settle one real receipt against a funding request.
+ *
+ * Extracted so the UroPay path and the manual bank path cannot drift into two
+ * different ideas of what "funded" means. Everything money-related lives here
+ * exactly once: the duplicate-reference guard, the ledger credit, the receipt,
+ * the reconciliation record, the prize reservation, and the publication gate.
+ *
+ * MUST be called inside withTransaction with the funding row already locked —
+ * the read-modify-write of prior receipts is only safe under that lock.
+ *
+ * `bankReference` is the idempotency key. For a manual transfer it is the UTR
+ * from the bank statement; for UroPay it is the provider's own order id. Either
+ * way, the same reference presented twice credits once.
+ */
+export async function settleFundingReceipt(svc, {
+  funding, actorId, bankReference, amountMinor = null, acceptPartial = false,
+  receivedDate = null, note = null, provider = 'manual_beta', providerStatus = 'BANK_STATEMENT',
+}) {
+      // One bank reference credits the ledger once. A genuine top-up carries a
+      // different UTR and is therefore a legitimate second receipt.
+      const priorReceipts = await svc.entities.FundingReceipt
+        .filter({ funding_id: funding.id }, 'created_date', 20).catch(() => []);
+      if (priorReceipts.some((r) => String(r.bank_reference).toUpperCase() === bankReference.toUpperCase())) {
+        return { conflict: err('DUPLICATE_BANK_REFERENCE', 'That bank reference has already been recorded against this funding request. No second credit was created.', 409) };
+      }
+
+      const expected = Number(funding.total_amount_minor);
+      const priorTotal = priorReceipts.reduce((a, r) => a + Number(r.amount_minor || 0), 0);
+      const thisReceipt = amountMinor != null
+        ? Math.round(Number(amountMinor))
+        : Number(funding.reported_amount_minor ?? expected) - priorTotal;
+
+      if (!Number.isFinite(thisReceipt) || thisReceipt <= 0) {
+        return { conflict: err('AMOUNT_REQUIRED', 'Enter the amount that actually appears on the bank statement.') };
+      }
+
+      const runningTotal = priorTotal + thisReceipt;
+      const match = classifyReconciliation(expected, runningTotal);
+
+      if (match === RECON.MISMATCH) {
+        return { conflict: err('NO_MATCHING_CREDIT', 'No credit was recorded for this reference. Reject the request instead of verifying it.', 422) };
+      }
+      if (match === RECON.PARTIAL && acceptPartial !== true) {
+        return {
+          conflict: err(
+            'AMOUNT_SHORTFALL',
+            `The bank shows ${toMajor(runningTotal, funding.currency)} but ${toMajor(expected, funding.currency)} is due. Record it as a part payment, or reject the request.`,
+            422,
+            { expected_amount_minor: expected, actual_amount_minor: runningTotal, difference_minor: runningTotal - expected }
+          ),
+        };
+      }
+
+      // ── Post the real money that arrived ───────────────────────────────
+      const credit = await recordFundingVerified(svc, {
+        funding, actorId: actorId, amountMinor: thisReceipt, bankReference,
+        // Only the first receipt carries the platform fee and tax.
+        bookFees: priorReceipts.length === 0,
+      });
+
+      await svc.entities.FundingReceipt.create({
+        funding_id: funding.id,
+        contest_id: funding.contest_id,
+        brand_id: funding.brand_id,
+        currency: funding.currency,
+        amount_minor: thisReceipt,
+        bank_reference: bankReference,
+        received_date: String(receivedDate || '').slice(0, 32) || nowIso().slice(0, 10),
+        verified_by: actorId,
+        verified_at: nowIso(),
+        note: String(note || '').slice(0, 500) || null,
+        ledger_txn_id: credit.transaction.id,
+        match_class: match,
+      });
+
+      await svc.entities.ReconciliationRecord.create({
+        reference: `RECON-${funding.reference}-${priorReceipts.length + 1}`,
+        entity_type: 'ContestFunding',
+        internal_ref: funding.reference,
+        internal_status: funding.status,
+        provider,
+        provider_ref: bankReference,
+        provider_status: providerStatus,
+        contest_id: funding.contest_id,
+        funding_id: funding.id,
+        currency: funding.currency,
+        expected_amount_minor: expected,
+        actual_amount_minor: runningTotal,
+        difference_minor: runningTotal - expected,
+        bank_reference: bankReference,
+        status: match,
+        checked_by: actorId,
+        checked_at: nowIso(),
+        mismatch_summary: match === RECON.MATCHED ? '' : `Expected ${expected}, bank shows ${runningTotal} (${match}).`,
+      }).catch(() => null);
+
+      // A part payment credits the money that really arrived but does NOT fund
+      // the contest — the prize is not fully covered, so nothing is reserved and
+      // nothing goes live.
+      if (match === RECON.PARTIAL) {
+        const partial = await svc.entities.ContestFunding.update(funding.id, {
+          status: assertFundingTransition(funding.status, FUNDING.PARTIAL),
+          receipts_total_minor: runningTotal,
+          shortfall_minor: expected - runningTotal,
+          bank_reference: bankReference,
+          last_receipt_reference: bankReference,
+          verified_by: actorId,
+          verification_note: String(note || '').slice(0, 500) || null,
+          ledger_txn_id: funding.ledger_txn_id || credit.transaction.id,
+        });
+        await svc.entities.Contest.update(funding.contest_id, { funding_status: FUNDING.PARTIAL }).catch(() => null);
+        return { funding: partial, match, credit, receiptMinor: thisReceipt, runningTotal, expected, partial: true };
+      }
+
+      // Fully covered (or more). Commit the prize to THIS contest so it can
+      // never be spent on another one.
+      const reservation = await reservePrize(svc, {
+        funding, prizeMinor: Number(funding.prize_amount_minor), actorId: actorId,
+      });
+
+      const overpaid = Math.max(0, runningTotal - expected);
+      const nextStatus = overpaid > 0 ? FUNDING.OVERPAID : FUNDING.VERIFIED;
+      const saved = await svc.entities.ContestFunding.update(funding.id, {
+        status: assertFundingTransition(funding.status, nextStatus),
+        verified_by: actorId,
+        verified_at: nowIso(),
+        verified_amount_minor: runningTotal,
+        receipts_total_minor: runningTotal,
+        shortfall_minor: 0,
+        overpaid_minor: overpaid,
+        verification_note: String(note || '').slice(0, 500) || null,
+        bank_reference: bankReference,
+        last_receipt_reference: bankReference,
+        ledger_txn_id: funding.ledger_txn_id || credit.transaction.id,
+        reservation_txn_id: reservation.transaction.id,
+      });
+
+      const contest = await svc.entities.Contest.get(funding.contest_id).catch(() => null);
+      await svc.entities.Contest.update(funding.contest_id, {
+        funding_status: nextStatus,
+        funding_id: funding.id,
+        funded_at: nowIso(),
+        prize_committed_minor: reservation.transaction.amount_minor,
+        // Funding is the publication gate: a draft contest goes live here and
+        // nowhere else.
+        status: contest && contest.status === 'draft' ? 'open' : contest?.status,
+      }).catch(() => null);
+
+      return {
+        funding: saved, match, credit, reservation, contest,
+        receiptMinor: thisReceipt, runningTotal, expected, overpaid,
+        published: Boolean(contest && contest.status === 'draft'),
+      };
+}
+
 export async function financeVerifyFunding(ctx) {
   const denied = await requireFinance(ctx, FINANCE_PERMISSION.VERIFY_FUNDING); if (denied) return denied;
   const b = ctx.body || {};
@@ -297,141 +453,18 @@ export async function financeVerifyFunding(ctx) {
         return { conflict: err('NOT_IN_QUEUE', `This funding request is ${funding.status} and cannot be verified.`, 409) };
       }
 
-      // One bank reference credits the ledger once. A genuine top-up carries a
-      // different UTR and is therefore a legitimate second receipt.
-      const priorReceipts = await svc.entities.FundingReceipt
-        .filter({ funding_id: funding.id }, 'created_date', 20).catch(() => []);
-      if (priorReceipts.some((r) => String(r.bank_reference).toUpperCase() === bankReference.toUpperCase())) {
-        return { conflict: err('DUPLICATE_BANK_REFERENCE', 'That bank reference has already been recorded against this funding request. No second credit was created.', 409) };
-      }
-
-      const expected = Number(funding.total_amount_minor);
-      const priorTotal = priorReceipts.reduce((a, r) => a + Number(r.amount_minor || 0), 0);
-      const thisReceipt = b.verified_amount != null
-        ? toMinor(Number(b.verified_amount), funding.currency)
-        : Number(funding.reported_amount_minor ?? expected) - priorTotal;
-
-      if (!Number.isFinite(thisReceipt) || thisReceipt <= 0) {
-        return { conflict: err('AMOUNT_REQUIRED', 'Enter the amount that actually appears on the bank statement.') };
-      }
-
-      const runningTotal = priorTotal + thisReceipt;
-      const match = classifyReconciliation(expected, runningTotal);
-
-      if (match === RECON.MISMATCH) {
-        return { conflict: err('NO_MATCHING_CREDIT', 'No credit was recorded for this reference. Reject the request instead of verifying it.', 422) };
-      }
-      if (match === RECON.PARTIAL && b.accept_partial !== true) {
-        return {
-          conflict: err(
-            'AMOUNT_SHORTFALL',
-            `The bank shows ${toMajor(runningTotal, funding.currency)} but ${toMajor(expected, funding.currency)} is due. Record it as a part payment, or reject the request.`,
-            422,
-            { expected_amount_minor: expected, actual_amount_minor: runningTotal, difference_minor: runningTotal - expected }
-          ),
-        };
-      }
-
-      // ── Post the real money that arrived ───────────────────────────────
-      const credit = await recordFundingVerified(svc, {
-        funding, actorId: ctx.user.id, amountMinor: thisReceipt, bankReference,
-        // Only the first receipt carries the platform fee and tax.
-        bookFees: priorReceipts.length === 0,
-      });
-
-      await svc.entities.FundingReceipt.create({
-        funding_id: funding.id,
-        contest_id: funding.contest_id,
-        brand_id: funding.brand_id,
-        currency: funding.currency,
-        amount_minor: thisReceipt,
-        bank_reference: bankReference,
-        received_date: String(b.received_date || '').slice(0, 32) || nowIso().slice(0, 10),
-        verified_by: ctx.user.id,
-        verified_at: nowIso(),
-        note: String(b.note || '').slice(0, 500) || null,
-        ledger_txn_id: credit.transaction.id,
-        match_class: match,
-      });
-
-      await svc.entities.ReconciliationRecord.create({
-        reference: `RECON-${funding.reference}-${priorReceipts.length + 1}`,
-        entity_type: 'ContestFunding',
-        internal_ref: funding.reference,
-        internal_status: funding.status,
+      // One settle implementation, shared with the UroPay path.
+      return await settleFundingReceipt(svc, {
+        funding,
+        actorId: ctx.user.id,
+        bankReference,
+        amountMinor: b.verified_amount != null ? toMinor(Number(b.verified_amount), funding.currency) : null,
+        acceptPartial: b.accept_partial === true,
+        receivedDate: b.received_date,
+        note: b.note,
         provider: 'manual_beta',
-        provider_ref: bankReference,
-        provider_status: 'BANK_STATEMENT',
-        contest_id: funding.contest_id,
-        funding_id: funding.id,
-        currency: funding.currency,
-        expected_amount_minor: expected,
-        actual_amount_minor: runningTotal,
-        difference_minor: runningTotal - expected,
-        bank_reference: bankReference,
-        status: match,
-        checked_by: ctx.user.id,
-        checked_at: nowIso(),
-        mismatch_summary: match === RECON.MATCHED ? '' : `Expected ${expected}, bank shows ${runningTotal} (${match}).`,
-      }).catch(() => null);
-
-      // A part payment credits the money that really arrived but does NOT fund
-      // the contest — the prize is not fully covered, so nothing is reserved and
-      // nothing goes live.
-      if (match === RECON.PARTIAL) {
-        const partial = await svc.entities.ContestFunding.update(funding.id, {
-          status: assertFundingTransition(funding.status, FUNDING.PARTIAL),
-          receipts_total_minor: runningTotal,
-          shortfall_minor: expected - runningTotal,
-          bank_reference: bankReference,
-          last_receipt_reference: bankReference,
-          verified_by: ctx.user.id,
-          verification_note: String(b.note || '').slice(0, 500) || null,
-          ledger_txn_id: funding.ledger_txn_id || credit.transaction.id,
-        });
-        await svc.entities.Contest.update(funding.contest_id, { funding_status: FUNDING.PARTIAL }).catch(() => null);
-        return { funding: partial, match, credit, receiptMinor: thisReceipt, runningTotal, expected, partial: true };
-      }
-
-      // Fully covered (or more). Commit the prize to THIS contest so it can
-      // never be spent on another one.
-      const reservation = await reservePrize(svc, {
-        funding, prizeMinor: Number(funding.prize_amount_minor), actorId: ctx.user.id,
+        providerStatus: 'BANK_STATEMENT',
       });
-
-      const overpaid = Math.max(0, runningTotal - expected);
-      const nextStatus = overpaid > 0 ? FUNDING.OVERPAID : FUNDING.VERIFIED;
-      const saved = await svc.entities.ContestFunding.update(funding.id, {
-        status: assertFundingTransition(funding.status, nextStatus),
-        verified_by: ctx.user.id,
-        verified_at: nowIso(),
-        verified_amount_minor: runningTotal,
-        receipts_total_minor: runningTotal,
-        shortfall_minor: 0,
-        overpaid_minor: overpaid,
-        verification_note: String(b.note || '').slice(0, 500) || null,
-        bank_reference: bankReference,
-        last_receipt_reference: bankReference,
-        ledger_txn_id: funding.ledger_txn_id || credit.transaction.id,
-        reservation_txn_id: reservation.transaction.id,
-      });
-
-      const contest = await svc.entities.Contest.get(funding.contest_id).catch(() => null);
-      await svc.entities.Contest.update(funding.contest_id, {
-        funding_status: nextStatus,
-        funding_id: funding.id,
-        funded_at: nowIso(),
-        prize_committed_minor: reservation.transaction.amount_minor,
-        // Funding is the publication gate: a draft contest goes live here and
-        // nowhere else.
-        status: contest && contest.status === 'draft' ? 'open' : contest?.status,
-      }).catch(() => null);
-
-      return {
-        funding: saved, match, credit, reservation, contest,
-        receiptMinor: thisReceipt, runningTotal, expected, overpaid,
-        published: Boolean(contest && contest.status === 'draft'),
-      };
     });
   } catch (e) {
     await auditFinance(ctx.svc, {

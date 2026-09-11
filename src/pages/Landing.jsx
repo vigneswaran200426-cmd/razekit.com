@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Trophy, Sparkles, ShieldCheck, Rocket } from 'lucide-react';
-import { entities } from '@/lib/api';
+import { entities, fn } from '@/lib/api';
 import { RazekitLogo } from '@/components/Brand';
 import { Button } from '@/components/ui';
 import ContestCard from '@/components/ContestCard';
+import PollBanners from '@/components/PollBanners';
 
 const STEPS = [
   { icon: Rocket, title: 'Brands launch', desc: 'A brand funds a prize and briefs the creative work they need.' },
@@ -15,7 +16,23 @@ const STEPS = [
 
 export default function Landing() {
   const [live, setLive] = useState([]);
+  // Real, seed-excluded adoption counts. This used to be three word-shaped
+  // tiles ("Open / contests live", "Verified / creators", "Secure / payouts")
+  // sitting exactly where a reader expects numbers — which reads as adoption
+  // the platform has not earned, and "Secure payouts" is a claim RazeKit is in
+  // no position to make. Now it shows counts, and nothing when there are none.
+  const [stats, setStats] = useState(null);
   useEffect(() => { entities.Contest.filter({ status: 'open' }, '-created_date', 6).then((l) => setLive(l || [])).catch(() => {}); }, []);
+  useEffect(() => { fn('platformStats').then(setStats).catch(() => setStats(null)); }, []);
+
+  // Only a count genuinely above zero is worth showing. A "0 creators" tile is
+  // honest but useless; an invented one would be neither.
+  const realStats = [
+    ['creators', stats?.creators, 'creators'],
+    ['clients', stats?.clients, 'brands'],
+    ['contests', stats?.contests, 'contests'],
+    ['winners', stats?.winners, 'winners paid'],
+  ].filter(([, v]) => Number(v) > 0);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -50,11 +67,18 @@ export default function Landing() {
               <Button to="/register" size="lg">Start competing <ArrowRight className="w-4 h-4" /></Button>
               <Button to="/explore" size="lg" variant="secondary">Browse contests</Button>
             </div>
-            <div className="mt-10 flex gap-8">
-              {[['Open', 'contests live'], ['Verified', 'creators'], ['Secure', 'payouts']].map(([a, b]) => (
-                <div key={b}><p className="font-display text-xl font-extrabold text-ink">{a}</p><p className="text-xs text-muted">{b}</p></div>
-              ))}
-            </div>
+            {realStats.length > 0 && (
+              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4">
+                {realStats.map(([key, value, label]) => (
+                  <div key={key}>
+                    <p className="font-display text-xl font-extrabold text-ink nums tabular-nums">
+                      {Number(value).toLocaleString('en-IN')}
+                    </p>
+                    <p className="text-xs text-muted">{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           {/* Live strip */}
           <div className="relative">
@@ -74,6 +98,10 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Upcoming community polls. Renders nothing at all when there are none,
+          so the page never carries an empty shelf. */}
+      <PollBanners />
 
       {/* How it works */}
       <section id="how" className="shell py-16 border-t border-line">
