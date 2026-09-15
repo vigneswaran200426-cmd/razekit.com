@@ -392,7 +392,7 @@ export function NotificationBell({ className }) {
     >
       <Bell className="h-5 w-5" aria-hidden="true" />
       {unread > 0 && (
-        <span className="nums absolute right-1.5 top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-white ring-2 ring-surface">
+        <span className="nums absolute right-1.5 top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary-hover px-1 text-[10px] font-bold text-white ring-2 ring-surface">
           {unread > 99 ? '99+' : unread}
         </span>
       )}

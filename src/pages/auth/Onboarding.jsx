@@ -72,11 +72,11 @@ export default function Onboarding() {
                 )}
               >
                 {active && (
-                  <span className="absolute top-3 right-3 grid place-items-center w-5 h-5 rounded-full bg-primary text-white">
+                  <span className="absolute top-3 right-3 grid place-items-center w-5 h-5 rounded-full bg-primary-hover text-white">
                     <Check className="w-3 h-3" aria-hidden="true" />
                   </span>
                 )}
-                <span className={cn('grid h-11 w-11 place-items-center rounded-md', active ? 'bg-primary text-white' : 'bg-surface-2 text-primary')}>
+                <span className={cn('grid h-11 w-11 place-items-center rounded-md', active ? 'bg-primary-hover text-white' : 'bg-surface-2 text-primary')}>
                   <r.icon className="w-5 h-5" aria-hidden="true" />
                 </span>
                 <h2 className="mt-3 font-display text-lg font-bold text-ink">{r.title}</h2>

@@ -192,7 +192,7 @@ export default function AppShell() {
             </button>
             <IconBtn onClick={() => navigate('/explore')} label="Search"><Search className="w-5 h-5 sm:hidden" /></IconBtn>
             {!isVisitor && (
-              <IconBtn to="/notifications" label="Notifications" badge={unread > 0 && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface" />}>
+              <IconBtn to="/notifications" label="Notifications" badge={unread > 0 && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-hover ring-2 ring-surface" />}>
                 <Bell className="w-5 h-5" />
               </IconBtn>
             )}
@@ -202,7 +202,7 @@ export default function AppShell() {
             {isVisitor ? (
               <div className="hidden md:flex items-center gap-2 ml-1">
                 <Link to="/login" className="px-3.5 py-2 text-sm font-medium text-ink rounded-md hover:bg-surface-2">Sign in</Link>
-                <Link to="/register" className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-md shadow-glow hover:bg-primary-ink transition-colors">Create account</Link>
+                <Link to="/register" className="px-4 py-2 text-sm font-semibold text-white bg-primary-hover rounded-md shadow-glow hover:bg-primary-ink transition-colors">Create account</Link>
               </div>
             ) : <AccountMenu />}
 
@@ -227,7 +227,7 @@ export default function AppShell() {
                 {isVisitor ? (
                   <div className="flex gap-2">
                     <Link to="/login" className="flex-1 text-center px-4 py-2.5 rounded-md border border-line-strong text-sm font-medium">Sign in</Link>
-                    <Link to="/register" className="flex-1 text-center px-4 py-2.5 rounded-md bg-primary text-white text-sm font-semibold">Create account</Link>
+                    <Link to="/register" className="flex-1 text-center px-4 py-2.5 rounded-md bg-primary-hover text-white text-sm font-semibold">Create account</Link>
                   </div>
                 ) : (
                   <>

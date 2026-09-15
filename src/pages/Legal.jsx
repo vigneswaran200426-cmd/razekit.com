@@ -155,7 +155,7 @@ function ContactBlock({ heading = 'Contact', intro }) {
       </ul>
       <p className="mt-4 max-w-[72ch] text-[13px] leading-relaxed text-muted">
         You can also open a support ticket from the{' '}
-        <Link to="/help" className="font-semibold text-primary underline underline-offset-2">Help Center</Link>, which
+        <Link to="/help" className="font-semibold text-primary-ink underline underline-offset-2">Help Center</Link>, which
         keeps the conversation attached to your account and your contest. Response times are targets, not guarantees.
       </p>
     </section>
@@ -343,13 +343,13 @@ function LegalDoc({ eyebrow, title, description, parts, updated = LAST_UPDATED, 
 
           <p className="mt-8 max-w-[72ch] text-[13px] text-muted">
             Also read:{' '}
-            <Link to="/terms" className="font-semibold text-primary underline underline-offset-2">Terms &amp; Conditions</Link>
+            <Link to="/terms" className="font-semibold text-primary-ink underline underline-offset-2">Terms &amp; Conditions</Link>
             {' · '}
-            <Link to="/privacy" className="font-semibold text-primary underline underline-offset-2">Privacy Policy</Link>
+            <Link to="/privacy" className="font-semibold text-primary-ink underline underline-offset-2">Privacy Policy</Link>
             {' · '}
-            <Link to="/about" className="font-semibold text-primary underline underline-offset-2">About RazeKit</Link>
+            <Link to="/about" className="font-semibold text-primary-ink underline underline-offset-2">About RazeKit</Link>
             {' · '}
-            <Link to="/contact" className="font-semibold text-primary underline underline-offset-2">Contact</Link>
+            <Link to="/contact" className="font-semibold text-primary-ink underline underline-offset-2">Contact</Link>
           </p>
         </div>
       </div>
@@ -1408,11 +1408,11 @@ export function About() {
 
       <p className="mt-8 max-w-[72ch] text-[13px] text-muted">
         Also read:{' '}
-        <Link to="/terms" className="font-semibold text-primary underline underline-offset-2">Terms &amp; Conditions</Link>
+        <Link to="/terms" className="font-semibold text-primary-ink underline underline-offset-2">Terms &amp; Conditions</Link>
         {' · '}
-        <Link to="/privacy" className="font-semibold text-primary underline underline-offset-2">Privacy Policy</Link>
+        <Link to="/privacy" className="font-semibold text-primary-ink underline underline-offset-2">Privacy Policy</Link>
         {' · '}
-        <Link to="/contact" className="font-semibold text-primary underline underline-offset-2">Contact</Link>
+        <Link to="/contact" className="font-semibold text-primary-ink underline underline-offset-2">Contact</Link>
       </p>
     </div>
   );
@@ -1556,7 +1556,7 @@ export function Contact() {
               <span aria-hidden="true" className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-primary" />
               <span>
                 The only contact details we use are the ones on this page. If something looks off, reach us at{' '}
-                <a href={CONTACT.emailHref} className="break-words font-semibold text-primary underline underline-offset-2">
+                <a href={CONTACT.emailHref} className="break-words font-semibold text-primary-ink underline underline-offset-2">
                   {CONTACT.email}
                 </a>{' '}
                 and ask.
@@ -1568,11 +1568,11 @@ export function Contact() {
 
       <p className="mt-10 max-w-[72ch] text-[13px] text-muted">
         Also read:{' '}
-        <Link to="/about" className="font-semibold text-primary underline underline-offset-2">About RazeKit</Link>
+        <Link to="/about" className="font-semibold text-primary-ink underline underline-offset-2">About RazeKit</Link>
         {' · '}
-        <Link to="/terms" className="font-semibold text-primary underline underline-offset-2">Terms &amp; Conditions</Link>
+        <Link to="/terms" className="font-semibold text-primary-ink underline underline-offset-2">Terms &amp; Conditions</Link>
         {' · '}
-        <Link to="/privacy" className="font-semibold text-primary underline underline-offset-2">Privacy Policy</Link>
+        <Link to="/privacy" className="font-semibold text-primary-ink underline underline-offset-2">Privacy Policy</Link>
       </p>
     </div>
   );

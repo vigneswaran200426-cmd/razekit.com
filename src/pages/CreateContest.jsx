@@ -83,7 +83,7 @@ function Stepper({ step }) {
           return (
             <li key={label} className="flex items-center gap-2" aria-current={current ? 'step' : undefined}>
               <span className={cn('grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold',
-                done ? 'bg-primary text-white' : current ? 'bg-primary/15 text-primary ring-2 ring-primary' : 'bg-surface-2 text-muted')}>
+                done ? 'bg-primary-hover text-white' : current ? 'bg-primary/15 text-primary ring-2 ring-primary' : 'bg-surface-2 text-muted')}>
                 {done ? <Check className="h-3 w-3" aria-hidden="true" /> : n}
                 <span className="sr-only">{done ? 'completed' : current ? 'current step' : 'not started'}</span>
               </span>

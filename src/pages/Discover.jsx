@@ -134,7 +134,7 @@ export function FilterButton({ count = 0, onClick, className }) {
       <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
       Filters
       {count > 0 && (
-        <span className="nums grid h-5 min-w-[20px] place-items-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">{count}</span>
+        <span className="nums grid h-5 min-w-[20px] place-items-center rounded-full bg-primary-hover px-1 text-[11px] font-bold text-white">{count}</span>
       )}
       <span className="sr-only">{count > 0 ? `${count} filters applied` : 'no filters applied'}</span>
     </button>

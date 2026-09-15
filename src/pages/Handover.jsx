@@ -106,7 +106,7 @@ export default function Handover() {
               return (
                 <li key={label} className="flex gap-3 pb-6 last:pb-0 relative">
                   {i < STEPS.length - 1 && <span className={cn('absolute left-[15px] top-8 bottom-0 w-0.5', done ? 'bg-primary' : 'bg-line')} />}
-                  <span className={cn('grid h-8 w-8 place-items-center rounded-full text-[13px] font-bold shrink-0 z-10', done ? 'bg-primary text-white' : current ? 'bg-primary/15 text-primary ring-2 ring-primary' : 'bg-surface-2 text-muted')}>
+                  <span className={cn('grid h-8 w-8 place-items-center rounded-full text-[13px] font-bold shrink-0 z-10', done ? 'bg-primary-hover text-white' : current ? 'bg-primary/15 text-primary ring-2 ring-primary' : 'bg-surface-2 text-muted')}>
                     {done ? <Check className="w-4 h-4" aria-hidden="true" /> : n}
                   </span>
                   <div className="pt-1"><p className={cn('font-semibold text-sm', done || current ? 'text-ink' : 'text-muted')}>{label}</p>
@@ -146,7 +146,7 @@ export default function Handover() {
               const mine = m.sender_id === user.id;
               return (
                 <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
-                  <div className={cn('max-w-[85%] rounded-lg px-3 py-2 text-sm', mine ? 'bg-primary text-white' : 'bg-surface-2 text-ink')}>{m.body}</div>
+                  <div className={cn('max-w-[85%] rounded-lg px-3 py-2 text-sm', mine ? 'bg-primary-hover text-white' : 'bg-surface-2 text-ink')}>{m.body}</div>
                 </div>
               );
             })}

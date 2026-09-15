@@ -246,7 +246,7 @@ function Chip({ active, onClick, count, children }) {
     >
       {children}
       {count > 0 && (
-        <span className={cn('nums rounded-full px-1.5 py-0.5 text-[10px] font-bold', active ? 'bg-primary text-white' : 'bg-surface-2 text-ink')}>
+        <span className={cn('nums rounded-full px-1.5 py-0.5 text-[10px] font-bold', active ? 'bg-primary-hover text-white' : 'bg-surface-2 text-ink')}>
           {count > 99 ? '99+' : count}
         </span>
       )}

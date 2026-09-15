@@ -565,8 +565,8 @@ export default function Balance() {
           <span className="flex items-center gap-2 text-sm font-semibold text-ink">
             <LifeBuoy className="h-4 w-4 text-primary" aria-hidden="true" />Questions about a figure on this page?
           </span>
-          {support.email && <a href={`mailto:${support.email}`} className="text-sm font-medium text-primary underline underline-offset-2">{support.email}</a>}
-          {support.phone && <a href={`tel:${support.phone}`} className="text-sm font-medium text-primary underline underline-offset-2">{support.phone}</a>}
+          {support.email && <a href={`mailto:${support.email}`} className="text-sm font-medium text-primary-ink underline underline-offset-2">{support.email}</a>}
+          {support.phone && <a href={`tel:${support.phone}`} className="text-sm font-medium text-primary-ink underline underline-offset-2">{support.phone}</a>}
         </Card>
       )}
     </div>
