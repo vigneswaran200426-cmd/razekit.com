@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "RazeKit backend API \u2014 the off-Base44 replacement (Node + TypeScript + Express + Prisma/PostgreSQL).",
+  "description": "RazeKit backend API — the off-Base44 replacement (Node + TypeScript + Express + Prisma/PostgreSQL).",
   "engines": {
     "node": ">=20"
   },
@@ -38,9 +38,7 @@
     "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "nanoid": "^5.0.9",
-    "node-cron": "^3.0.3",
-    "zod": "^3.24.1"
+    "node-cron": "^3.0.3"
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
