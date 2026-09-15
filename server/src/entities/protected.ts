@@ -109,6 +109,44 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   TrackingLink: ['*'],
   AuditLog: ['*'],
   FraudAlert: ['*'],
+
+  // ── Entities a user may CREATE, but whose verdict fields are not theirs ───
+  // Each of these has rls.create === true, which is correct: a creator really
+  // does file a report, open a handover, start an OTP check. What they must
+  // never do is write the field that says the check PASSED. Found by sweeping
+  // every entity with create:true against its own field names — none of these
+  // were guarded before.
+
+  // Footage access. OTP and download sessions are the gate on licensed
+  // material, so self-verifying one is a direct route to material the creator
+  // was not granted.
+  OtpVerification: ['verified', 'verified_at', 'attempts', 'expires_at', 'code_hash', 'status'],
+  DownloadSession: ['status', 'downloads_used', 'max_downloads', 'expires_at', 'revoked_at', 'revoked_by'],
+  DownloadLog: ['status', 'session_id', 'bytes'],
+
+  // Handover completion gates payout eligibility. A winner marking their own
+  // handover COMPLETED would be claiming they handed over an account nobody
+  // confirmed receiving.
+  Handover: ['status', 'winner_id', 'client_id', 'contest_id', 'verified_at',
+    'verified_by', 'completed_at', 'otp_code', 'credentials_released_at'],
+  HandoverMessage: ['sender_role', 'winner_id', 'client_id'],
+
+  // Moderation verdicts and verification badges are staff decisions.
+  Post: ['author_verified', 'moderation_status', 'moderated_by', 'moderated_at',
+    'like_count', 'save_count', 'comment_count', 'view_count'],
+  Comment: ['moderation_status', 'moderated_by', 'moderated_at'],
+  // A user files a Report; its status and resolution belong to whoever reviews it.
+  Report: ['status', 'reviewed_by', 'reviewed_at', 'resolution', 'resolution_notes', 'severity'],
+
+  // Dormant today (nothing reads it), which is exactly when to close it: the
+  // moment something trusts `verified`, a browser-set true becomes a forged
+  // account-ownership claim.
+  SocialConnection: ['verified', 'status', 'provider_account_id', 'owner_user_id',
+    'scopes', 'last_synced_at', 'sync_error'],
+
+  // A notification is emitted by the server in response to a real event. A
+  // client writing one could fabricate "your payout completed".
+  Notification: ['*'],
 };
 
 // Status values that only the server may assign (the client may still move a
