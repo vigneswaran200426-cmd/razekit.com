@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RouteSeo } from '@/components/Seo';
 import { AuthProvider } from '@/lib/auth';
@@ -5,35 +6,77 @@ import { HomeGate, ProtectedRoute } from '@/components/routing';
 import AppShell from '@/components/AppShell';
 import { NotificationProvider } from '@/components/Notifications';
 
+// ── Route-level code splitting ──────────────────────────────────────────────
+// The whole app used to ship as ONE 910KB chunk, so a visitor reading the
+// homepage downloaded Admin, Tracker, Finance and the chart library before
+// anything rendered. Each route below is now its own chunk, fetched when the
+// route is actually visited.
+//
+// Landing, Login and Register stay eager on purpose: they are the first paint
+// for a signed-out visitor, and lazy-loading them would add a round trip to
+// exactly the moment that matters most.
 import Landing from '@/pages/Landing';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
-import Onboarding from '@/pages/auth/Onboarding';
-import Explore from '@/pages/Explore';
-import Discover from '@/pages/Discover';
-import Tracker from '@/pages/Tracker';
-import Dashboard from '@/pages/Dashboard';
-import ContestDetail from '@/pages/ContestDetail';
-import Winners from '@/pages/Winners';
-import Feed from '@/pages/Feed';
-import CreatorProfile from '@/pages/CreatorProfile';
-import Work from '@/pages/Work';
-import Balance from '@/pages/Balance';
-import FundContest from '@/pages/FundContest';
-import WinnerVerify from '@/pages/WinnerVerify';
-import CampaignReport from '@/pages/CampaignReport';
-import TrackRecord from '@/pages/TrackRecord';
-import { Terms, Privacy, About, Contact } from '@/pages/Legal';
-import Profile from '@/pages/Profile';
-import Settings from '@/pages/Settings';
-import Notifications from '@/pages/Notifications';
-import Help from '@/pages/Help';
-import Admin from '@/pages/Admin';
-import CreateContest from '@/pages/CreateContest';
-import SubmitWork from '@/pages/SubmitWork';
-import Review from '@/pages/Review';
-import Handover from '@/pages/Handover';
-import NotFound from '@/pages/NotFound';
+
+const Admin = lazy(() => import('@/pages/Admin'));
+const Balance = lazy(() => import('@/pages/Balance'));
+const CampaignReport = lazy(() => import('@/pages/CampaignReport'));
+const ContestDetail = lazy(() => import('@/pages/ContestDetail'));
+const CreateContest = lazy(() => import('@/pages/CreateContest'));
+const CreatorProfile = lazy(() => import('@/pages/CreatorProfile'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Discover = lazy(() => import('@/pages/Discover'));
+const Explore = lazy(() => import('@/pages/Explore'));
+const Feed = lazy(() => import('@/pages/Feed'));
+const FundContest = lazy(() => import('@/pages/FundContest'));
+const Handover = lazy(() => import('@/pages/Handover'));
+const Help = lazy(() => import('@/pages/Help'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
+const Notifications = lazy(() => import('@/pages/Notifications'));
+const Onboarding = lazy(() => import('@/pages/auth/Onboarding'));
+const Profile = lazy(() => import('@/pages/Profile'));
+const Review = lazy(() => import('@/pages/Review'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const SubmitWork = lazy(() => import('@/pages/SubmitWork'));
+const TrackRecord = lazy(() => import('@/pages/TrackRecord'));
+const Tracker = lazy(() => import('@/pages/Tracker'));
+const WinnerVerify = lazy(() => import('@/pages/WinnerVerify'));
+const Winners = lazy(() => import('@/pages/Winners'));
+const Work = lazy(() => import('@/pages/Work'));
+const Terms = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Terms })));
+const Privacy = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Privacy })));
+const About = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.About })));
+const Contact = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Contact })));
+
+
+/**
+ * Shown while a route chunk is in flight.
+ *
+ * Deliberately NOT a spinner. A centred spinner tells the reader "something is
+ * happening somewhere"; a block that occupies the shape the page is about to
+ * take tells them the page is arriving, and keeps the layout from jumping when
+ * it does. It is aria-busy so a screen reader announces the wait rather than
+ * reading an empty document.
+ */
+function RouteFallback() {
+  return (
+    <div className="shell py-10" role="status" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading</span>
+      <div className="h-7 w-52 rounded-md bg-surface-2" />
+      <div className="mt-3 h-4 w-80 max-w-full rounded-md bg-surface-2/70" />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="rounded-lg border border-line bg-surface p-4">
+            <div className="h-32 w-full rounded-md bg-surface-2" />
+            <div className="mt-3 h-4 w-3/4 rounded bg-surface-2" />
+            <div className="mt-2 h-3 w-1/2 rounded bg-surface-2/70" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -42,6 +85,7 @@ export default function App() {
         <BrowserRouter>
         {/* Per-route title, description, canonical and robots. */}
           <RouteSeo />
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
 
           {/* Standalone */}
@@ -94,6 +138,7 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+          </Suspense>
       </BrowserRouter>
       </NotificationProvider>
     </AuthProvider>
