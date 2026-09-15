@@ -61,7 +61,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
       <main className="flex flex-col justify-center px-6 sm:px-10 py-12">
         <motion.div {...enter} className="w-full max-w-sm mx-auto">
           <div className="lg:hidden mb-8">
-            <Link to="/" className="inline-flex" aria-label="RazeKit home">
+            <Link to="/" className="inline-flex min-h-[44px] items-center" aria-label="RazeKit home">
               <RazekitLogo mark={32} word={22} />
             </Link>
           </div>
@@ -71,7 +71,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
 
           <div className="mt-8">{children}</div>
 
-          {footer && <div className="mt-8 text-sm text-muted text-center">{footer}</div>}
+          {footer && <p className="mt-8 text-sm text-muted text-center">{footer}</p>}
         </motion.div>
       </main>
     </div>

@@ -11,7 +11,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { prisma } from '../db.js';
+import { prisma, adminPrisma } from '../db.js';
+import { isAdminEntity } from './routing.js';
 import { canAccess, readWhere, type RlsUser } from './rls.js';
 import { publicUser } from '../auth/users.js';
 import { coreIntegrations } from '../integrations/core.js';
@@ -35,6 +36,7 @@ const META_KEYS = new Set(['id', 'created_date', 'created_by_id', 'updated_date'
 
 import { assertNoProtectedWrite } from './protected.js';
 import { enforceContestFairness, touchesFairness } from '../contest/guard.js';
+import { enforceSubmissionPublication, touchesPublication } from '../social/publication.js';
 
 export class EntityError extends Error {
   status: number;
@@ -47,6 +49,12 @@ export class EntityError extends Error {
 export interface Ctx {
   user: RlsUser | null;
   serviceRole: boolean;
+  /**
+   * Optional Prisma client bound to an open transaction (see db.withTransaction).
+   * When present every read and write in this context joins that transaction,
+   * so a multi-step financial posting commits as one unit or not at all.
+   */
+  db?: any;
 }
 
 export const serviceCtx: Ctx = { user: null, serviceRole: true };
@@ -158,11 +166,23 @@ function isAdmin(ctx: Ctx) {
   return ctx.serviceRole || ctx.user?.role === 'admin';
 }
 
+// The contest a submission belongs to, read only when a write actually touches
+// the published link — it is needed for Contest.required_platform, and nothing
+// else in the write path needs it.
+async function contestForSubmission(db: any, contestId: unknown) {
+  if (!contestId || typeof contestId !== 'string') return null;
+  const row = await db.record.findFirst({ where: { id: contestId, entity: 'Contest' } }).catch(() => null);
+  return row ? flatten(row) : null;
+}
+
+const raiseEntity = (m: string, c: number) => { throw new EntityError(m, c); };
+
 async function userFilter(ctx: Ctx, query: Record<string, unknown>, sort?: string, limit?: number) {
+  const db: any = ctx.db || prisma;
   // Admin (or service) may list/query all users; a normal user may only read self.
   if (!isAdmin(ctx)) {
     if (!ctx.user) return [];
-    const self = await prisma.appUser.findUnique({ where: { id: ctx.user.id } });
+    const self = await db.appUser.findUnique({ where: { id: ctx.user.id } });
     if (!self) return [];
     const flat = flattenUser(self);
     // apply query equality on self
@@ -176,7 +196,7 @@ async function userFilter(ctx: Ctx, query: Record<string, unknown>, sort?: strin
     else if (USER_COLUMNS[k]) where[USER_COLUMNS[k]] = v;
   }
   const orderBy = sort === 'created_date' ? { createdDate: 'asc' as const } : { createdDate: 'desc' as const };
-  const rows = await prisma.appUser.findMany({ where, orderBy, take: limit ?? 200 });
+  const rows = await db.appUser.findMany({ where, orderBy, take: limit ?? 200 });
   return rows.map(flattenUser);
 }
 
@@ -184,6 +204,11 @@ async function userFilter(ctx: Ctx, query: Record<string, unknown>, sort?: strin
 function makeEntityMethods(entity: string, ctx: Ctx) {
   const s = schema(entity);
   const isUser = entity === 'User';
+  // Admin-only entities live in their own database and therefore can never
+  // join a platform transaction — passing them the tx client would silently
+  // write them to the wrong database. Everything else uses the transaction
+  // client when there is one, so the whole operation stays atomic.
+  const db: any = isAdminEntity(entity) ? adminPrisma : (ctx.db || prisma);
 
   return {
     async filter(query: Record<string, unknown> = {}, sort?: string, limit?: number) {
@@ -196,7 +221,7 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
         if (rls.where && Object.keys(rls.where).length) and.push(rls.where);
       }
       const orderBy = scalarOrderBy(sort);
-      const rows = await prisma.record.findMany({
+      const rows = await db.record.findMany({
         where: { AND: and },
         ...(orderBy ? { orderBy } : {}),
         ...(orderBy && limit ? { take: limit } : {}),
@@ -215,12 +240,12 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
 
     async get(id: string) {
       if (isUser) {
-        const u = await prisma.appUser.findUnique({ where: { id } });
+        const u = await db.appUser.findUnique({ where: { id } });
         if (!u) throw new EntityError('User not found', 404);
         if (!isAdmin(ctx) && ctx.user?.id !== id) throw new EntityError('Forbidden', 403);
         return flattenUser(u);
       }
-      const row = await prisma.record.findFirst({ where: { id, entity } });
+      const row = await db.record.findFirst({ where: { id, entity } });
       if (!row) throw new EntityError(`${entity} not found`, 404);
       if (!ctx.serviceRole && !canAccess(s.rls.read, ctx.user, row)) {
         throw new EntityError('Forbidden', 403);
@@ -230,8 +255,9 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
 
     async create(obj: Record<string, unknown> = {}) {
       if (isUser) throw new EntityError('Users are created via the auth endpoints', 400);
-      const data = applyDefaults(entity, stripMeta(obj));
-      if (!ctx.serviceRole) assertNoProtectedWrite(entity, stripMeta(obj));
+      const incoming = stripMeta(obj);
+      const data = applyDefaults(entity, incoming);
+      if (!ctx.serviceRole) assertNoProtectedWrite(entity, incoming);
       const createdById = (obj.created_by_id as string) || ctx.user?.id || null;
       if (!ctx.serviceRole && !canAccess(s.rls.create, ctx.user, { createdById, data })) {
         throw new EntityError('Forbidden', 403);
@@ -239,9 +265,16 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
       assertRequired(entity, data);
       // Prize -> duration fairness is enforced here so no API path can bypass it.
       if (entity === 'Contest') {
-        enforceContestFairness(data, (m: string, c: number) => { throw new EntityError(m, c); });
+        enforceContestFairness(data, raiseEntity);
       }
-      const row = await prisma.record.create({ data: { entity, data: data as any, createdById } });
+      // A published link is evidence the Winners Hub will show publicly, so it
+      // is parsed here rather than trusted: the stored platform comes from the
+      // URL, never from what the client called it.
+      if (entity === 'Submission' && touchesPublication(incoming)) {
+        const contest = await contestForSubmission(db, data.contest_id);
+        enforceSubmissionPublication(data, { contest, prev: null }, raiseEntity);
+      }
+      const row = await db.record.create({ data: { entity, data: data as any, createdById } });
       // Event hook: new Contest → generate artwork (replaces the Base44
       // "Contest Visual Assets" entity-trigger workflow). Fire-and-forget.
       if (entity === 'Contest') {
@@ -254,7 +287,7 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
 
     async update(id: string, patch: Record<string, unknown> = {}) {
       if (isUser) {
-        const u = await prisma.appUser.findUnique({ where: { id } });
+        const u = await db.appUser.findUnique({ where: { id } });
         if (!u) throw new EntityError('User not found', 404);
         if (!isAdmin(ctx) && ctx.user?.id !== id) throw new EntityError('Forbidden', 403);
         const { cols, profile } = userPatch(patch);
@@ -264,13 +297,13 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
         // user self-assign it is a privilege escalation.
         if (!isAdmin(ctx)) { delete cols.role; delete cols.accountStatus; delete cols.userRole; }
         const merged = { ...(u.profile as any), ...profile };
-        const updated = await prisma.appUser.update({
+        const updated = await db.appUser.update({
           where: { id },
           data: { ...cols, profile: merged as any },
         });
         return flattenUser(updated);
       }
-      const row = await prisma.record.findFirst({ where: { id, entity } });
+      const row = await db.record.findFirst({ where: { id, entity } });
       if (!row) throw new EntityError(`${entity} not found`, 404);
       if (!ctx.serviceRole && !canAccess(s.rls.update, ctx.user, row)) {
         throw new EntityError('Forbidden', 403);
@@ -278,28 +311,37 @@ function makeEntityMethods(entity: string, ctx: Ctx) {
       if (!ctx.serviceRole) {
         assertNoProtectedWrite(entity, stripMeta(patch), (row.data as any) || {});
       }
-      const data = { ...(row.data as any), ...stripMeta(patch) };
+      const changes = stripMeta(patch);
+      const prev = (row.data as any) || {};
+      const data = { ...prev, ...changes };
       // Re-validate only when prize/deadline/start actually change, so existing
       // contests created before this rule are never retro-broken.
-      if (entity === 'Contest' && touchesFairness(stripMeta(patch))) {
-        enforceContestFairness(data, (m: string, c: number) => { throw new EntityError(m, c); });
+      if (entity === 'Contest' && touchesFairness(changes)) {
+        enforceContestFairness(data, raiseEntity);
       }
-      const updated = await prisma.record.update({ where: { id }, data: { data: data as any } });
+      // Same discipline for a submission's published link: re-derived only when
+      // the link (or a field derived from it) actually changes, so an entry
+      // that predates this rule is never broken by an unrelated edit.
+      if (entity === 'Submission' && touchesPublication(changes, prev)) {
+        const contest = await contestForSubmission(db, data.contest_id);
+        enforceSubmissionPublication(data, { contest, prev }, raiseEntity);
+      }
+      const updated = await db.record.update({ where: { id }, data: { data: data as any } });
       return flatten(updated);
     },
 
     async delete(id: string) {
       if (isUser) {
         if (!isAdmin(ctx)) throw new EntityError('Forbidden', 403);
-        await prisma.appUser.delete({ where: { id } }).catch(() => {});
+        await db.appUser.delete({ where: { id } }).catch(() => {});
         return {};
       }
-      const row = await prisma.record.findFirst({ where: { id, entity } });
+      const row = await db.record.findFirst({ where: { id, entity } });
       if (!row) throw new EntityError(`${entity} not found`, 404);
       if (!ctx.serviceRole && !canAccess(s.rls.delete, ctx.user, row)) {
         throw new EntityError('Forbidden', 403);
       }
-      await prisma.record.delete({ where: { id } });
+      await db.record.delete({ where: { id } });
       return {};
     },
   };
@@ -321,8 +363,9 @@ export function makeEntities(ctx: Ctx): Record<string, EntityMethods> {
 
 // Convenience: a service-role client shaped like the Base44 SDK the ported
 // backend code expects (`svc.entities.X...`, `svc.integrations.Core.*`).
-export function serviceClient() {
-  return { entities: makeEntities(serviceCtx), integrations: { Core: coreIntegrations } };
+export function serviceClient(db?: any) {
+  const ctx: Ctx = db ? { user: null, serviceRole: true, db } : serviceCtx;
+  return { entities: makeEntities(ctx), integrations: { Core: coreIntegrations }, db: db || null };
 }
 
 export function knownEntity(name: string): boolean {

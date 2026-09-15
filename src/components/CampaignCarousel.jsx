@@ -1,46 +1,34 @@
-// Dashboard campaign carousel (spec 25) — a featured RazeKit campaign module,
-// not an ad-network widget.
+// Dashboard campaign carousel — a featured RazeKit campaign module, not an
+// ad-network widget.
 //
-// Deep-links only resolve to a REAL contest record. Where no such contest
-// exists, the CTA routes to Discover instead of fabricating a destination.
-// Slides carry no affiliation claim: they are RazeKit-run branding briefs.
-import { useEffect, useMemo, useState } from 'react';
+// Every word and every number on a slide comes from a REAL Contest row. This
+// used to carry three hard-coded slides with invented prize figures (a "GTA 6"
+// contest at 3 lakh that did not exist), which meant a creator's dashboard
+// advertised a prize nobody could win. The gradients below are the only
+// hard-coded thing left, because a gradient is presentation; a prize is a claim.
+//
+// When there is no real campaign to feature, this renders NOTHING. An empty
+// dashboard section is honest in a way a fabricated one is not.
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { entities } from '@/lib/api';
-import { money } from '@/lib/format';
+import { money, dateShort } from '@/lib/format';
 
 const EASE = [0.22, 1, 0.36, 1];
 
-const SLIDES = [
+/* Presentation only — cycled by slot, carrying no meaning about the contest. */
+const THEMES = [
   {
-    id: 'gta6',
-    headline: 'GTA 6 Branding Video Makers Contest',
-    copy: 'Create a standout branding video concept and compete for a ₹3 lakh prize.',
-    prize: 300000,
-    cta: 'Enter contest',
-    // Cinematic gaming energy: premium dark/blue tonal gradient.
     bg: 'linear-gradient(120deg,#07142e 0%,#0d2452 42%,#1746a2 100%)',
     glow: 'radial-gradient(60% 90% at 78% 20%, rgba(49,211,255,0.30), transparent 70%)',
   },
   {
-    id: 'gpt6astra',
-    headline: 'GPT 6 Astra Branding Video Makers Contest',
-    copy: 'Create a bold brand video concept and compete for a ₹1 lakh prize.',
-    prize: 100000,
-    cta: 'Explore contest',
-    // Futuristic AI aesthetic: cool blue-violet glow, elegant light accents.
     bg: 'linear-gradient(120deg,#0a0f2c 0%,#221a5e 48%,#4426b8 100%)',
     glow: 'radial-gradient(55% 85% at 22% 18%, rgba(148,120,255,0.34), transparent 70%)',
   },
   {
-    id: 'razekit',
-    headline: 'RazeKit Branding Video Makers Contest',
-    copy: 'Show us how you would bring the RazeKit brand to life.',
-    prize: 50000,
-    cta: 'Create for RazeKit',
-    // RazeKit blue/white premium treatment.
     bg: 'linear-gradient(120deg,#0d1b3a 0%,#1055c8 55%,#2f7bf5 100%)',
     glow: 'radial-gradient(60% 90% at 82% 78%, rgba(255,255,255,0.24), transparent 70%)',
   },
@@ -48,34 +36,45 @@ const SLIDES = [
 
 export default function CampaignCarousel() {
   const [i, setI] = useState(0);
-  const [matches, setMatches] = useState({});
+  const [slides, setSlides] = useState(null);
   const reduce = useReducedMotion();
 
-  // Resolve each slide to a real contest, if one exists.
+  // Real open contests, newest first. A contest only reaches 'open' once its
+  // prize has actually been funded, so anything featured here is enterable.
   useEffect(() => {
-    entities.Contest.filter({ status: 'open' }, '-created_date', 200)
+    let alive = true;
+    entities.Contest.filter({ status: 'open' }, '-created_date', 12)
       .then((rows) => {
-        const found = {};
-        for (const s of SLIDES) {
-          const key = s.headline.toLowerCase().split(' ')[0];
-          const hit = (rows || []).find((c) => String(c.title || '').toLowerCase().includes(key));
-          if (hit) found[s.id] = hit.id;
-        }
-        setMatches(found);
+        if (!alive) return;
+        setSlides((rows || []).slice(0, 3).map((c, n) => ({
+          id: c.id,
+          headline: c.title,
+          copy: c.short_description || c.description || '',
+          prize: Number(c.prize_amount) || null,
+          currency: c.currency || 'INR',
+          deadline: c.deadline || null,
+          ...THEMES[n % THEMES.length],
+        })));
       })
-      .catch(() => {});
+      .catch(() => { if (alive) setSlides([]); });
+    return () => { alive = false; };
   }, []);
 
-  // Calm auto-rotation, disabled entirely under reduced motion (spec 25).
-  useEffect(() => {
-    if (reduce) return undefined;
-    const t = setInterval(() => setI((n) => (n + 1) % SLIDES.length), 7000);
-    return () => clearInterval(t);
-  }, [reduce]);
+  const count = slides?.length || 0;
 
-  const slide = SLIDES[i];
-  const to = useMemo(() => (matches[slide.id] ? `/contest/${matches[slide.id]}` : '/discover'), [matches, slide.id]);
-  const go = (n) => setI((n + SLIDES.length) % SLIDES.length);
+  // Calm auto-rotation, disabled entirely under reduced motion.
+  useEffect(() => {
+    if (reduce || count < 2) return undefined;
+    const t = setInterval(() => setI((n) => (n + 1) % count), 7000);
+    return () => clearInterval(t);
+  }, [reduce, count]);
+
+  // Nothing real to feature: render nothing rather than invent a campaign.
+  if (!slides || count === 0) return null;
+
+  const slide = slides[Math.min(i, count - 1)];
+  const to = `/contest/${slide.id}`;
+  const go = (n) => setI((n + count) % count);
 
   return (
     <section aria-label="Featured RazeKit campaigns" aria-roledescription="carousel" className="relative overflow-hidden rounded-xl border border-line">
@@ -98,12 +97,20 @@ export default function CampaignCarousel() {
               </h2>
               <p className="text-[13px] leading-snug text-white/75 max-w-lg">{slide.copy}</p>
               <div className="mt-1.5 flex flex-wrap items-center gap-3">
-                <span className="font-display text-lg font-extrabold text-white nums">{money(slide.prize, 'INR')}</span>
+                {/* A prize we have no figure for is omitted, never shown as 0. */}
+                {slide.prize ? (
+                  <span className="font-display text-lg font-extrabold text-white nums">
+                    {money(slide.prize, slide.currency)}
+                  </span>
+                ) : null}
+                {slide.deadline ? (
+                  <span className="text-[12px] text-white/70">Closes {dateShort(slide.deadline)}</span>
+                ) : null}
                 <Link
                   to={to}
                   className="inline-flex items-center rounded-md bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#0d1b3a] transition-transform hover:scale-[1.02] active:scale-[0.99]"
                 >
-                  {slide.cta}
+                  Open contest
                 </Link>
               </div>
             </div>
@@ -120,9 +127,14 @@ export default function CampaignCarousel() {
         </button>
 
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-          {SLIDES.map((s, n) => (
+          {slides.map((s, n) => (
+            // The dot is 6px; the BUTTON is 44px. A control you cannot reliably
+            // hit on a phone is not a control.
             <button key={s.id} onClick={() => setI(n)} aria-label={`Show campaign ${n + 1}`} aria-current={n === i}
-              className={`h-1.5 rounded-full transition-all ${n === i ? 'w-5 bg-white' : 'w-1.5 bg-white/45 hover:bg-white/70'}`} />
+              className="group grid h-11 w-6 place-items-center focus-visible:outline-none">
+              <span aria-hidden="true"
+                className={`h-1.5 rounded-full transition-all ${n === i ? 'w-5 bg-white' : 'w-1.5 bg-white/45 group-hover:bg-white/70'}`} />
+            </button>
           ))}
         </div>
       </div>

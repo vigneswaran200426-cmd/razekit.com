@@ -128,8 +128,13 @@ function Guide() {
           {/* Progress + jump-to-page */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {pages.map((x) => (
+              // The BAR stays 6px; the button around it is a real 44px target.
+              // A 6px-tall control is decoration that happens to be clickable.
               <button key={x.n} onClick={() => setPage(x.n)} aria-label={`Go to page ${x.n}`} aria-current={x.n === page}
-                className={`h-1.5 rounded-full transition-all ${x.n === page ? 'w-7 bg-primary' : 'w-4 bg-line hover:bg-line-strong'}`} />
+                className="group grid h-11 place-items-center px-0.5 focus-visible:outline-none">
+                <span aria-hidden="true"
+                  className={`h-1.5 rounded-full transition-all ${x.n === page ? 'w-7 bg-primary' : 'w-4 bg-line group-hover:bg-line-strong'}`} />
+              </button>
             ))}
             <span className="ml-auto text-[11px] text-muted nums">Page {page} of {pages.length}</span>
           </div>

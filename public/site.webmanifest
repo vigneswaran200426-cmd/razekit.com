@@ -1,0 +1,14 @@
+{
+  "name": "RazeKit — Creator Contests & Brand Campaigns",
+  "short_name": "RazeKit",
+  "description": "Brands fund a brief. Creators compete. The work is measured, and the winner is paid.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d1b3a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/og.png", "sizes": "1200x630", "type": "image/png", "purpose": "any" }
+  ]
+}

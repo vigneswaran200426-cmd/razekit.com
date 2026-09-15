@@ -9,6 +9,8 @@ import { entities } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
 import { RazekitMark, RazekitWordmark } from '@/components/Brand';
+import Footer from '@/components/Footer';
+import { NotificationBell } from '@/components/Notifications';
 
 const NAV = {
   // Spec IA: Dashboard / Explore / Discover / Winners / Tracker.
@@ -40,8 +42,10 @@ const NAV = {
 };
 
 const QUICK = {
-  creator: [{ to: '/work', label: 'My Work', icon: FolderKanban }, { to: '/wallet', label: 'Earnings', icon: Wallet }],
-  client: [{ to: '/work', label: 'My Contests', icon: FolderKanban }, { to: '/wallet', label: 'Wallet', icon: Wallet }],
+  // "Balance", never "Wallet": RazeKit is not a wallet provider and the product
+  // language must not imply one.
+  creator: [{ to: '/work', label: 'My Work', icon: FolderKanban }, { to: '/track-record', label: 'Track record', icon: Trophy }, { to: '/balance', label: 'Earnings', icon: Wallet }],
+  client: [{ to: '/work', label: 'My Contests', icon: FolderKanban }, { to: '/balance', label: 'Balance', icon: Wallet }],
 };
 
 function useClickOutside(ref, onOut) {
@@ -130,7 +134,9 @@ function MenuItem({ icon: Icon, children, danger, ...props }) {
 }
 
 function IconBtn({ to, onClick, label, children, badge }) {
-  const cls = 'relative grid place-items-center w-10 h-10 rounded-md text-muted hover:text-ink hover:bg-surface-2 transition-colors';
+  // 40px under a mouse, 44px under a finger. These four controls sit in the
+  // header of EVERY page, so an undersized one is undersized everywhere.
+  const cls = 'relative grid place-items-center w-10 h-10 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 rounded-md text-muted hover:text-ink hover:bg-surface-2 transition-colors';
   const inner = <>{children}{badge}</>;
   return to ? <Link to={to} aria-label={label} className={cls}>{inner}</Link> : <button onClick={onClick} aria-label={label} className={cls}>{inner}</button>;
 }
@@ -163,7 +169,7 @@ export default function AppShell() {
     <div className="min-h-screen bg-bg flex flex-col">
       <header className="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
         <div className="shell h-16 flex items-center gap-3">
-          <Link to="/" aria-label="RazeKit home" className="flex items-center gap-2.5 shrink-0">
+          <Link to="/" aria-label="RazeKit home" className="flex min-h-[44px] items-center gap-2.5 shrink-0">
             <RazekitMark size={34} /><span className="hidden sm:block"><RazekitWordmark size={22} /></span>
           </Link>
           <span className="hidden md:block h-7 w-px bg-line mx-3" aria-hidden="true" />
@@ -190,6 +196,7 @@ export default function AppShell() {
                 <Bell className="w-5 h-5" />
               </IconBtn>
             )}
+            <NotificationBell />
             <IconBtn to="/help" label="Help"><HelpCircle className="w-5 h-5 hidden sm:block" /></IconBtn>
 
             {isVisitor ? (
@@ -200,7 +207,7 @@ export default function AppShell() {
             ) : <AccountMenu />}
 
             <button onClick={() => setMobileOpen((v) => !v)} aria-label="Menu" aria-expanded={mobileOpen}
-              className="md:hidden grid place-items-center w-10 h-10 rounded-md text-ink hover:bg-surface-2">
+              className="md:hidden grid place-items-center w-10 h-10 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:h-11 rounded-md text-ink hover:bg-surface-2">
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
@@ -241,6 +248,9 @@ export default function AppShell() {
           </motion.div>
         </div>
       </main>
+
+      {/* Legal and real support channels reachable from anywhere. */}
+      <Footer />
     </div>
   );
 }

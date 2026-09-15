@@ -15,6 +15,9 @@ import { computeContestScores } from '../scoring/compute.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { loadLockedCriteria } from './compliance.js';
 import { ELIGIBILITY, ENGINE_VERSION as COMPLIANCE_ENGINE_VERSION } from '../compliance/engine.js';
+import { ensurePayoutForWinner } from './payouts.js';
+import { ensureVerificationForWinner } from './winnerVerification.js';
+import { publicationEvidence } from '../social/publication.js';
 
 const SCORED_STATES = ['submitted', 'shortlisted', 'won', 'not_selected'];
 
@@ -220,6 +223,67 @@ export async function winnerFinalize(ctx) {
     }),
   }).catch(() => null);
 
+  // Turn the contest's committed prize into a debt owed to this creator.
+  // Deliberately after the winner is recorded and deliberately best-effort:
+  // a bookkeeping problem must not undo a finalised, audited result. If it
+  // fails, the payout is created on first read of the payout overview and the
+  // contest still shows a correct winner.
+  const payoutRecord = await ensurePayoutForWinner(svc, {
+    contest: { ...contest, funding_id: contest.funding_id, id: contestId },
+    submission: winner,
+    creatorId: winner.created_by_id,
+  }).catch(() => null);
+
+  // RazeKit's hard rule: a creator never connects a social account to enter or
+  // submit. Verification is created HERE, the moment they win, and the prize
+  // cannot be paid until they prove they control the account they published
+  // from. This also moves the contest to WINNER_PENDING_VERIFICATION.
+  const verificationRecord = await ensureVerificationForWinner(svc, {
+    contest: { ...contest, id: contestId },
+    submission: winner,
+    creatorId: winner.created_by_id,
+    payoutId: payoutRecord?.id || null,
+  }).catch(() => null);
+
+  // ── Winners Hub record ──────────────────────────────────────────────────
+  // The publication evidence comes from the WINNING submission and nowhere
+  // else: never a runner-up's link, never the campaign cover. When that entry
+  // has no verified live URL every field stays null and embed_available is
+  // false — the Hub then shows the RazeKit-hosted winning video with no
+  // external link, which is the true state of what RazeKit can prove.
+  // Best-effort, like the payout: a Hub row must not undo an audited result.
+  const evidence = publicationEvidence(winner);
+  const publicationFields = {
+    original_post_url: evidence.original_post_url,
+    original_platform: evidence.platform,
+    original_published_at: evidence.original_published_at,
+    embed_available: evidence.embed_available,
+  };
+  const existingPublish = await svc.entities.WinnerPublish
+    .filter({ contest_id: contestId, submission_id: winner.id }, '-created_date', 1)
+    .catch(() => []);
+  if (existingPublish[0]) {
+    await svc.entities.WinnerPublish.update(existingPublish[0].id, publicationFields).catch(() => null);
+  } else {
+    await svc.entities.WinnerPublish.create({
+      contest_id: contestId,
+      submission_id: winner.id,
+      creator_id: winner.created_by_id,
+      client_id: contest.created_by_id,
+      placement: winner.rank || 1,
+      title: winner.title || contest.title || null,
+      category: contest.category || null,
+      // RazeKit-hosted media: what the Hub shows when there is no public embed,
+      // which is every platform except YouTube today.
+      media_uri: winner.final_asset_uri || winner.video_url || null,
+      media_type: winner.media_kind || null,
+      thumbnail_uri: winner.thumbnail || null,
+      prize_amount: contest.prize_amount ?? null,
+      currency: contest.currency || 'INR',
+      ...publicationFields,
+    }).catch(() => null);
+  }
+
   await svc.entities.Notification.create({
     type: 'contest_won',
     title: 'You won!',
@@ -236,5 +300,14 @@ export async function winnerFinalize(ctx) {
     selection_method: method,
     final_score: winner.final_score ?? null,
     finalized_at: now,
+    // Says plainly whether the prize can actually be paid, rather than
+    // implying a payout that no verified money stands behind.
+    payout: payoutRecord
+      ? { id: payoutRecord.id, status: payoutRecord.status, reason: payoutRecord.eligibility_reason || null }
+      : null,
+    // The winner must verify before any money moves.
+    verification: verificationRecord
+      ? { id: verificationRecord.id, status: verificationRecord.status, required: true }
+      : null,
   });
 }

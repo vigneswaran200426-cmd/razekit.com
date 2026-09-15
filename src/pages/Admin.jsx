@@ -10,6 +10,7 @@ import {
 import { fn } from '@/lib/api';
 import { money, dateShort } from '@/lib/format';
 import { PageHeader, Card, Segmented, Spinner, Badge, EmptyState } from '@/components/ui';
+import Finance from '@/pages/admin/Finance';
 
 const nf = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN') : '—');
 const SEV = { high: 'danger', medium: 'warning', low: 'neutral' };
@@ -287,12 +288,15 @@ export default function Admin() {
       <Segmented value={tab} onChange={setTab} tabs={[
         { key: 'overview', label: 'Overview' },
         { key: 'contests', label: 'Contests' },
+        { key: 'finance', label: 'Finance' },
         { key: 'traffic', label: 'Traffic' },
         { key: 'users', label: 'Users' },
         { key: 'audit', label: 'Audit' },
       ]} />
       {tab === 'overview' && <Overview />}
       {tab === 'contests' && <Contests />}
+      {/* The control point for the manual beta money flow. */}
+      {tab === 'finance' && <Finance />}
       {tab === 'traffic' && <Traffic />}
       {tab === 'users' && <UsersPanel />}
       {tab === 'audit' && <Audit />}

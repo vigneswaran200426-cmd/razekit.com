@@ -8,6 +8,7 @@ import {
   videoEngagementScore, brandTrafficScore, finalScore, rankSubmissions,
   SCORING_VERSION, SCORE_STATES,
 } from './index.js';
+import { weightedFinalScore, explainScore, comparatorFor, configFor, DEFAULT_CONFIG } from './weights.js';
 
 const ENGAGEMENT_KEYS = ['views', 'likes', 'comments', 'shares', 'saves', 'watch_time', 'follower_growth'];
 
@@ -33,7 +34,7 @@ function engagementInputs(post) {
  * Only VERIFIED traffic contributes — fraud filtering already happened at
  * ingest, and TrackingLink.verified_clicks/unique_visitors hold the result.
  */
-export function computeScores({ submissions, linksBySubmission, postsBySubmission }) {
+export function computeScores({ submissions, linksBySubmission, postsBySubmission, config = DEFAULT_CONFIG }) {
   const rawEngagement = new Map();
   const rawTraffic = new Map();
 
@@ -58,30 +59,48 @@ export function computeScores({ submissions, linksBySubmission, postsBySubmissio
     const engagement_score = eng ? videoEngagementScore(eng, popMax) : null;
     const traffic_score = trf === null ? null : brandTrafficScore(trf, trafficMax);
 
+    // A disqualified entry keeps its measured scores — the record of what it
+    // achieved is not erased — but it is removed from ranking entirely.
+    if (s.disqualified) {
+      return {
+        ...s,
+        engagement_score, traffic_score, final_score: null,
+        score_state: SCORE_STATES.DISQUALIFIED,
+        scoring_version: SCORING_VERSION,
+        metric_snapshot: JSON.stringify({ engagement: eng || null, verified_unique_visitors: trf, disqualified: true }),
+      };
+    }
+
     // Never invent a score from nothing (spec §28: no fake zeros).
     let score_state = SCORE_STATES.FINAL;
     let final_score = null;
     if (engagement_score === null && traffic_score === null) {
       score_state = SCORE_STATES.INSUFFICIENT_DATA;
     } else {
-      // A dimension with no data yet contributes 0 but the state says provisional,
-      // so the UI can be honest about what is still missing.
+      // A dimension with no data is EXCLUDED and the remaining weight is
+      // re-proportioned — not counted as zero. Scoring a creator 0 for traffic
+      // that nobody in the contest generated would punish them for the
+      // campaign's setup rather than for their work.
       if (engagement_score === null || traffic_score === null) score_state = SCORE_STATES.PROVISIONAL;
-      final_score = finalScore(engagement_score ?? 0, traffic_score ?? 0);
+      final_score = weightedFinalScore(engagement_score, traffic_score, config);
     }
 
     return {
       ...s,
       engagement_score, traffic_score, final_score, score_state,
       scoring_version: SCORING_VERSION,
+      scoring_config_version: config.version,
+      // Stored so the Brand Tracker can answer "why is this creator ranked
+      // first?" without the browser recomputing anything.
+      score_breakdown: JSON.stringify(explainScore(engagement_score, traffic_score, config)),
       metric_snapshot: JSON.stringify({ engagement: eng || null, verified_unique_visitors: trf, population: { engagement: popMax, trafficMax } }),
     };
   });
 
-  const ranked = rankSubmissions(scored.filter((s) => s.final_score !== null));
+  const ranked = [...scored.filter((s) => s.final_score !== null)].sort(comparatorFor(config));
   ranked.forEach((s, i) => { s.rank = i + 1; });
   const unscored = scored.filter((s) => s.final_score === null);
-  return { ranked, unscored, scoredCount: ranked.length };
+  return { ranked, unscored, scoredCount: ranked.length, config };
 }
 
 /** Load the inputs a contest needs, then compute. */
@@ -96,5 +115,8 @@ export async function computeContestScores(svc, contestId) {
   const linksBySubmission = new Map(links.filter((l) => l.submission_id).map((l) => [l.submission_id, l]));
   const postsBySubmission = new Map(posts.filter((p) => p.submission_id).map((p) => [p.submission_id, p]));
 
-  return computeScores({ submissions: subs, linksBySubmission, postsBySubmission });
+  // The campaign's own weights, falling back to the platform default so a
+  // contest created before configurable scoring existed is unaffected.
+  const config = await configFor(svc, contestId).catch(() => DEFAULT_CONFIG);
+  return computeScores({ submissions: subs, linksBySubmission, postsBySubmission, config });
 }

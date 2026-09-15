@@ -21,10 +21,21 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
     'platform_fee', 'duration_rule_version', 'min_duration_days', 'max_duration_days',
     // Criteria confirmation is what unlocks payment — only the server sets it.
     'criteria_version_id', 'criteria_confirmed_at',
+    // Funding state is decided by an admin verifying a real bank transfer.
+    // A brand must never be able to mark its own contest funded.
+    'funding_status', 'funding_id', 'funded_at', 'prize_committed_minor', 'payment_mode',
+    // The lifecycle is advanced by the server as real events happen.
+    'lifecycle_state', 'winner_verification_id', 'winner_verified_at',
+    'submission_closed_at', 'review_started_at', 'scoring_config_version',
   ],
   Submission: [
     'engagement_score', 'traffic_score', 'final_score', 'rank',
     'scoring_version', 'scored_at', 'score_state',
+    // Only an authorised review can disqualify an entry, and only with a reason.
+    'disqualified', 'disqualification_id', 'disqualified_at', 'disqualification_reason',
+    // The engine writes the breakdown; a browser must not be able to author
+    // an explanation for a score it did not compute.
+    'score_breakdown', 'scoring_config_version',
   ],
   WinnerPublish: ['published_at'],
   // A user files a ticket; only the server moves it through its lifecycle.
@@ -37,6 +48,56 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   SubmissionComplianceFinding: ['*'],
   ComplianceReview: ['*'],
   AgentRun: ['*'],
+  // ── Money ────────────────────────────────────────────────────────────────
+  // Every financial record is written by a server function under the service
+  // role and nowhere else. The ledger is append-only: even the server never
+  // updates or deletes an entry, it posts a reversal.
+  LedgerAccount: ['*'],
+  LedgerTransaction: ['*'],
+  LedgerEntry: ['*'],
+  ContestFunding: ['*'],
+  FundingProof: ['*'],
+  Payout: ['*'],
+  // A creator submits bank details through payoutAccountSave, which validates
+  // and masks them; the raw row is never client-writable.
+  PayoutAccount: ['*'],
+  ReconciliationRecord: ['*'],
+  // Payment instructions (destination account, UPI, QR) are admin-configured
+  // through an audited server function and never client-writable.
+  PaymentSettings: ['*'],
+  PaymentQrVersion: ['*'],
+  FundingReceipt: ['*'],
+  // Finance permissions are granted only through an audited admin function.
+  AdminPermission: ['*'],
+  // Balances are a projection of the ledger, not an input to it.
+  Wallet: ['*'],
+  WalletLedgerEntry: ['*'],
+  Payment: ['*'],
+  PaymentQuote: ['*'],
+  PaymentTransaction: ['*'],
+  // A creator files a withdrawal through a server function that reserves the
+  // amount on the ledger; the row itself is never client-writable.
+  WithdrawalRequest: ['*'],
+  Fund: ['*'],
+  FundsTransaction: ['*'],
+  MoneyRule: ['*'],
+
+  // Trust & Safety: a user may FILE a report (rls.create) but never set its
+  // status, severity, risk score or resolution — those are staff decisions.
+  TrustReport: ['status', 'severity', 'risk_score', 'signals', 'assigned_to',
+    'reviewed_by', 'reviewed_at', 'resolution', 'resolution_notes', 'closed_at', 'source'],
+  // Enforcement history is written only by an audited admin function.
+  EnforcementAction: ['*'],
+
+  // Winner verification is created only by winnerFinalize and advanced only by
+  // the verification handlers. A creator may never mark themselves verified.
+  WinnerVerification: ['*'],
+  // A creator connects an account through a server function that validates the
+  // handle and issues a challenge; the row is never client-writable.
+  SocialAccount: ['*'],
+  Disqualification: ['*'],
+  ScoringConfig: ['*'],
+
   // Server-computed aggregates — never client-writable.
   CreatorStats: ['*'],
   PublicCreatorStats: ['*'],
