@@ -12,9 +12,13 @@ export const POLICY_VERSION = "v1";
 
 // Single place to change the image model / provider. Never scatter model names.
 // Generation runs server-side only — credentials never reach the browser.
+// Recorded on every asset for provenance. "openai-image-auto" used to sit here
+// and is not a model anyone can ask OpenAI for — it made the stored provenance
+// a guess. The real model now comes back from the provider on each generation
+// and this is only the default for display before one has run.
 export const IMAGE_PROVIDER_CONFIG = {
   name: "openai",
-  model: "openai-image-auto",
+  model: "gpt-image-1",
 };
 
 export const RETRY_POLICY = {

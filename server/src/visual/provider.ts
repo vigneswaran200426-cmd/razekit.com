@@ -1,60 +1,76 @@
 // @ts-nocheck
-// Ported from base44/shared/visual/provider.ts (import extensions .ts→.js).
 // ImageGenerationProvider — the seam between the Visual Asset Engine and the
-// image backend. The default implementation calls the platform's server-side
-// image generation integration (credentials stay server-side, never exposed to
-// the browser). Swapping to a direct OpenAI/vendor API later = implement this
-// same interface with a secrets-based client; the rest of the system is unchanged.
-import { IMAGE_PROVIDER_CONFIG } from "./registry.js";
+// image backend, so the engine never knows which vendor produced a picture.
+//
+// It used to call srClient.integrations.Core.GenerateImage — a Base44 platform
+// call left behind when RazeKit moved off Base44 — and then treated the result
+// as a URL. It now calls the server-side image integration directly and passes
+// BYTES through, because bytes are the only thing that can honestly be stored.
+//
+// The credential never leaves the server, and nothing here ever reaches the
+// browser.
+import { generateImage, assertUsableImage, ImageGenerationError } from '../integrations/image.js';
 
-function guessMime(url) {
-  const ext = String(url || "").split("?")[0].split(".").pop().toLowerCase();
-  if (ext === "png") return "image/png";
-  if (ext === "webp") return "image/webp";
-  if (ext === "gif") return "image/gif";
-  return "image/jpeg";
-}
-
-function extractGenerationId(url) {
-  const parts = String(url || "").split("/").filter(Boolean);
-  return parts[parts.length - 1] || "";
-}
-
-export function createImageProvider(srClient) {
+export function createImageProvider() {
   return {
-    name: IMAGE_PROVIDER_CONFIG.name,
-    model: IMAGE_PROVIDER_CONFIG.model,
+    name: 'image',
 
-    // generateImage(prompt) → raw provider response ({ url })
+    /** generateImage(prompt) → GeneratedImage ({ bytes, mime, model, ... }) */
     async generateImage(prompt) {
-      return await srClient.integrations.Core.GenerateImage({ prompt });
+      return await generateImage({ prompt });
     },
 
-    // validateResponse(raw) → { url, generationId } or throws
+    /**
+     * validateResponse(raw) → the image, or throws.
+     *
+     * Re-validates the bytes rather than trusting the integration's word for
+     * it. This is the last point before an asset is written as "ready", and a
+     * row marked ready pointing at a broken image is worse than a failure — a
+     * failure gets retried, a bad success does not.
+     */
     validateResponse(raw) {
-      const url = raw && raw.url;
-      if (!url || typeof url !== "string") {
-        throw new Error("Image provider returned no URL");
+      if (!raw || !Buffer.isBuffer(raw.bytes)) {
+        throw new ImageGenerationError('IMAGE_VALIDATION_ERROR', 'The image provider returned no image data.', 502);
       }
-      return { url, generationId: extractGenerationId(url) };
-    },
-
-    // returnAsset(validated) → asset fields to persist
-    returnAsset(validated) {
+      const mime = assertUsableImage(raw.bytes);
       return {
-        storageUrl: validated.url,
-        generationId: validated.generationId,
-        provider: IMAGE_PROVIDER_CONFIG.name,
-        model: IMAGE_PROVIDER_CONFIG.model,
-        mimeType: guessMime(validated.url),
+        bytes: raw.bytes,
+        mime,
+        provider: raw.provider,
+        model: raw.model,
+        generationId: raw.generationId,
+        placeholder: Boolean(raw.placeholder),
+        width: raw.width ?? null,
+        height: raw.height ?? null,
       };
     },
 
-    // handleError(err) → { code, message }
-    handleError(err) {
+    /** returnAsset(validated) → the fields the engine persists. */
+    returnAsset(validated) {
       return {
-        code: (err && (err.code || err.name)) || "generation_failed",
+        provider: validated.provider,
+        model: validated.model,
+        generationId: validated.generationId,
+        mimeType: validated.mime,
+        width: validated.width,
+        height: validated.height,
+        // Carried through so a placeholder can never be mistaken for artwork
+        // once it is a database row.
+        placeholder: validated.placeholder,
+      };
+    },
+
+    /** handleError(err) → { code, message, retryable } */
+    handleError(err) {
+      if (err instanceof ImageGenerationError) {
+        return { code: err.code, message: err.message.slice(0, 400), retryable: err.retryable };
+      }
+      return {
+        code: (err && (err.code || err.name)) || 'generation_failed',
         message: String((err && err.message) || err).slice(0, 400),
+        // An unrecognised error is not assumed transient: retrying a permanent
+        // failure three times just spends money to fail three times.
+        retryable: false,
       };
     },
   };

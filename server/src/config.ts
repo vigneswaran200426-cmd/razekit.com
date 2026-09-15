@@ -85,6 +85,9 @@ export const config = {
     driver: (process.env.IMAGE_DRIVER || 'stub') as 'stub' | 'openai',
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     model: process.env.IMAGE_MODEL || 'gpt-image-1',
+    // 1024x1024 | 1024x1536 | 1536x1024 | auto. Anything else is a 400 from the
+    // Images API, so an unknown value falls back rather than failing every call.
+    size: process.env.IMAGE_SIZE || '1536x1024',
   },
 
   enableScheduler: (process.env.ENABLE_SCHEDULER || 'true') === 'true',

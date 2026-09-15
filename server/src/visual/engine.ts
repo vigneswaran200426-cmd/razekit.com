@@ -162,14 +162,15 @@ export async function processJob(sr, job) {
     const brief = buildVisualBrief(job.entity_type, entity, job.asset_type);
     const prompt = buildImagePrompt(brief);
 
-    const provider = createImageProvider(sr);
+    const provider = createImageProvider();
     const raw = await provider.generateImage(prompt);
     const validated = provider.validateResponse(raw);
     const assetFields = provider.returnAsset(validated);
     const version = parseVersion(job.generation_key);
 
     const storage = createStorageProvider();
-    const stored = await storage.store(validated.url, {
+    // Bytes, not a URL. storage.store() rejects anything else on purpose.
+    const stored = await storage.store(validated, {
       entityType: job.entity_type,
       entityId: job.entity_id,
       assetType: job.asset_type,
@@ -195,10 +196,15 @@ export async function processJob(sr, job) {
       storage_url: stored.storage_url,
       storage_key: stored.storage_key,
       mime_type: assetFields.mimeType,
+      width: assetFields.width,
+      height: assetFields.height,
+      file_size: stored.bytes,
       attempt_count: attempt,
       origin: job.origin || "auto",
       created_by: job.requested_by || "system",
-      metadata: JSON.stringify({ brief, prompt, attempt }),
+      // `placeholder` is recorded so a development stub can never be read back
+      // as real generated artwork.
+      metadata: JSON.stringify({ brief, prompt, attempt, placeholder: assetFields.placeholder === true }),
       error_code: "",
       error_message: "",
     };
@@ -214,7 +220,7 @@ export async function processJob(sr, job) {
     });
     return { ok: true, asset, durationMs: Date.now() - startedAt };
   } catch (err) {
-    const provider = createImageProvider(sr);
+    const provider = createImageProvider();
     const handled = provider.handleError(err);
     const exhausted = attempt >= maxAttempts;
     const backoff = RETRY_POLICY.backoffMs[Math.min(attempt, RETRY_POLICY.backoffMs.length) - 1];
