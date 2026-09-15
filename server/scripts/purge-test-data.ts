@@ -94,6 +94,52 @@ for (const p of polls) {
   }
 }
 
+// ── Orphaned verification contests ──────────────────────────────────────────
+// A narrower case than the one below, and the only one safe to delete
+// automatically. On 2026-09-11 a verify-reports run crashed before cleanup and
+// left two contests advertising a 20,000 prize on the PUBLIC landing page,
+// under "Live now", with status open. Their owner accounts were removed by a
+// later purge, so nobody could ever fund or judge them — a creator entering one
+// would have been competing for money that does not exist.
+//
+// Three conditions must ALL hold, because any one of them alone could describe
+// a real contest:
+//   1. a verification-run demo tag (rep-*, imgv-*, camp-*) — no real contest
+//      carries one; the scripts write it
+//   2. no surviving owner account
+//   3. no funding record — nobody ever put money behind it
+// A real contest fails condition 1 immediately. An orphaned REAL contest (owner
+// deleted their account) fails it too, and is left for a human.
+const VERIFY_TAG = /^(rep|imgv|camp|e2e)-/;
+
+const allContests = await svc.entities.Contest.filter({}, '-created_date', 5000).catch(() => []);
+const orphanedTestContests: any[] = [];
+for (const c of allContests) {
+  if (!VERIFY_TAG.test(String(c.demo || ''))) continue;
+  const ownerAlive = c.created_by_id
+    ? Boolean(await prisma.appUser.findUnique({ where: { id: c.created_by_id }, select: { id: true } }).catch(() => null))
+    : false;
+  if (ownerAlive) continue;
+  const funding = await svc.entities.ContestFunding.filter({ contest_id: c.id }, '-created_date', 5).catch(() => []);
+  if (funding.length) continue;
+  orphanedTestContests.push(c);
+}
+
+console.log(`
+orphaned verification contests on public surfaces: ${orphanedTestContests.length}`);
+for (const c of orphanedTestContests) {
+  console.log(`  ${String(c.status).padEnd(8)} ${c.demo} | prize ${c.prize_amount} | ${String(c.title).slice(0, 44)}`);
+}
+if (APPLY) {
+  for (const c of orphanedTestContests) {
+    // Submissions first: a submission whose contest is gone is unreadable noise.
+    const subs = await svc.entities.Submission.filter({ contest_id: c.id }, '-created_date', 500).catch(() => []);
+    for (const sub of subs) await svc.entities.Submission.delete(sub.id).catch(() => {});
+    await svc.entities.Contest.delete(c.id).catch(() => {});
+    console.log(`  removed ${c.demo} and ${subs.length} submission(s)`);
+  }
+}
+
 // ── Anything else owned by a verification account, on a PUBLIC surface ──────
 // Contests and submissions are listed but NOT deleted: a test contest is still
 // a contest, and guessing wrong here destroys real work. They are reported so a
@@ -114,7 +160,7 @@ if (APPLY && testUsers.length) {
 }
 
 console.log(`\n══ ${testVotes.length} test vote(s), ${drift} poll(s) with drift, ${testUsers.length} account(s) ══`);
-if (!APPLY && (testVotes.length || drift || testUsers.length)) {
+if (!APPLY && (testVotes.length || drift || testUsers.length || orphanedTestContests.length)) {
   console.log('   re-run with --apply to remove them');
 }
 await prisma.$disconnect();
