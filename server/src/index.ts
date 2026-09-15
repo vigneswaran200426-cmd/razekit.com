@@ -13,10 +13,13 @@ import { miscRouter } from './misc/routes.js';
 import { trafficRouter } from './traffic/routes.js';
 import { paymentsRouter } from './payments/routes.js';
 import { ensureFinanceConstraints } from './db.js';
+import { captureError, errorMiddleware } from './errors/capture.js';
+import { securityHeaders } from './security/headers.js';
 import { startScheduler } from './scheduler.js';
 
 const app = express();
 
+app.use(securityHeaders());
 app.use(
   cors({
     origin(origin, cb) {
@@ -48,21 +51,18 @@ app.use('/api', miscRouter);
 app.get('/', (_req, res) => res.json({ service: 'razekit-api', ok: true }));
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 
-// Keep implementation details in server logs; public clients get a stable 5xx message.
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  const status = err?.status && Number.isInteger(err.status) ? err.status : 500;
-  if (status >= 500) console.error('[error]', err);
+// Redact, persist, and hand the client an id it can quote at support — never a
+// stack, a SQL fragment or a server path. See src/errors/capture.ts.
+app.use(errorMiddleware({ service: 'api' }));
 
-  const safeMessage =
-    status < 500 && typeof err?.message === 'string'
-      ? err.message
-      : 'Something went wrong. Please try again.';
-
-  res.status(status).json({ error: safeMessage });
+// Background failures (scheduler, fire-and-forget hooks) never pass through the
+// middleware, and they are the ones nobody sees. captureError never throws.
+process.on('unhandledRejection', (e) => {
+  void captureError(null, { error: e, service: 'process', severity: 'fatal', context: { kind: 'unhandledRejection' } });
 });
-
-process.on('unhandledRejection', (e) => console.error('[unhandledRejection]', e));
-process.on('uncaughtException', (e) => console.error('[uncaughtException]', e));
+process.on('uncaughtException', (e) => {
+  void captureError(null, { error: e, service: 'process', severity: 'fatal', context: { kind: 'uncaughtException' } });
+});
 
 app.listen(config.port, () => {
   console.log(`\n🚀 RazeKit API on http://localhost:${config.port}  (env: ${config.env})`);

@@ -105,6 +105,17 @@ export const HANDLERS = {
   adminVisualAssets, adminSystemHealth,
   // Public, honest adoption counts for the homepage.
   platformStats,
+
+  // These were imported and allow-listed but never actually registered, so the
+  // route resolved them to nothing: the notification centre, the campaign
+  // report, the creator track record, the fraud signals and the scoring/
+  // disqualification controls were all dead over HTTP while their unit tests
+  // passed — the tests import the functions directly and never went through
+  // this table. scripts/audit-api-surface.ts now fails the build on the gap.
+  notificationFeed, notificationRead,
+  campaignReport, creatorTrackRecord, fraudSignals,
+  scoringConfigGet, scoringConfigSave,
+  submissionDisqualify, submissionReinstate, disqualificationList,
 };
 
 // Functions callable over HTTP via the /api/functions/:name route.

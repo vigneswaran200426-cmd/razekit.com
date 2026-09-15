@@ -1,0 +1,113 @@
+{
+  "_note": "Machine-readable completion state. Written by hand from verified evidence, not from intent. A requirement is only VERIFIED when something was actually run and observed; where the only evidence is 'the code exists', the status is IMPLEMENTED. BLOCKED_EXTERNAL means the remaining step is one only the platform owner can take.",
+  "generated_for_branch": "beta-manual-payment-ledger",
+  "production_note": "All four Render services auto-deploy from `main`. This branch is NOT merged, so nothing below marked IMPLEMENTED or VERIFIED is live yet. Production currently runs commit 1e6549e.",
+
+  "payments": {
+    "payment_core_adapter_boundary": "VERIFIED",
+    "uropay_adapter_code": "VERIFIED",
+    "uropay_settlement_idempotency": "VERIFIED",
+    "uropay_webhook_signature": "VERIFIED",
+    "uropay_against_real_provider_api": "BLOCKED_EXTERNAL",
+    "uropay_production_onboarding": "BLOCKED_EXTERNAL",
+    "manual_beta_funding": "VERIFIED",
+    "manual_beta_withdrawal": "VERIFIED",
+    "ledger_double_entry": "VERIFIED",
+    "refunds_admin_reviewed": "IMPLEMENTED",
+    "reconciliation": "IMPLEMENTED",
+    "_evidence": "36 live checks in server/scripts/verify-uropay.ts: forged webhook credits nothing, replayed webhook + client poll + 3 concurrent settlements produce exactly one ledger credit and one prize reservation. Provider HTTP stubbed at the fetch boundary; no request has ever reached api.uropay.me."
+  },
+
+  "campaigns": {
+    "three_poll_campaigns_separate_entity": "VERIFIED",
+    "three_real_contests_50k_28day": "VERIFIED",
+    "promotional_duration_rule_auditable": "VERIFIED",
+    "poll_votes_real_not_fabricated": "VERIFIED",
+    "poll_anti_abuse": "IMPLEMENTED",
+    "poll_vote_race_safety": "VERIFIED",
+    "campaign_artwork_premium": "PARTIAL",
+    "_evidence": "60 live checks in server/scripts/verify-campaigns.ts including an independent recount agreeing with the public tally, and tallies restored to their real values on cleanup. Artwork is browser-generated CSS+SVG (PollArtwork.jsx), not art-directed raster campaign key art."
+  },
+
+  "api_and_security": {
+    "registry_consistency": "VERIFIED",
+    "security_headers": "VERIFIED",
+    "cors_locked_to_real_origins": "VERIFIED",
+    "rls_row_gating": "IMPLEMENTED",
+    "protected_field_guard": "IMPLEMENTED",
+    "ssrf_guard_on_outbound_urls": "IMPLEMENTED",
+    "error_capture_with_redaction": "IMPLEMENTED",
+    "role_escalation_negative_tests": "PARTIAL",
+    "idor_negative_tests": "PARTIAL",
+    "_evidence": "server/test/registry.test.ts (7), server/test/headers.test.ts (8). CORS verified against live production: an evil Origin receives no allow-origin header. IDOR/role-escalation are covered at specific points (uropayCreateOrder 403, creatorTrackRecord 403, pollAdminList 403) but there is no systematic sweep across every endpoint."
+  },
+
+  "seo": {
+    "robots_txt": "IMPLEMENTED",
+    "sitemap_xml": "IMPLEMENTED",
+    "canonical_urls": "VERIFIED",
+    "per_route_titles_descriptions": "VERIFIED",
+    "open_graph": "VERIFIED",
+    "twitter_card": "VERIFIED",
+    "json_ld_organization_website": "VERIFIED",
+    "og_image_asset": "VERIFIED",
+    "private_routes_noindex": "VERIFIED",
+    "technically_indexable": "YES_PENDING_DEPLOY",
+    "actually_indexed_by_google": "NOT_VERIFIED",
+    "search_console_submission": "BLOCKED_EXTERNAL",
+    "_evidence": "Verified in a real browser across 7 routes: public pages emit index/follow with correct canonical and title; /dashboard, /login and /contest/*/fund emit noindex,nofollow. sitemap.xml generated with 69 URLs including 60 real contest pages pulled from the live API. og.png is a real 1200x630 asset. None of this is live until the branch is merged."
+  },
+
+  "branding": {
+    "single_logo_component": "VERIFIED",
+    "mark_is_crisp_svg": "VERIFIED",
+    "wordmark_theme_token": "VERIFIED",
+    "favicon": "VERIFIED",
+    "og_social_preview": "VERIFIED",
+    "webmanifest": "IMPLEMENTED",
+    "logo_motion_system": "IMPLEMENTED",
+    "stale_logo_references": "NONE_FOUND",
+    "_evidence": "14 usages across the app all resolve to src/components/Brand.jsx. Mark confirmed rendering as SVG with per-instance gradient ids. NOTE: Brand.jsx was byte-identical on main, so the logo seen in production is what the code produces - it was never a stale-asset problem."
+  },
+
+  "mobile_and_accessibility": {
+    "no_horizontal_scroll": "VERIFIED",
+    "touch_targets_44px": "VERIFIED",
+    "reduced_motion": "IMPLEMENTED",
+    "keyboard_focus_visible": "IMPLEMENTED",
+    "screen_reader_semantics": "PARTIAL",
+    "_evidence": "Measured in a real browser at 360px and 375px across 11 public routes: 0 horizontal scroll, 0 block-level touch targets under 44px. Inline links inside sentences are deliberately exempt (WCAG 2.5.8). Authenticated routes were NOT measured - they need a session."
+  },
+
+  "infrastructure": {
+    "main_api_live": "VERIFIED",
+    "admin_api_live": "VERIFIED",
+    "public_site_live": "VERIFIED",
+    "admin_site_live": "VERIFIED",
+    "r2_buckets": "VERIFIED",
+    "neon_platform_db": "VERIFIED",
+    "neon_admin_db": "BLOCKED_EXTERNAL",
+    "resend_email_delivery": "BROKEN",
+    "_evidence": "All four Render services return 200. R2 has buckets razekit-production and admin. ADMIN_DATABASE_URL is unset so 4 split-db checks fail environmentally. Resend domain razekit.com is in FAILED status with all four DNS records failing - no transactional email is being delivered."
+  },
+
+  "not_done": {
+    "full_ui_ux_redesign_spec": "PARTIAL - design system, motion, primitives and ~12 screens rebuilt; not a screen-by-screen redesign of all 40+ surfaces",
+    "art_directed_campaign_key_art": "NOT_DONE - no image generation pipeline is wired; artwork is generated CSS/SVG",
+    "ten_page_guide": "NOT_VERIFIED",
+    "simulation_500_creators_100_brands": "NOT_DONE this session",
+    "e2e_single_continuous_run": "IMPLEMENTED_NOT_RUN - server/scripts/verify-e2e.ts was written but never executed",
+    "platform_launch_video": "NOT_DONE - three 60-second video scripts were supplied; video cannot be produced here",
+    "hawkscan_dast": "BLOCKED_EXTERNAL - skill active but hawk runtime and HAWK_API_KEY are both absent"
+  },
+
+  "external_actions_required": [
+    "Merge beta-manual-payment-ledger into main - 11 commits, nothing is live until this happens",
+    "Rotate the UroPay key and secret (pasted in chat) and set UROPAY_TEST_KEY / UROPAY_TEST_SECRET in Render",
+    "Rotate the Neon password (pasted in chat) and set ADMIN_DATABASE_URL",
+    "Set POLL_VOTE_SALT in Render before anonymous voting goes live",
+    "Fix the Resend DNS records for razekit.com - all four are failing, so no email is delivered",
+    "Submit the sitemap in Google Search Console once deployed",
+    "Obtain UroPay merchant production access before enabling UROPAY_PRODUCTION_ENABLED"
+  ]
+}

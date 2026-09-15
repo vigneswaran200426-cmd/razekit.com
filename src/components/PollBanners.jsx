@@ -10,6 +10,11 @@
 // than funded money. There is no Join, no countdown, no prize-claim language.
 // If the API fails the section goes quiet instead of rendering a plausible
 // banner, because a fabricated banner here would be a lie about demand.
+//
+// Cover art is the one thing here that is invented, and it is allowed to be:
+// PollArtwork draws abstract geometry in the browser when a poll has no image.
+// A gradient is presentation; a count, a prize or a logo would be a claim, so
+// the artwork carries none of those — see PollArtwork.jsx.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useReducedMotion } from 'framer-motion';
@@ -18,6 +23,7 @@ import { fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { moneyMinor } from '@/lib/format';
 import { Skeleton } from '@/components/ui';
+import PollArtwork from '@/components/PollArtwork';
 import { cn } from '@/lib/cn';
 
 /* ── Numbers ───────────────────────────────────────────────────────────────
@@ -79,6 +85,10 @@ function PollBanner({ poll, onVoted }) {
   const [busy, setBusy] = useState(null);
   const [err, setErr] = useState(null);
   const [needsLogin, setNeedsLogin] = useState(false);
+  // A banner_url that 404s used to leave the browser's broken-image glyph in a
+  // card that is otherwise finished work. One flag lets a dead URL fall back to
+  // the generated art instead; a working URL is never second-guessed.
+  const [imgBroken, setImgBroken] = useState(false);
 
   const uid = `poll-${poll.slug}`;
   const total = num(poll.total_votes);
@@ -140,18 +150,23 @@ function PollBanner({ poll, onVoted }) {
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-xs transition-shadow duration-base ease-brand hover:shadow-md">
-      {/* Media */}
+      {/* Media. A real banner_url wins — an image pipeline may fill these in
+          later and a photograph should never be overruled by a gradient. With
+          no image, PollArtwork draws one in the browser: original abstract
+          geometry only, aria-hidden, carrying no number and no claim, so the
+          accessible content of this card is still the text below it. */}
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface-2">
-        {poll.banner_url ? (
+        {poll.banner_url && !imgBroken ? (
           <img
             src={poll.banner_url}
             alt={poll.banner_alt || ''}
             loading="lazy"
             decoding="async"
+            onError={() => setImgBroken(true)}
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="hatch h-full w-full" aria-hidden="true" />
+          <PollArtwork poll={poll} />
         )}
         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/45 to-transparent" aria-hidden="true" />
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">

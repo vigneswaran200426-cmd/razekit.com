@@ -44,7 +44,7 @@ export default function Landing() {
             {['Contests', 'Creators', 'How it works'].map((l) => <a key={l} href="#how" className="px-3 py-2 rounded-md text-muted hover:text-ink hover:bg-surface-2 transition-colors font-medium">{l}</a>)}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <Link to="/login" className="px-3.5 py-2 text-sm font-medium text-ink rounded-md hover:bg-surface-2">Log in</Link>
+            <Link to="/login" className="inline-flex min-h-[44px] items-center px-3.5 text-sm font-medium text-ink rounded-md hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Log in</Link>
             <Button to="/register" size="md">Get started</Button>
           </div>
         </div>
@@ -85,7 +85,8 @@ export default function Landing() {
             <div className="rounded-xl border border-line bg-surface shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <p className="font-display font-bold text-ink flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-success animate-pulse" /> Live now</p>
-                <Link to="/explore" className="text-sm text-primary font-semibold hover:underline">See all</Link>
+                {/* 20px tall before: a real link a finger could not reliably hit. */}
+                <Link to="/explore" className="inline-flex min-h-[44px] items-center px-1 text-sm text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">See all</Link>
               </div>
               {live.length ? (
                 <div className="grid sm:grid-cols-2 gap-3">{live.slice(0, 4).map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}</div>

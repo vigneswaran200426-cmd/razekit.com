@@ -1,0 +1,43 @@
+# RazeKit — https://razekit.com
+#
+# Public marketing and discovery pages are open to crawlers. Everything behind a
+# session is disallowed: those pages return the same HTML shell to a crawler as
+# to a signed-out visitor, so indexing them would put empty, duplicated pages in
+# search results under titles that promise real content.
+#
+# Disallow here is a crawling instruction, not an access control. Nothing
+# private is protected BY this file — authorisation is enforced server-side.
+
+User-agent: *
+
+# Signed-in product surfaces: no public content to index.
+Disallow: /dashboard
+Disallow: /tracker
+Disallow: /work
+Disallow: /balance
+Disallow: /wallet
+Disallow: /profile
+Disallow: /settings
+Disallow: /notifications
+Disallow: /onboarding
+Disallow: /create-contest
+Disallow: /track-record
+Disallow: /admin
+
+# Per-contest operational routes. The contest page itself IS public; these are
+# the brand/creator working views hanging off it.
+Disallow: /contest/*/submit
+Disallow: /contest/*/review
+Disallow: /contest/*/fund
+Disallow: /contest/*/verify
+Disallow: /contest/*/report
+Disallow: /contest/*/handover
+
+# Auth screens carry no content worth ranking and split signal from the pages
+# that do.
+Disallow: /login
+Disallow: /register
+
+Allow: /
+
+Sitemap: https://razekit.com/sitemap.xml

@@ -54,7 +54,7 @@ export default function Login() {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <Label htmlFor="password" className="mb-0">Password</Label>
-            <button type="button" onClick={forgot} className="text-xs text-primary hover:underline">Forgot password?</button>
+            <button type="button" onClick={forgot} className="inline-flex min-h-[44px] items-center text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">Forgot password?</button>
           </div>
           <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" placeholder="••••••••" /></div>

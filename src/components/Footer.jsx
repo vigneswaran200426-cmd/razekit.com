@@ -32,7 +32,7 @@ export default function Footer() {
       <div className="shell py-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <RazekitWordmark className="h-5" />
+            <RazekitWordmark size={19} />
             <p className="mt-2 max-w-xs text-[12px] leading-relaxed text-muted">
               A contest platform where brands run funded campaigns and creators compete on measured
               performance.
@@ -44,8 +44,10 @@ export default function Footer() {
               <Link
                 key={l.to}
                 to={l.to}
-                // 44px min touch target on mobile without bloating the desktop row.
-                className="inline-flex min-h-[32px] items-center text-[13px] text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                // 32px under a mouse, a real 44px under a finger. This comment
+                // previously claimed 44px while the class said 32px — the claim
+                // was the thing that was wrong, so the class now matches it.
+                className="inline-flex min-h-[32px] [@media(pointer:coarse)]:min-h-[44px] items-center text-[13px] text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
                 {l.label}
               </Link>
@@ -55,15 +57,15 @@ export default function Footer() {
           <div className="flex flex-col gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">Support</p>
             <a href={SUPPORT.whatsappHref} target="_blank" rel="noreferrer"
-              className="inline-flex min-h-[32px] items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink">
+              className="inline-flex min-h-[32px] [@media(pointer:coarse)]:min-h-[44px] items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink">
               <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> WhatsApp support
             </a>
             <a href={SUPPORT.emailHref}
-              className="inline-flex min-h-[32px] items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink">
+              className="inline-flex min-h-[32px] [@media(pointer:coarse)]:min-h-[44px] items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink">
               <Mail className="h-3.5 w-3.5" aria-hidden="true" /> {SUPPORT.email}
             </a>
             <a href={SUPPORT.phoneHref}
-              className="inline-flex min-h-[32px] items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink">
+              className="inline-flex min-h-[32px] [@media(pointer:coarse)]:min-h-[44px] items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink">
               <Phone className="h-3.5 w-3.5" aria-hidden="true" /> {SUPPORT.phone}
             </a>
           </div>

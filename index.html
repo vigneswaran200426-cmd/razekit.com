@@ -2,15 +2,74 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="RazeKit — a prize-funded contest marketplace where brands brief real creative work, creators compete on it, and winners get paid in public." />
-    <meta property="og:title" content="RazeKit" />
-    <meta property="og:description" content="Create. Compete. Win. The creator contest marketplace." />
+
+    <!-- Defaults for the document. Per-route overrides happen in src/components/Seo.jsx;
+         these are what a crawler sees before React runs, and what it keeps for
+         any route that does not set its own. -->
+    <title>RazeKit — Creator Contests &amp; Brand Campaigns</title>
+    <meta name="description" content="RazeKit is a contest marketplace where brands fund creative briefs, creators compete on them, and the winner is chosen on measured performance — then paid in public." />
+    <link rel="canonical" href="https://razekit.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="theme-color" content="#0d1b3a" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/og.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RazeKit" />
+    <meta property="og:url" content="https://razekit.com/" />
+    <meta property="og:title" content="RazeKit — Creator Contests &amp; Brand Campaigns" />
+    <meta property="og:description" content="Brands fund a brief. Creators compete. The work is measured, and the winner is paid." />
+    <!-- PNG, not SVG: every major scraper refuses SVG for og:image and shows no
+         preview at all rather than falling back. -->
+    <meta property="og:image" content="https://razekit.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RazeKit — creator contests, judged on performance." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RazeKit — Creator Contests &amp; Brand Campaigns" />
+    <meta name="twitter:description" content="Brands fund a brief. Creators compete. The work is measured, and the winner is paid." />
+    <meta name="twitter:image" content="https://razekit.com/og.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&display=swap" rel="stylesheet" />
-    <title>RazeKit</title>
+
+    <!-- Organization and WebSite only. No SearchAction: that tells Google a
+         sitewide search endpoint exists, and RazeKit has no public search URL
+         to hand it — claiming one produces a broken result in the SERP. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://razekit.com/#organization",
+          "name": "RazeKit",
+          "url": "https://razekit.com/",
+          "logo": "https://razekit.com/og.png",
+          "description": "A contest marketplace where brands fund creative briefs and creators compete on measured performance.",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "razekitchat@razekit.com",
+            "telephone": "+91-8608911369",
+            "availableLanguage": ["en"]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://razekit.com/#website",
+          "url": "https://razekit.com/",
+          "name": "RazeKit",
+          "publisher": { "@id": "https://razekit.com/#organization" }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

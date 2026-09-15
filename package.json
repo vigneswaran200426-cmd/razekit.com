@@ -6,10 +6,11 @@
   "description": "RazeKit \u2014 creator contest marketplace. Fresh frontend (Vite + React) on the self-hosted RazeKit API.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-sitemap.mjs && vite build",
     "preview": "vite preview",
     "lint": "eslint . --quiet",
-    "lint:fix": "eslint . --fix --quiet"
+    "lint:fix": "eslint . --fix --quiet",
+    "sitemap": "node scripts/build-sitemap.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

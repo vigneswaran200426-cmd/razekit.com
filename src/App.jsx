@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { RouteSeo } from '@/components/Seo';
 import { AuthProvider } from '@/lib/auth';
 import { HomeGate, ProtectedRoute } from '@/components/routing';
 import AppShell from '@/components/AppShell';
@@ -39,7 +40,10 @@ export default function App() {
     <AuthProvider>
       <NotificationProvider>
         <BrowserRouter>
-        <Routes>
+        {/* Per-route title, description, canonical and robots. */}
+          <RouteSeo />
+          <Routes>
+
           {/* Standalone */}
           <Route path="/" element={<HomeGate landing={Landing} />} />
           <Route path="/login" element={<Login />} />

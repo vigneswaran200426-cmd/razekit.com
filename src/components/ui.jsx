@@ -13,7 +13,15 @@ const BTN = {
     danger: 'bg-danger text-white hover:brightness-95',
     outlineDanger: 'border border-danger/40 text-danger hover:bg-danger/5',
   },
-  size: { sm: 'h-9 px-3 text-[13px]', md: 'h-10 px-4 text-sm', lg: 'h-12 px-6 text-[15px]' },
+  // Touch targets grow on a COARSE pointer only. A finger needs 44px (Apple HIG
+  // and Material both say so); a mouse does not, and forcing 44px everywhere
+  // would inflate every dense desktop toolbar to fix a problem desktop does not
+  // have. sm and md are 36px and 40px on a mouse, 44px under a finger.
+  size: {
+    sm: 'h-9 px-3 text-[13px] [@media(pointer:coarse)]:h-11',
+    md: 'h-10 px-4 text-sm [@media(pointer:coarse)]:h-11',
+    lg: 'h-12 px-6 text-[15px]',
+  },
 };
 
 export const Button = forwardRef(function Button(
@@ -34,7 +42,7 @@ export function Card({ className, hover, as: Comp = 'div', ...props }) {
 
 /* ── Input / Label ──────────────────────────────────────────────────────── */
 export const Input = forwardRef(function Input({ className, ...props }, ref) {
-  return <input ref={ref} className={cn('h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20', className)} {...props} />;
+  return <input ref={ref} className={cn('h-10 [@media(pointer:coarse)]:h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20', className)} {...props} />;
 });
 export function Label({ className, ...props }) {
   return <label className={cn('block text-[13px] font-medium text-ink mb-1.5', className)} {...props} />;
@@ -87,7 +95,10 @@ export function Segmented({ tabs, value, onChange, size = 'md' }) {
         const active = value === key;
         return (
           <button key={key} onClick={() => onChange(key)}
-            className={cn('rounded-[7px] font-semibold transition-all ease-brand', size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-[13px]',
+            // Tabs were 32px tall. Under a finger they are 44px; a mouse keeps
+            // the tighter density this control was designed for.
+            className={cn('rounded-[7px] font-semibold transition-all ease-brand [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:px-4',
+              size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-[13px]',
               active ? 'bg-surface text-ink shadow-xs' : 'text-muted hover:text-ink')}>
             {label}
           </button>
