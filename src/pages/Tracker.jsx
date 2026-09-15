@@ -753,7 +753,7 @@ function CreatorTracker() {
             <Card className="p-5">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Your best performance</h2>
-                <Link to={`/contest/${best.contest_id}`} className="text-[12px] font-medium text-primary hover:underline">{best.contest_title}</Link>
+                <Link to={`/contest/${best.contest_id}`} className="text-[12px] font-medium text-primary-ink hover:underline">{best.contest_title}</Link>
               </div>
               <ScoreBreakdown engagement={best.engagement_score} traffic={best.traffic_score} final={best.final_score} state={best.score_state} />
             </Card>

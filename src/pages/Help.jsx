@@ -244,7 +244,7 @@ function Tickets() {
 
   if (!user) {
     return <EmptyState icon={LifeBuoy} title="Sign in to raise a ticket" description="Tickets are tied to your account so we can look up the right details."
-      action={<Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link>} />;
+      action={<Link to="/login" className="text-primary-ink font-medium hover:underline">Sign in</Link>} />;
   }
 
   return (

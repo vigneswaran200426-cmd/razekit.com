@@ -257,7 +257,7 @@ function PollBanner({ poll, onVoted }) {
           {needsLogin && (
             <p className="text-[12px] leading-snug text-muted">
               One vote per account keeps this count honest.{' '}
-              <Link to="/login" className="font-semibold text-primary hover:underline">Log in to vote</Link>.
+              <Link to="/login" className="font-semibold text-primary-ink hover:underline">Log in to vote</Link>.
             </p>
           )}
           {err && <p className="text-[12px] leading-snug text-danger">{err}</p>}

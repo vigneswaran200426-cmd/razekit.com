@@ -47,7 +47,7 @@ export default function Register() {
   if (step === 'otp') {
     return (
       <AuthShell title="Verify your email" subtitle={`We sent a 6-digit code to ${email}.`}
-        footer={<button onClick={() => auth.resendOtp(email.trim())} className="text-primary font-semibold hover:underline">Resend code</button>}>
+        footer={<button onClick={() => auth.resendOtp(email.trim())} className="text-primary-ink font-semibold hover:underline">Resend code</button>}>
         {err && <div className="mb-4 rounded-md bg-danger/8 text-danger text-sm px-3 py-2">{err}</div>}
         <form onSubmit={verify} className="space-y-4">
           <div>
@@ -64,7 +64,7 @@ export default function Register() {
 
   return (
     <AuthShell title="Join RazeKit" subtitle="Create your account to compete or launch contests"
-      footer={<>Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Log in</Link></>}>
+      footer={<>Already have an account? <Link to="/login" className="text-primary-ink font-semibold hover:underline">Log in</Link></>}>
       <GoogleButton label="Sign up with Google" />
       <div className="relative my-6 text-center"><span className="relative z-10 bg-bg px-3 text-xs uppercase tracking-wide text-muted">or</span><div className="absolute inset-x-0 top-1/2 h-px bg-line" /></div>
       {err && <div className="mb-4 rounded-md bg-danger/8 text-danger text-sm px-3 py-2">{err}</div>}

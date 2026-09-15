@@ -349,7 +349,7 @@ export default function CreatorProfile() {
               href={/^https?:\/\//i.test(profile.website) ? profile.website : `https://${profile.website}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 rounded text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Globe className="h-3.5 w-3.5" aria-hidden="true" />{profile.website}
             </a>
@@ -382,7 +382,7 @@ export default function CreatorProfile() {
             <p className="mt-4 flex items-start gap-1.5 text-[11px] leading-snug text-muted">
               <Lock className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               This is your public profile. Your earnings, balance and payouts are never shown here —
-              they stay in <Link to="/balance" className="font-semibold text-primary hover:underline">Balance</Link>.
+              they stay in <Link to="/balance" className="font-semibold text-primary-ink hover:underline">Balance</Link>.
             </p>
           )}
         </div>
@@ -462,7 +462,7 @@ export default function CreatorProfile() {
               </ul>
               <p className="text-[11px] leading-snug text-muted">
                 Prize shown is the contest’s published prize, not a payout. The winning entries themselves are in the{' '}
-                <Link to="/winners" className="font-semibold text-primary hover:underline">Winners hub</Link>.
+                <Link to="/winners" className="font-semibold text-primary-ink hover:underline">Winners hub</Link>.
               </p>
             </>
           ) : (
@@ -639,7 +639,7 @@ export default function CreatorProfile() {
                       {c.winner_user_id ? (
                         <Link
                           to={`/u/${c.winner_user_id}`}
-                          className="inline-flex min-h-[44px] items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="inline-flex min-h-[44px] items-center gap-1.5 rounded text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                           <Handshake className="h-4 w-4" aria-hidden="true" />Winning creator
                         </Link>

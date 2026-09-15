@@ -428,7 +428,7 @@ function WinnerCard({ w, media, mediaState, onRetry, active, onActivate, onOpen 
             <button
               type="button"
               onClick={onOpen}
-              className="mt-0.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              className="mt-0.5 rounded text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
             >
               Full result
             </button>
@@ -575,7 +575,7 @@ function WinnerDetail({ w, media, mediaState, onRetry }) {
         <div className="flex items-center justify-between gap-3 py-2.5">
           <dt className="text-[13px] text-muted">Contest</dt>
           <dd className="min-w-0 text-right">
-            <Link to={`/contest/${w.contest_id}`} className="rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <Link to={`/contest/${w.contest_id}`} className="rounded text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               {w.title}
             </Link>
           </dd>

@@ -593,9 +593,9 @@ export default function FundContest() {
           <p className="text-[13px] text-muted">
             {instr?.verification_window_hours ? `Verification usually takes up to ${instr.verification_window_hours} hours on working days. ` : ''}
             Need help with a transfer?{' '}
-            {support?.email && <a className="font-semibold text-primary hover:underline" href={`mailto:${support.email}`}>{support.email}</a>}
+            {support?.email && <a className="font-semibold text-primary-ink hover:underline" href={`mailto:${support.email}`}>{support.email}</a>}
             {support?.email && support?.phone ? ' · ' : ''}
-            {support?.phone && <a className="font-semibold text-primary hover:underline" href={`tel:${String(support.phone).replace(/\s+/g, '')}`}>{support.phone}</a>}
+            {support?.phone && <a className="font-semibold text-primary-ink hover:underline" href={`tel:${String(support.phone).replace(/\s+/g, '')}`}>{support.phone}</a>}
           </p>
         </Card>
       )}

@@ -235,7 +235,7 @@ export default function Profile() {
         <p className="mt-3 flex items-start gap-1.5 text-[12px] leading-relaxed text-muted">
           <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           Your earnings, balance, payouts and payment details are never shown on a public profile. They stay in{' '}
-          <Link to="/balance" className="font-semibold text-primary hover:underline">Balance</Link>.
+          <Link to="/balance" className="font-semibold text-primary-ink hover:underline">Balance</Link>.
         </p>
       </Card>
     </div>

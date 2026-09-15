@@ -314,7 +314,7 @@ function Viewport({ toasts, criticals, onHandled, reduce }) {
                   </div>
                 </div>
                 {t.to && t.action && (
-                  <Link to={t.to} className="mt-1 ml-[26px] inline-flex min-h-[44px] items-center text-[12px] font-semibold text-primary hover:underline sm:min-h-0 sm:py-1">
+                  <Link to={t.to} className="mt-1 ml-[26px] inline-flex min-h-[44px] items-center text-[12px] font-semibold text-primary-ink hover:underline sm:min-h-0 sm:py-1">
                     {t.action}
                   </Link>
                 )}
@@ -344,7 +344,7 @@ function Alert({ n, onHandled }) {
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-3 pl-[26px]">
         {n.action_url && (
-          <Link to={n.action_url} className="inline-flex min-h-[44px] items-center text-[12px] font-semibold text-primary hover:underline sm:min-h-0 sm:py-1">
+          <Link to={n.action_url} className="inline-flex min-h-[44px] items-center text-[12px] font-semibold text-primary-ink hover:underline sm:min-h-0 sm:py-1">
             {label}
           </Link>
         )}
@@ -370,7 +370,7 @@ export function SecurityWarnings({ className }) {
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-medium leading-snug text-ink break-words">{w.title}</p>
               <div className="mt-1 flex flex-wrap items-center gap-3">
-                {w.to && <Link to={w.to} className="inline-flex min-h-[44px] items-center text-[12px] font-semibold text-primary hover:underline sm:min-h-0">{w.action}</Link>}
+                {w.to && <Link to={w.to} className="inline-flex min-h-[44px] items-center text-[12px] font-semibold text-primary-ink hover:underline sm:min-h-0">{w.action}</Link>}
                 <button type="button" onClick={() => clearWarning(w.id)} className="inline-flex min-h-[44px] items-center text-[12px] font-medium text-muted hover:text-ink sm:min-h-0">Dismiss</button>
               </div>
             </div>

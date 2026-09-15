@@ -19,10 +19,15 @@ const BTN = {
   variant: {
     // Exactly one glowing control per view. A glow on three buttons stops
     // meaning "this is the thing to press".
-    primary: 'bg-primary text-white shadow-glow hover:bg-primary-hover',
+    // The fill is one step down the blue ramp from the brand tone, because
+    // white on rgb(26 123 248) measures 4.01:1 and WCAG AA wants 4.5:1 for
+    // text this size. rgb(17 106 226) measures 5.02:1 and is visually the same
+    // blue. The brand token itself is untouched: it still paints the wordmark,
+    // focus rings and icons, where it is not carrying text.
+    primary: 'bg-primary-hover text-white shadow-glow hover:bg-primary-ink',
     secondary: 'bg-surface text-ink border border-line-strong hover:border-primary/50 hover:bg-surface-2',
     // Tertiary reads as a link but keeps a button's hit area and states.
-    tertiary: 'text-primary hover:bg-primary-wash',
+    tertiary: 'text-primary-ink hover:bg-primary-wash',
     ghost: 'text-muted hover:text-ink hover:bg-surface-2',
     danger: 'bg-danger text-white hover:brightness-95',
     outlineDanger: 'border border-danger/40 text-danger hover:bg-danger/5',

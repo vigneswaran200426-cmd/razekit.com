@@ -173,7 +173,7 @@ function RequirementCard({ rec, state, onToggle, onMandatory, onParam }) {
               <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className="inline-flex min-h-[44px] items-center text-[12px] font-medium text-primary hover:underline"
+                className="inline-flex min-h-[44px] items-center text-[12px] font-medium text-primary-ink hover:underline"
                 aria-expanded={open}
               >
                 Why RazeKit recommends this
@@ -461,7 +461,7 @@ export default function CreateContest() {
               setF({ title: '', short_description: '', category: CATEGORIES[0], description: '', prize_amount: '', number_of_winners: 1, days: '', market: 'IN', brand_destination_url: '' });
               setCustoms([]); setSel({}); setCollab(false); setHandover(false); setContestId(null); setRestored(false);
             }}
-            className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-medium text-primary hover:underline"
+            className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-medium text-primary-ink hover:underline"
           >
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Start fresh
           </button>

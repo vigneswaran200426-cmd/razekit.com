@@ -248,7 +248,7 @@ function CreatorSheet({ entry, onClose }) {
               href={portfolio}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               Portfolio <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </a>

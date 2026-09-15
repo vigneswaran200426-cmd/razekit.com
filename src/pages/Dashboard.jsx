@@ -51,7 +51,7 @@ function Section({ title, description, to, linkLabel = 'View all', children }) {
         {to && (
           <Link
             to={to}
-            className="inline-flex min-h-[44px] shrink-0 items-center rounded-md px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-md px-1 text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {linkLabel}
           </Link>

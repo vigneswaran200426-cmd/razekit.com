@@ -86,7 +86,7 @@ export default function Landing() {
               <div className="flex items-center justify-between mb-4">
                 <p className="font-display font-bold text-ink flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-success animate-pulse" /> Live now</p>
                 {/* 20px tall before: a real link a finger could not reliably hit. */}
-                <Link to="/explore" className="inline-flex min-h-[44px] items-center px-1 text-sm text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">See all</Link>
+                <Link to="/explore" className="inline-flex min-h-[44px] items-center px-1 text-sm text-primary-ink font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">See all</Link>
               </div>
               {live.length ? (
                 <div className="grid sm:grid-cols-2 gap-3">{live.slice(0, 4).map((c, i) => <ContestCard key={c.id} contest={c} index={i} />)}</div>

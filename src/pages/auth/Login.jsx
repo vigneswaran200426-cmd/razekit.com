@@ -38,7 +38,7 @@ export default function Login() {
 
   return (
     <AuthShell title="Welcome back" subtitle="Log in to your RazeKit account"
-      footer={<>New to RazeKit? <Link to="/register" className="text-primary font-semibold hover:underline">Create an account</Link></>}>
+      footer={<>New to RazeKit? <Link to="/register" className="text-primary-ink font-semibold hover:underline">Create an account</Link></>}>
       <GoogleButton label="Continue with Google" />
       <div className="relative my-6 text-center"><span className="relative z-10 bg-bg px-3 text-xs uppercase tracking-wide text-muted">or</span><div className="absolute inset-x-0 top-1/2 h-px bg-line" /></div>
 
@@ -54,7 +54,7 @@ export default function Login() {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <Label htmlFor="password" className="mb-0">Password</Label>
-            <button type="button" onClick={forgot} className="inline-flex min-h-[44px] items-center text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">Forgot password?</button>
+            <button type="button" onClick={forgot} className="inline-flex min-h-[44px] items-center text-xs text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">Forgot password?</button>
           </div>
           <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" placeholder="••••••••" /></div>
