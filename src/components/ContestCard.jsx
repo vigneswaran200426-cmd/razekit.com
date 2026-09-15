@@ -37,7 +37,22 @@ export default function ContestCard({ contest, entries, index = 0 }) {
         {/* Cover */}
         <div className="relative aspect-[16/9] overflow-hidden">
           {contest.cover_image_url
-            ? <img src={contest.cover_image_url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            ? (
+              <img
+                src={contest.cover_image_url}
+                alt=""
+                /* The first row is almost certainly on screen, and lazy-loading
+                   the image the page is measured by delays the moment the page
+                   looks loaded. Everything after it is scrolled to, so it waits:
+                   a 24-contest grid used to fetch 24 covers to show about four. */
+                loading={index < 3 ? 'eager' : 'lazy'}
+                fetchPriority={index < 3 ? 'high' : 'auto'}
+                /* Decode off the main thread so a large cover cannot stall
+                   scrolling while the browser unpacks it. */
+                decoding="async"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            )
             : <div className="w-full h-full transition-transform duration-500 group-hover:scale-105" style={{ background: cover(contest.id) }} />}
           <div className="absolute inset-0 bg-gradient-to-t from-ink/35 to-transparent" />
           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-2.5">

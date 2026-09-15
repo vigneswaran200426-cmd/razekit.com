@@ -21,8 +21,8 @@ function PostCard({ post, liked, onLike }) {
       {post.media_url && (
         <div className="bg-ink">
           {/\.(mp4|webm|mov)/i.test(post.media_url)
-            ? <video src={post.media_url} controls className="w-full max-h-[540px]" />
-            : <img src={post.media_url} alt={post.title || ''} className="w-full max-h-[540px] object-contain" />}
+            ? <video src={post.media_url} controls preload="metadata" className="w-full max-h-[540px]" />
+            : <img src={post.media_url} alt={post.title || ''} loading="lazy" decoding="async" className="w-full max-h-[540px] object-contain" />}
         </div>
       )}
       <div className="p-3.5">
@@ -74,7 +74,7 @@ function CreateModal({ onClose, onCreated }) {
         <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={onFile} />
         {mediaUrl ? (
           <div className="relative rounded-md overflow-hidden border border-line mb-3">
-            {/\.(mp4|webm|mov)/i.test(mediaUrl) ? <video src={mediaUrl} className="w-full max-h-64 bg-surface-2" /> : <img src={mediaUrl} alt="" className="w-full max-h-64 object-contain bg-surface-2" />}
+            {/\.(mp4|webm|mov)/i.test(mediaUrl) ? <video src={mediaUrl} preload="metadata" className="w-full max-h-64 bg-surface-2" /> : <img src={mediaUrl} alt="" className="w-full max-h-64 object-contain bg-surface-2" />}
           </div>
         ) : (
           <button onClick={() => fileRef.current?.click()} disabled={uploading} className="w-full rounded-md border-2 border-dashed border-line-strong bg-surface-2/40 py-8 flex flex-col items-center gap-2 text-muted hover:border-primary/50 hover:text-ink transition-colors mb-3">
