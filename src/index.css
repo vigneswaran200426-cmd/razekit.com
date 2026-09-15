@@ -203,6 +203,15 @@
   }
 }
 
+/* A status message rising into place. The travel is short (8px) because the
+   element is small: a large journey for a small object reads as theatrical.
+   The reduced-motion block below collapses the transform and leaves the fade,
+   which still carries the "something appeared" signal without the movement. */
+@keyframes rk-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* A measured bar filling. Slow enough to read as a value being revealed. */
 .rk-bar { transition: width 600ms var(--ease-standard); }
 
@@ -218,6 +227,8 @@
     scroll-behavior: auto !important;
   }
   .rk-bar { transition: none; }
+  /* Keep the fade, drop the travel: the message still announces itself. */
+  @keyframes rk-rise { from { opacity: 0; } to { opacity: 1; } }
 }
 
 /* Some readers find translucency itself hard to parse. Honour that. */

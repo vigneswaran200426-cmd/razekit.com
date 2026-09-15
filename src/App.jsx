@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react';
+import ConnectionStatus from '@/components/ConnectionStatus';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RouteSeo } from '@/components/Seo';
 import { AuthProvider } from '@/lib/auth';
@@ -85,6 +86,10 @@ export default function App() {
         <BrowserRouter>
         {/* Per-route title, description, canonical and robots. */}
           <RouteSeo />
+          {/* Renders null while the connection is healthy. Eagerly imported on
+              purpose: a chunk that must be FETCHED to report a lost connection
+              is the one chunk that cannot arrive when it is needed. */}
+          <ConnectionStatus />
           <Suspense fallback={<RouteFallback />}>
           <Routes>
 
