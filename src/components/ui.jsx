@@ -1,14 +1,28 @@
 import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 /* ── Button ─────────────────────────────────────────────────────────────── */
 const BTN = {
-  base: 'inline-flex items-center justify-center gap-2 font-semibold rounded-md transition-all duration-150 ease-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] whitespace-nowrap',
+  // active:scale fires on pointer-DOWN, not on release. The moment feedback
+  // waits for click, directness falls off a cliff — a button that highlights
+  // only after you let go feels dead even when the handler is instant.
+  //
+  // Disabled is a muted FILL, not opacity. Fading the whole control also fades
+  // its text, and unreadable disabled text is an accessibility failure rather
+  // than a style: a user must still be able to read what they cannot press.
+  base: 'inline-flex items-center justify-center gap-2 font-semibold rounded-md transition-all duration-fast ease-brand '
+    + 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg '
+    + 'active:scale-[0.98] active:duration-instant whitespace-nowrap '
+    + 'disabled:pointer-events-none disabled:bg-surface-2 disabled:text-disabled disabled:border-line disabled:shadow-none',
   variant: {
-    primary: 'bg-primary text-white shadow-glow hover:bg-primary-ink',
+    // Exactly one glowing control per view. A glow on three buttons stops
+    // meaning "this is the thing to press".
+    primary: 'bg-primary text-white shadow-glow hover:bg-primary-hover',
     secondary: 'bg-surface text-ink border border-line-strong hover:border-primary/50 hover:bg-surface-2',
+    // Tertiary reads as a link but keeps a button's hit area and states.
+    tertiary: 'text-primary hover:bg-primary-wash',
     ghost: 'text-muted hover:text-ink hover:bg-surface-2',
     danger: 'bg-danger text-white hover:brightness-95',
     outlineDanger: 'border border-danger/40 text-danger hover:bg-danger/5',
@@ -25,10 +39,20 @@ const BTN = {
 };
 
 export const Button = forwardRef(function Button(
-  { as, to, href, variant = 'primary', size = 'md', loading, className, children, ...props }, ref
+  { as, to, href, variant = 'primary', size = 'md', loading, success, className, children, ...props }, ref
 ) {
-  const cls = cn(BTN.base, BTN.variant[variant], BTN.size[size], className);
-  const inner = <>{loading && <Loader2 className="w-4 h-4 animate-spin" />}{children}</>;
+  const cls = cn(BTN.base, BTN.variant[variant], BTN.size[size],
+    // A confirmed action holds green briefly instead of snapping back to rest,
+    // so the confirmation is legible rather than a flicker.
+    success && 'bg-success text-white shadow-none hover:bg-success',
+    className);
+  const inner = (
+    <>
+      {loading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
+      {success && !loading && <Check className="w-4 h-4" aria-hidden="true" />}
+      {children}
+    </>
+  );
   if (to) return <Link ref={ref} to={to} className={cls} {...props}>{inner}</Link>;
   if (href) return <a ref={ref} href={href} className={cls} {...props}>{inner}</a>;
   const Comp = as || 'button';
@@ -36,13 +60,47 @@ export const Button = forwardRef(function Button(
 });
 
 /* ── Card / panel ───────────────────────────────────────────────────────── */
+/**
+ * A surface one level above the page.
+ *
+ * `hover` is for cards that are genuinely interactive — it lifts slightly to
+ * say "this is pressable". A static card must NOT take it: movement that leads
+ * nowhere teaches people to ignore movement that does.
+ */
 export function Card({ className, hover, as: Comp = 'div', ...props }) {
-  return <Comp className={cn('bg-surface border border-line rounded-lg shadow-xs', hover && 'transition-all duration-200 ease-brand hover:shadow-md hover:border-line-strong', className)} {...props} />;
+  return (
+    <Comp
+      className={cn(
+        'bg-surface border border-line rounded-lg shadow-xs',
+        hover && 'transition-all duration-base ease-brand hover:shadow-md hover:border-line-strong hover:-translate-y-0.5 motion-reduce:hover:translate-y-0',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 /* ── Input / Label ──────────────────────────────────────────────────────── */
-export const Input = forwardRef(function Input({ className, ...props }, ref) {
-  return <input ref={ref} className={cn('h-10 [@media(pointer:coarse)]:h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20', className)} {...props} />;
+export const Input = forwardRef(function Input({ className, invalid, ...props }, ref) {
+  return (
+    <input
+      ref={ref}
+      // aria-invalid rather than colour alone: a red border is invisible to a
+      // screen reader and to a good part of the sighted population too.
+      aria-invalid={invalid || undefined}
+      className={cn(
+        'h-10 [@media(pointer:coarse)]:h-11 w-full rounded-md border bg-surface px-3 text-sm text-ink',
+        'placeholder:text-subtle transition-colors duration-fast',
+        'focus:outline-none focus:ring-2',
+        invalid
+          ? 'border-danger focus:border-danger focus:ring-danger/20'
+          : 'border-line-strong focus:border-primary focus:ring-primary/20',
+        'disabled:bg-surface-2 disabled:text-disabled disabled:cursor-not-allowed',
+        className,
+      )}
+      {...props}
+    />
+  );
 });
 export function Label({ className, ...props }) {
   return <label className={cn('block text-[13px] font-medium text-ink mb-1.5', className)} {...props} />;

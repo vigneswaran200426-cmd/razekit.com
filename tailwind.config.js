@@ -6,38 +6,65 @@ export default {
       colors: {
         // Semantic tokens (mapped to CSS vars in index.css)
         bg: 'rgb(var(--bg) / <alpha-value>)',
+        'bg-elevated': 'rgb(var(--bg-elevated) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
         'surface-2': 'rgb(var(--surface-2) / <alpha-value>)',
+        'surface-3': 'rgb(var(--surface-3) / <alpha-value>)',
+        'surface-inverse': 'rgb(var(--surface-inverse) / <alpha-value>)',
         ink: 'rgb(var(--ink) / <alpha-value>)',
+        'ink-inverse': 'rgb(var(--ink-inverse) / <alpha-value>)',
         muted: 'rgb(var(--muted) / <alpha-value>)',
+        subtle: 'rgb(var(--subtle) / <alpha-value>)',
+        disabled: 'rgb(var(--disabled) / <alpha-value>)',
         line: 'rgb(var(--line) / <alpha-value>)',
         'line-strong': 'rgb(var(--line-strong) / <alpha-value>)',
         primary: 'rgb(var(--primary) / <alpha-value>)',
+        'primary-hover': 'rgb(var(--primary-hover) / <alpha-value>)',
         'primary-ink': 'rgb(var(--primary-ink) / <alpha-value>)',
+        'primary-wash': 'rgb(var(--primary-wash) / <alpha-value>)',
         accent: 'rgb(var(--accent) / <alpha-value>)',
         success: 'rgb(var(--success) / <alpha-value>)',
+        'success-wash': 'rgb(var(--success-wash) / <alpha-value>)',
         warning: 'rgb(var(--warning) / <alpha-value>)',
+        'warning-wash': 'rgb(var(--warning-wash) / <alpha-value>)',
         danger: 'rgb(var(--danger) / <alpha-value>)',
+        'danger-wash': 'rgb(var(--danger-wash) / <alpha-value>)',
+        info: 'rgb(var(--info) / <alpha-value>)',
+        'info-wash': 'rgb(var(--info-wash) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['"Inter Tight"', 'Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        DEFAULT: '10px',
-        sm: '8px',
-        md: '10px',
-        lg: '12px',
-        xl: '14px',
+        DEFAULT: 'var(--r-md)',
+        xs: 'var(--r-xs)',
+        sm: 'var(--r-sm)',
+        md: 'var(--r-md)',
+        lg: 'var(--r-lg)',
+        xl: 'var(--r-xl)',
       },
       boxShadow: {
-        xs: '0 1px 2px rgb(11 21 36 / 0.05)',
-        sm: '0 1px 2px rgb(11 21 36 / 0.06), 0 1px 3px rgb(11 21 36 / 0.08)',
-        md: '0 2px 4px rgb(11 21 36 / 0.06), 0 6px 16px -6px rgb(11 21 36 / 0.14)',
-        lg: '0 8px 30px -8px rgb(11 21 36 / 0.20)',
-        glow: '0 6px 20px -6px rgb(var(--primary) / 0.5)',
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+        // Reserved for the primary action only. A glow on more than one
+        // element per view stops meaning "this is the thing to press".
+        glow: '0 6px 20px -6px rgb(var(--primary) / 0.45)',
       },
-      maxWidth: { shell: '1400px' },
+      maxWidth: { shell: '1400px', measure: '72ch' },
+      // A 4px rhythm. Named steps exist so a layout can say "section gap"
+      // rather than picking a number that happens to look right on one screen.
+      spacing: {
+        'gap-tight': '0.5rem',
+        'gap-base': '1rem',
+        'gap-loose': '1.5rem',
+        'gap-section': '3rem',
+        'gap-hero': '5rem',
+        chrome: 'var(--chrome-h)',
+      },
       // ── Motion system ──────────────────────────────────────────────────
       // One decelerating curve for things entering, one accelerating for
       // things leaving, and a soft spring reserved for interactions that
@@ -51,10 +78,11 @@ export default {
       transitionDuration: {
         // Exit is deliberately faster than enter: a UI that lingers on the way
         // out feels slow even when it is not.
-        instant: '90ms',
-        fast: '140ms',
-        base: '220ms',
-        slow: '320ms',
+        instant: 'var(--dur-instant)',
+        fast: 'var(--dur-fast)',
+        base: 'var(--dur-base)',
+        slow: 'var(--dur-slow)',
+        exit: 'var(--dur-exit)',
       },
       keyframes: {
         'fade-up': { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'none' } },

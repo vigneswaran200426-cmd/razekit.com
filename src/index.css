@@ -2,66 +2,238 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── RazeKit design tokens ─────────────────────────────────────────────────
-   Boxy, precise, media-first. One electric-blue accent over cool neutrals. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   RazeKit design tokens — the single source of truth.
+
+   The visual thesis: MEASURED PERFORMANCE, SHOWN PLAINLY.
+
+   RazeKit judges creative work on numbers, so three things follow and every
+   token below serves one of them:
+     1. numerals are a first-class typographic citizen, not an afterthought
+     2. surfaces stay neutral so the WORK carries the colour
+     3. blue means action or measurement — never decoration
+
+   Colours are stored as raw RGB channels so Tailwind's `<alpha-value>` works:
+   `bg-surface/60` needs the channels, not a hex string.
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg: 246 247 249;          /* #F6F7F9 cool near-white */
-  --surface: 255 255 255;     /* #FFFFFF */
-  --surface-2: 240 242 245;   /* #F0F2F5 */
-  --ink: 11 21 36;            /* #0B1524 deep navy-black */
-  --muted: 90 100 115;        /* #5A6473 */
-  --line: 228 231 236;        /* #E4E7EC hairline */
-  --line-strong: 211 216 224; /* #D3D8E0 */
-  --primary: 26 123 248;      /* #1A7BF8 RazeKit blue */
-  --primary-ink: 11 68 199;   /* #0B44C7 */
-  --accent: 6 182 212;        /* #06B6D4 cyan (used sparingly) */
+  /* ── Surfaces, lightest to heaviest ─────────────────────────────────────
+     A real layering model, not a pile of cards. Each step means "one level
+     closer to the reader", and nothing should skip a level. */
+  --bg: 246 247 249;            /* page ground */
+  --bg-elevated: 250 251 252;   /* a section lifted off the ground */
+  --surface: 255 255 255;       /* the default card/panel */
+  --surface-2: 240 242 245;     /* recessed: inputs, wells, track backgrounds */
+  --surface-3: 232 235 240;     /* pressed / active fill */
+  --surface-inverse: 11 21 36;  /* dark surface for emphasis moments */
+
+  /* ── Lines ──────────────────────────────────────────────────────────────
+     Two weights only. A third gets used arbitrarily and the interface starts
+     looking like a spreadsheet. */
+  --line: 228 231 236;          /* hairline: the default separation */
+  --line-strong: 211 216 224;   /* a real edge: inputs, focusable containers */
+
+  /* ── Text ───────────────────────────────────────────────────────────────
+     Four steps. `muted` carries most secondary copy; `subtle` is for metadata
+     that must not compete; `disabled` is deliberately still legible, because
+     unreadable disabled text is an accessibility failure, not a style. */
+  --ink: 11 21 36;
+  --muted: 90 100 115;
+  --subtle: 128 137 150;
+  --disabled: 163 171 182;
+  --ink-inverse: 255 255 255;
+
+  /* ── Brand ──────────────────────────────────────────────────────────────
+     One blue, three roles: rest, hover, and the deep tone for text on light.
+     The cyan accent exists for measurement gradients and nothing else. */
+  --primary: 26 123 248;
+  --primary-hover: 17 106 226;
+  --primary-ink: 11 68 199;
+  --primary-wash: 235 243 255;  /* selected rows, subtle brand fills */
+  --accent: 6 182 212;
+
+  /* ── Semantic state ─────────────────────────────────────────────────────
+     Each has a wash so a state can fill a surface without shouting. Status is
+     never carried by colour alone — these always pair with an icon or a word. */
   --success: 22 163 74;
+  --success-wash: 236 250 241;
   --warning: 217 119 6;
+  --warning-wash: 254 247 234;
   --danger: 220 38 38;
-  color-scheme: light;
+  --danger-wash: 254 240 240;
+  --info: 26 123 248;
+  --info-wash: 235 243 255;
+
+  /* ── Elevation ──────────────────────────────────────────────────────────
+     Shadows are tinted with the ink colour rather than pure black: a neutral
+     black shadow on a cool ground reads as dirt. Bigger surfaces get a deeper
+     shadow, because a large object casting a small shadow looks pasted on. */
+  --shadow-xs: 0 1px 2px rgb(11 21 36 / 0.04);
+  --shadow-sm: 0 1px 3px rgb(11 21 36 / 0.06), 0 1px 2px rgb(11 21 36 / 0.04);
+  --shadow-md: 0 4px 12px rgb(11 21 36 / 0.07), 0 1px 3px rgb(11 21 36 / 0.05);
+  --shadow-lg: 0 12px 32px rgb(11 21 36 / 0.10), 0 2px 8px rgb(11 21 36 / 0.05);
+  --shadow-xl: 0 24px 64px rgb(11 21 36 / 0.14), 0 4px 12px rgb(11 21 36 / 0.06);
+
+  /* ── Motion ─────────────────────────────────────────────────────────────
+     Durations are named for what they DO. A "response" is how quickly a value
+     reaches its target — not a fixed runtime, which is why springs are used
+     for anything a finger can touch.
+
+     Exit is faster than enter (~70%): leaving should feel like getting out of
+     the way, arriving should feel like settling. */
+  --dur-instant: 100ms;   /* press feedback — must beat perception */
+  --dur-fast: 160ms;      /* hover, focus, small state */
+  --dur-base: 240ms;      /* the default: panels, tabs, reveals */
+  --dur-slow: 380ms;      /* a large surface moving a long way */
+  --dur-exit: 170ms;      /* ~70% of base */
+
+  /* Standard = enters and settles. Emphasis = arrives with intent.
+     Exit = accelerates away. No bounce curve: overshoot belongs to springs
+     driven by a real gesture, not to a menu that merely appeared. */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ── Radius ─────────────────────────────────────────────────────────────
+     A deliberate ceiling. Everything being a pill is its own kind of noise;
+     `full` is reserved for avatars, dots and true chips. */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  /* Sticky chrome height, so content can offset itself without guessing. */
+  --chrome-h: 64px;
 }
 
 @layer base {
-  * { border-color: rgb(var(--line)); }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    background: rgb(var(--bg));
-    color: rgb(var(--ink));
-    font-family: 'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Scroll-margin so an in-page anchor is not hidden under sticky chrome. */
+    scroll-padding-top: calc(var(--chrome-h) + 16px);
   }
-  h1, h2, h3, h4, h5 { font-family: 'Inter Tight', 'Inter', sans-serif; letter-spacing: -0.02em; }
+
+  body {
+    @apply bg-bg text-ink antialiased;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv11' 1, 'ss01' 1;
+    /* Body leading is comfortable; headings tighten it back (see .tracking-*). */
+    line-height: 1.5;
+  }
+
+  /* Type scale: tracking is SIZE-SPECIFIC. Letters read too far apart as they
+     grow, so display sizes get negative tracking and body sits near zero. One
+     fixed letter-spacing across a scale is wrong at one end or the other. */
+  h1, h2, h3, h4 {
+    font-family: 'Inter Tight', Inter, ui-sans-serif, system-ui, sans-serif;
+    @apply text-ink;
+    text-wrap: balance;
+  }
+  h1 { letter-spacing: -0.032em; line-height: 1.06; }
+  h2 { letter-spacing: -0.026em; line-height: 1.12; }
+  h3 { letter-spacing: -0.02em;  line-height: 1.2; }
+  h4 { letter-spacing: -0.014em; line-height: 1.3; }
+
+  /* Paragraphs get a measure cap: a line longer than ~75 characters is hard to
+     track back from, however elegant the type. */
+  p { text-wrap: pretty; }
+
+  /* One focus treatment for the whole product. Focus is never removed — it is
+     the only way a keyboard user knows where they are. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--primary));
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+  }
+
   ::selection { background: rgb(var(--primary) / 0.16); }
-  :focus-visible { outline: 2px solid rgb(var(--primary)); outline-offset: 2px; border-radius: 4px; }
-  /* Thin, quiet scrollbars */
-  * { scrollbar-width: thin; scrollbar-color: rgb(var(--line-strong)) transparent; }
-  *::-webkit-scrollbar { width: 10px; height: 10px; }
-  *::-webkit-scrollbar-thumb { background: rgb(var(--line-strong)); border-radius: 999px; border: 3px solid rgb(var(--bg)); }
+
+  /* Inputs inherit the product's font rather than the platform's default. */
+  input, textarea, select, button { font: inherit; }
 }
 
 @layer utilities {
+  /* Tabular figures. Used wherever numbers stack or change: scores, money,
+     vote counts, KPI blocks. Proportional digits make a changing number jitter
+     and a column of figures fail to align. */
   .nums { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* The page measure. One value, so every screen aligns to the same grid. */
   .shell { max-width: 1400px; margin-inline: auto; padding-inline: 1rem; }
-  @media (min-width: 640px) { .shell { padding-inline: 1.5rem; } }
+  @media (min-width: 640px)  { .shell { padding-inline: 1.5rem; } }
   @media (min-width: 1024px) { .shell { padding-inline: 2rem; } }
-  /* subtle diagonal hatch for empty media wells */
+
+  /* A narrower measure for reading: legal, guide, long-form. ~72ch. */
+  .prose-measure { max-width: 72ch; }
+
   .hatch { background-image: repeating-linear-gradient(135deg, rgb(var(--line) / 0.6) 0 1px, transparent 1px 10px); }
+
+  /* Translucent chrome. Content scrolls UNDER it rather than being pushed by an
+     opaque strip, which is what makes a header feel like a layer instead of a
+     bar. Falls back to a solid surface where backdrop-filter is unsupported or
+     the reader has asked for less transparency. */
+  .chrome {
+    background: rgb(var(--surface) / 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .chrome { background: rgb(var(--surface)); }
+  }
+
+  /* A scroll edge instead of a 1px rule under sticky chrome: content fades as
+     it passes beneath, which reads as depth rather than as a line drawn across
+     the page. */
+  .scroll-edge {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+  }
+
+  /* Media wells. Creative work is the point of this product, so its container
+     recedes: a neutral ground, a hairline, and nothing else competing. */
+  .media-well {
+    background: rgb(var(--surface-2));
+    border: 1px solid rgb(var(--line));
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
 }
 
+/* A measured bar filling. Slow enough to read as a value being revealed. */
+.rk-bar { transition: width 600ms var(--ease-standard); }
 
-/* Score bars animate their width once on render; kept off the layout path. */
-.rk-bar { transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1); }
-
-/* Accessibility: respect the OS "reduce motion" setting everywhere (spec 47).
-   Motion is a progressive enhancement — nothing depends on it to be usable. */
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+   Not "no feedback" — a gentler, non-vestibular equivalent. Transforms and
+   parallax go; opacity and colour changes stay, because they still carry
+   meaning about what changed. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .rk-bar { transition: none; }
+}
+
+/* Some readers find translucency itself hard to parse. Honour that. */
+@media (prefers-reduced-transparency: reduce) {
+  .chrome {
+    background: rgb(var(--surface));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line: 190 196 206;
+    --line-strong: 150 158 170;
+    --muted: 64 74 89;
+    --subtle: 90 100 115;
   }
 }
