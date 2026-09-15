@@ -242,7 +242,7 @@ function PollBanner({ poll, onVoted }) {
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
                       'disabled:opacity-60 disabled:pointer-events-none',
                       c.key === 'yes'
-                        ? 'border-primary/40 bg-primary/[0.07] text-primary hover:bg-primary/[0.12]'
+                        ? 'border-primary/40 bg-primary/[0.07] text-primary-ink hover:bg-primary/[0.12]'
                         : 'border-line-strong bg-surface text-muted hover:border-ink/25 hover:text-ink'
                     )}
                   >
