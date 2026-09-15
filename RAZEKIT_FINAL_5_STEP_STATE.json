@@ -1,0 +1,102 @@
+{
+  "_note": "Status is assigned from evidence actually observed, never from intent. VERIFIED means something was run and the result seen. BLOCKED_EXTERNAL means the next action is one only the platform owner can take.",
+  "production_commit": "996369d9724c317d9609dfd96161b5b8f36212b7",
+  "database": "Neon PostgreSQL — unchanged. Not migrated, not reset, not replaced.",
+
+  "step_1_branch_reconciliation": {
+    "branch_comparison": "VERIFIED",
+    "commits_unique_to_main": 0,
+    "commits_unique_to_beta": 13,
+    "relationship": "main was a strict ancestor of beta — no conflicts, nothing of main's discarded",
+    "migration_diff": "VERIFIED — none. New entities live in the JSONB document store.",
+    "destructive_changes": "VERIFIED — none. Only CREATE UNIQUE INDEX IF NOT EXISTS at boot, idempotent and already applied.",
+    "pre_merge_gate": "VERIFIED — backend typecheck, backend build, 270 unit tests, API surface audit (108 handlers), frontend build, admin build, admin server typecheck",
+    "merge": "VERIFIED — merge commit 996369d, --no-ff so it is revertable with git revert -m 1",
+    "beta_branch_deleted": false
+  },
+
+  "step_1b_deploy_verification": {
+    "razekit_api_deploy": "VERIFIED — dep-dakplrmq1p3s73eaqqv0 status live on commit 996369d",
+    "razekit_web_deploy": "VERIFIED — dep-dakplrmq1p3s73eaqqsg picked up the same commit",
+    "proof_production_runs_new_code": "VERIFIED",
+    "proof_detail": "platformStats, pollList and uropayAvailability all returned 401 before the merge (absent from the deployed public-function set) and return 200 after. pollList returns the real GTA 6 poll record. notificationFeed now returns 401-on-auth rather than being an unknown handler.",
+    "seo_assets_live": "VERIFIED — robots.txt 200 text/plain, sitemap.xml 200 application/xml (it was a soft-404 HTML page before), og.png 200 image/png",
+    "security_headers_live": "VERIFIED — HSTS, nosniff, X-Frame-Options DENY, CSP, Referrer-Policy present; x-powered-by removed",
+    "browser_check_production": "VERIFIED — razekit.com at 375px: logo renders as SVG, 0 horizontal scroll, 0 undersized touch targets (production had 3 before), poll banners rendering, real counts showing 2 brands / 5 contests"
+  },
+
+  "step_2_email": {
+    "inspection": "VERIFIED",
+    "resend_domain_status": "failed",
+    "dns_host": "Wix (ns4.wixdns.net, ns5.wixdns.net) — not Cloudflare, so the connected Cloudflare tools cannot reach it",
+    "records_present": "NONE — DKIM, both SPF CNAMEs and the MX all return no answer. They were never added, they are not merely wrong.",
+    "backend_driver": "EMAIL_DRIVER defaults to 'console', which only logs. Unless it is set to 'resend' in Render, no mail is attempted even once DNS is fixed.",
+    "test_email_sent": "NOT_DONE — sending before the domain verifies would bounce and would not prove anything",
+    "status": "BLOCKED_EXTERNAL",
+    "required_records": [
+      "TXT  resend._domainkey  p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCty9jYryKGBW4fe1LV6B8+tiykBvHI/q/r/y53rEBluDx7Ogzet2Y/GOxKsGCO++VH/6bknqgXXrwHzuOMhh0nLe8MBrN4E03KrrCbhrR0fOlu8Ed/PqnISOIlcPSVQAVjSuUUj367mYgwYzfyIUAEfJ2vZdbp1OEinxPUTvsRXwIDAQAB",
+      "CNAME  send   send.forge.rmta.net",
+      "CNAME  rsend  rsend-apne1.forge.rmta.net",
+      "MX     @      inbound-smtp.ap-northeast-1.amazonaws.com  priority 10"
+    ]
+  },
+
+  "step_3_credential_rotation": {
+    "neon_rotation": "BLOCKED_EXTERNAL — no Neon connector is available in this session; rotation happens in the Neon console",
+    "uropay_rotation": "BLOCKED_EXTERNAL — no UroPay admin API access",
+    "render_env_update": "BLOCKED_EXTERNAL — the Render connector can write env vars, but only the OLD compromised values are known here. Writing those back would preserve the exposure rather than end it.",
+    "uropay_production_enabled": false,
+    "uropay_currently_configured_in_render": "NO — the live uropayAvailability endpoint reports available:false, which means UROPAY_TEST_KEY/SECRET are unset in production",
+    "step_3b_secret_scan": "VERIFIED — CLEAN",
+    "secret_scan_detail": "Five checks, all clean: (1) no real credential shapes in tracked files, (2) neither credential pasted in chat appears anywhere in the repo, (3) zero occurrences across the entire git history on all branches, (4) .env is not tracked, (5) no secret in the built frontend bundle."
+  },
+
+  "step_4_end_to_end": {
+    "verify_e2e_executed": "VERIFIED — it was run, having previously only been written",
+    "result": "25 checks passed across registration, contest creation and requirements locking, then ABORTED at funding",
+    "abort_reason": "PAYMENT_NOT_CONFIGURED. Production has exactly one active PaymentSettings row and it is empty — the deliberate state from when payment details were scrubbed. The script failed loudly with the reason rather than skipping or stubbing.",
+    "security_properties_proven": [
+      "a user cannot grant themselves the client role through the entity API",
+      "a client cannot set winner_user_id through the entity API (403)",
+      "the server stamps the fairness rule and duration band a client cannot write",
+      "a creator cannot confirm a brand's requirements",
+      "criteria lock on confirmation, and locking is what unlocks payment"
+    ],
+    "funding_to_payout_leg": "BLOCKED_EXTERNAL — needs a configured payment method. Not worked around: writing fictional bank details into the live active settings row is the exact failure this product forbids, and the correct fix is a separate test database, which does not exist.",
+    "money_chain_coverage_that_did_run": "verify-uropay.ts 36/36 — it builds its own ContestFunding rows and does not depend on the funding-instructions endpoint. Proves a forged webhook credits nothing, and that a replay plus a client poll plus three concurrent settlements produce exactly one ledger credit and one prize reservation.",
+    "campaign_chain": "VERIFIED — verify-campaigns.ts 60/60, including an independent recount agreeing with the public vote tally",
+    "unit_tests": "VERIFIED — 270 passing",
+    "creator_brand_admin_ui_walkthrough": "NOT_DONE — these need authenticated sessions the scripts do not create",
+    "traffic_e2e": "NOT_DONE",
+    "winner_tie_break_e2e": "NOT_DONE this pass — tie-break is covered by unit tests, not by a live run"
+  },
+
+  "step_5_visual_redesign": {
+    "status": "PARTIAL",
+    "done_this_pass": [
+      "logo system: mark converted from positioned divs to one SVG sharing favicon geometry, per-instance gradient ids, ink token instead of a hard-coded hex, className bug fixed",
+      "touch targets fixed at the primitives, verified 0 defects across 11 public routes at 360px and now in production",
+      "SEO and social preview: real 1200x630 og.png, per-route titles, canonical, JSON-LD",
+      "fabricated data removed: the dashboard carousel's invented contests and the landing page's word-shaped stat tiles"
+    ],
+    "not_done": [
+      "screen-by-screen redesign of all 40+ surfaces — roughly a third covered",
+      "art-directed campaign key art — no image pipeline exists; artwork is generated CSS and SVG",
+      "full motion system audit across every modal, drawer, tab and page transition"
+    ]
+  },
+
+  "external_actions_required": [
+    "Add the four Resend DNS records at Wix (listed above), then set EMAIL_DRIVER=resend in Render. No mail is delivered until both are done.",
+    "Rotate the Neon password and the UroPay key/secret, then set them in Render. The repo is clean of both, but they were exposed in chat.",
+    "Configure a payment method (Admin -> Finance -> Payment Settings) to unblock the funding-to-payout half of the E2E.",
+    "Set POLL_VOTE_SALT in Render — anonymous poll voting is now live on the homepage.",
+    "Set ADMIN_DATABASE_URL, or accept that admin records share the platform database.",
+    "Submit https://razekit.com/sitemap.xml in Google Search Console."
+  ],
+
+  "seo_indexing": {
+    "technically_indexable": "YES — verified live",
+    "actually_indexed_by_google": "NOT_VERIFIED"
+  }
+}
