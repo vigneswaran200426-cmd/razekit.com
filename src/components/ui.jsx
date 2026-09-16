@@ -158,6 +158,13 @@ export function Segmented({ tabs, value, onChange, size = 'md' }) {
         const active = value === key;
         return (
           <button key={key} onClick={() => onChange(key)}
+            // Without type, a Segmented inside a form submits it on every tab
+            // change. Without aria-pressed, which option is selected is carried
+            // by a background colour alone, so a screen-reader user cannot tell
+            // which one is active — and on the funding screen the option decides
+            // which payment destination is shown below.
+            type="button"
+            aria-pressed={active}
             // Tabs were 32px tall. Under a finger they are 44px; a mouse keeps
             // the tighter density this control was designed for.
             className={cn('rounded-[7px] font-semibold transition-all ease-brand [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:px-4',

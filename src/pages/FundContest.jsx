@@ -218,7 +218,12 @@ export default function FundContest() {
   const support = status?.support || instr?.instructions?.support || quote?.beta_notice?.support || null;
   const funding = status?.funding || instr?.funding || null;
   const fundingId = funding?.id;
-  const totalMinor = quote?.total_amount_minor ?? funding?.total_amount_minor ?? 0;
+  // `?? 0` would conflate "the server did not tell us" with "the amount is zero".
+  // On a screen whose job is to state what someone must pay, those must not look
+  // the same — moneyMinor(null) renders a confident "₹0".
+  const totalMinorRaw = quote?.total_amount_minor ?? funding?.total_amount_minor ?? null;
+  const totalKnown = totalMinorRaw != null && Number.isFinite(Number(totalMinorRaw));
+  const totalMinor = totalKnown ? Number(totalMinorRaw) : 0;
   const currency = quote?.currency || funding?.currency || 'INR';
   const masked = describeMasked(status?.masked_destination || instr?.masked_destination, method?.key);
   const st = funding?.status;
@@ -304,11 +309,16 @@ export default function FundContest() {
 
   if (fatal) return <div className="mx-auto max-w-2xl space-y-5">{back}<ErrorPanel error={fatal} contestId={id} onRetry={load} /></div>;
 
+  // A row whose amount the server did not send is dropped rather than rendered
+  // as ₹0. This fallback only runs when `breakdown` is absent, which is exactly
+  // when the individual components are likely absent too — so without the filter
+  // the page invents a three-line cost breakdown of zeroes underneath a real
+  // total, on the screen where someone is about to send money.
   const breakdown = quote?.breakdown?.length ? quote.breakdown : [
     { label: 'Contest prize', amount_minor: quote?.prize_amount_minor },
     { label: 'RazeKit platform fee', amount_minor: quote?.platform_fee_minor },
     { label: 'Tax on platform charges', amount_minor: quote?.tax_minor },
-  ];
+  ].filter((b) => b.amount_minor != null && Number.isFinite(Number(b.amount_minor)));
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -319,14 +329,31 @@ export default function FundContest() {
 
       <Card className="border-ink bg-ink p-5 text-white">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Amount required</p>
-        <p className="mt-1.5 font-display text-4xl font-extrabold nums">{moneyMinor(totalMinor, currency)}</p>
-        <p className="mt-1 text-[12px] text-white/60">Prize commitment plus RazeKit platform charges</p>
+        {totalKnown ? (
+          <>
+            <p className="mt-1.5 font-display text-4xl font-extrabold nums">{moneyMinor(totalMinor, currency)}</p>
+            <p className="mt-1 text-[12px] text-white/60">Prize commitment plus RazeKit platform charges</p>
+          </>
+        ) : (
+          <>
+            <p className="mt-1.5 font-display text-2xl font-extrabold">Not available right now</p>
+            <p className="mt-1 text-[12px] text-white/60">
+              We could not load the amount for this contest, so we are not going to guess it.
+              Reload the page, and contact support if it keeps happening.
+            </p>
+          </>
+        )}
       </Card>
 
       <BetaNotice notice={quote?.beta_notice || instr?.beta_notice || status?.beta_notice} />
 
       <Card className="p-5">
         <h2 className="font-display text-lg font-bold text-ink">What you are paying for</h2>
+        {!breakdown.length && (
+          <p className="mt-2 text-[13px] text-muted">
+            The line-by-line breakdown did not load. The total below is still the amount to send.
+          </p>
+        )}
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[380px] text-sm">
             <caption className="sr-only">Cost breakdown for funding this contest</caption>
@@ -342,7 +369,9 @@ export default function FundContest() {
               ))}
               <tr className="border-t-2 border-line-strong">
                 <th scope="row" className="py-3 pr-4 text-left font-display font-bold text-ink">Total required</th>
-                <td className="py-3 text-right font-display text-lg font-extrabold text-ink nums">{moneyMinor(totalMinor, currency)}</td>
+                <td className="py-3 text-right font-display text-lg font-extrabold text-ink nums">
+                  {totalKnown ? moneyMinor(totalMinor, currency) : 'Not available'}
+                </td>
               </tr>
             </tbody>
           </table>

@@ -31,6 +31,11 @@ const WD_FIELD = {
   ACCOUNT_CONFIRMATION_FAILED: 'confirm_last4',
 };
 
+// Which step each field is rendered on. An error written to a field that is not
+// on screen is an error nobody sees, so the step has to follow the error rather
+// than resetting underneath it.
+const WD_FIELD_STAGE = { amount: 'form', note: 'form', confirm_last4: 'confirm' };
+
 const FIGURES = [
   { key: 'total', label: 'Total balance', field: 'total_minor', icon: Coins },
   { key: 'available', label: 'Available', field: 'available_minor', icon: CheckCircle2 },
@@ -308,12 +313,25 @@ function RequestForm({ balance, account, disabled, onDone }) {
     try {
       await fn('withdrawalRequest', { amount: Number(amount), confirm_account_last4: last4.trim(), note: note.trim() });
       setNote(''); setLast4('');
+      setStage('form');
       await onDone('Your withdrawal request has been sent to the RazeKit finance team for manual review.');
     } catch (e) {
       const field = WD_FIELD[codeOf(e)];
-      if (field) setErrs({ [field]: msgOf(e, 'Check this value.') });
-      else setFormErr(msgOf(e, 'Your request could not be created. Nothing was changed on your balance.'));
-    } finally { setBusy(false); setStage('form'); }
+      const stageFor = field && WD_FIELD_STAGE[field];
+      if (stageFor) {
+        setErrs({ [field]: msgOf(e, 'Check this value.') });
+        // Go to the step that actually renders this field. Previously the
+        // `finally` below reset to 'form' unconditionally, which unmounted the
+        // confirm step in the same commit that wrote the error into it — so a
+        // rejected last-4 check returned the user to the amount form with
+        // nothing shown at all, and a failed withdrawal looked like no-op.
+        setStage(stageFor);
+      } else {
+        // Either an unmapped code or a field with no home on screen. The form
+        // alert sits above both steps, so this is always visible.
+        setFormErr(msgOf(e, 'Your request could not be created. Nothing was changed on your balance.'));
+      }
+    } finally { setBusy(false); }
   };
 
   return (
