@@ -507,7 +507,18 @@ export default function Explore() {
   // phone — so the two can never drift apart.
   const creatorFilters = (
     <div className="space-y-5">
-      <OptionList legend="Category" options={categoryOptions} value={cat} onChange={setCat} />
+      {/* Same reasoning as the record group below. These counts are counts of
+          LOADED profiles, so when the profile read failed every one of them is
+          zero — and "All categories 0" beside a failure notice still reads as a
+          claim that the directory is empty. Withdrawn until there is something
+          real to count. */}
+      {profileError ? (
+        <p className="text-[12px] leading-relaxed text-muted">
+          Filtering by category is unavailable until creator profiles load.
+        </p>
+      ) : (
+        <OptionList legend="Category" options={categoryOptions} value={cat} onChange={setCat} />
+      )}
       {/* Every count in this group is a count of finalized records. With no
           records to count they would all read 0, which offers the brand a
           filter that promises nothing exists — so the group is withdrawn until
