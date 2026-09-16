@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, Plus, ImagePlus, X, Loader2 } from 'lucide-react';
+import { AlertCircle, Heart, MessageCircle, Bookmark, Plus, ImagePlus, X, Loader2 } from 'lucide-react';
 import { entities, uploads } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initials, dateShort } from '@/lib/format';
@@ -95,11 +95,27 @@ export default function Feed() {
   const [posts, setPosts] = useState(null);
   const [likedIds, setLikedIds] = useState(new Set());
   const [showCreate, setShowCreate] = useState(false);
+  // A failed read used to land in `setPosts([])`, and an empty array is drawn as
+  // "No posts yet" — the product asserting that the community has posted nothing
+  // when all it actually knows is that the request never came back. "We don't
+  // know" is its own state, so it gets its own surface and its own way out.
+  const [loadErr, setLoadErr] = useState('');
 
-  useEffect(() => {
-    entities.Post.list('-created_date', 50).then((l) => setPosts((l || []).filter((p) => p.moderation_status !== 'removed' && p.status !== 'removed'))).catch(() => setPosts([]));
+  const load = useCallback(async () => {
+    setLoadErr('');
+    // Started before the feed is awaited so the two reads still overlap. Which
+    // posts you have already liked is decoration on the feed rather than the
+    // feed itself, so its failure stays quiet instead of taking the screen down.
     if (user?.id) entities.PostLike.filter({ user_id: user.id }, '-created_date', 200).then((l) => setLikedIds(new Set((l || []).map((x) => x.post_id)))).catch(() => {});
+    try {
+      const l = await entities.Post.list('-created_date', 50);
+      setPosts((l || []).filter((p) => p.moderation_status !== 'removed' && p.status !== 'removed'));
+    } catch (e) {
+      setLoadErr(e?.data?.error?.message || e?.message || 'The feed did not come back. Check your connection and try again.');
+    }
   }, [user?.id]);
+
+  useEffect(() => { load(); }, [load]);
 
   const toggleLike = async (post) => {
     if (!user) return;
@@ -117,7 +133,18 @@ export default function Feed() {
     <div className="max-w-2xl mx-auto space-y-5">
       <PageHeader eyebrow="Community" title="Feed" description="Winning work and creator showcases from across RazeKit."
         actions={status === 'authenticated' && <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" />Share work</Button>} />
-      {!posts ? (
+      {loadErr ? (
+        // Checked before the loading gate: on a failure `posts` is still null,
+        // and the shimmer would otherwise run forever on a request that is
+        // already over.
+        <div role="alert" className="rounded-lg border border-danger/30 bg-surface px-5 py-8 text-center">
+          <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-md bg-danger/10 text-danger"><AlertCircle className="h-5 w-5" aria-hidden="true" /></div>
+          <h3 className="font-display text-base font-bold text-ink">We couldn’t load the feed</h3>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-muted">{loadErr}</p>
+          <p className="mx-auto mt-1 max-w-sm text-[13px] text-muted">Nothing was posted, removed or changed — only this list failed to arrive.</p>
+          <div className="mt-4 flex justify-center"><Button variant="secondary" onClick={load}>Try again</Button></div>
+        </div>
+      ) : !posts ? (
         <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-80" />)}</div>
       ) : posts.length ? (
         <div className="space-y-4">{posts.map((p) => <PostCard key={p.id} post={p} liked={likedIds.has(p.id)} onLike={toggleLike} />)}</div>

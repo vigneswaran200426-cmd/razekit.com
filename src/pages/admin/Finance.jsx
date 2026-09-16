@@ -1277,8 +1277,13 @@ function SettingsTab() {
     });
   }, [data?.settings?.version]);
 
-  if (loading || !form) return <Skeleton className="h-96 rounded-lg" />;
+  // The error check has to come FIRST. `form` is only populated from
+  // data.settings, so a failed paymentSettingsGet leaves form null with loading
+  // false — and the previous order returned the skeleton on every subsequent
+  // render, making this branch unreachable. The tab that configures where
+  // customer money is sent shimmered forever instead of saying it had failed.
   if (error) return <Err error={error} />;
+  if (loading || !form) return <Skeleton className="h-96 rounded-lg" />;
   const s = data.settings;
   const canManage = gate('finance.manage_permissions');
 

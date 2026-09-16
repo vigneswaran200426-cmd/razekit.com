@@ -3,11 +3,12 @@
 //
 // Guide content describes only what is actually implemented. Nothing here
 // documents a planned feature as though it exists.
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen, MessageSquare, LifeBuoy, ChevronLeft, ChevronRight, Search,
   ShieldCheck, Trophy, Target, Activity, Wallet, Users, Sparkles, Send, Clock,
+  AlertCircle, RotateCcw,
 } from 'lucide-react';
 import { fn, contestRules } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -221,12 +222,32 @@ function Tickets() {
   const { user } = useAuth();
   const [form, setForm] = useState({ category: 'contest', subject: '', description: '' });
   const [tickets, setTickets] = useState(null);
+  const [loadErr, setLoadErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
 
-  const load = () => fn('supportTicketList').then((d) => setTickets(d.tickets || [])).catch(() => setTickets([]));
-  useEffect(() => { if (user) load(); else setTickets([]); }, [user?.id]);
+  // A failed lookup is not an empty inbox. Swallowing the failure into [] tells
+  // someone with an open ticket that they have none — so they raise a duplicate,
+  // or conclude support lost the one they already have. The failure has to stay
+  // visible as a failure.
+  const load = useCallback(async () => {
+    setLoadErr('');
+    try {
+      const d = await fn('supportTicketList');
+      setTickets(d.tickets || []);
+    } catch (e) {
+      // A NetworkError already carries a sentence written for a person. An HTTP
+      // error may carry only a status phrase, which explains nothing and leaks
+      // how the server failed, so it is replaced rather than shown.
+      setLoadErr(e?.data?.error?.message || (e?.isNetwork ? e.message : '') || 'The list did not come back.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) { setTickets([]); setLoadErr(''); return; }
+    load();
+  }, [user?.id, load]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -273,7 +294,14 @@ function Tickets() {
 
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">My tickets</h2>
-        {tickets === null ? <div className="py-8 grid place-items-center"><Spinner /></div>
+        {loadErr ? (
+          <EmptyState
+            icon={AlertCircle}
+            title="Your tickets could not be loaded"
+            description={`${loadErr} Nothing has changed: any ticket you have already raised is still open, so there is no need to raise it again.`}
+            action={<Button variant="secondary" onClick={load}><RotateCcw className="h-4 w-4" aria-hidden="true" />Try again</Button>}
+          />
+        ) : tickets === null ? <div className="py-8 grid place-items-center"><Spinner /></div>
           : tickets.length === 0 ? <EmptyState icon={MessageSquare} title="No tickets yet" description="Anything we can't answer automatically becomes a ticket here." />
           : (
             <div className="space-y-2">

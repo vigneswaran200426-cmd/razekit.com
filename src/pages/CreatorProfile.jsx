@@ -214,7 +214,11 @@ export default function CreatorProfile() {
   const [postsErr, setPostsErr] = useState(false);
   const [wins, setWins] = useState(null);
   const [winsErr, setWinsErr] = useState(false);
-  const [campaigns, setCampaigns] = useState(undefined);
+  // A failed request is not an empty history. This profile is public, so
+  // telling a brand that a member has never run a campaign when the call simply
+  // failed misrepresents them: null = still loading, [] + campaignsErr = unknown.
+  const [campaigns, setCampaigns] = useState(null);
+  const [campaignsErr, setCampaignsErr] = useState(false);
   const [reviews, setReviews] = useState(null);
   const [reviewsErr, setReviewsErr] = useState(false);
   const [tab, setTab] = useState(null);
@@ -252,16 +256,20 @@ export default function CreatorProfile() {
       .catch(() => { setReviews([]); setReviewsErr(true); });
   }, [id]);
 
-  useEffect(() => {
-    setTab(null); setPlaying(null);
-    loadIdentity(); loadPosts(); loadWins(); loadReviews();
-    fn('creatorPublicProfile', { creator_id: id }).then(setPublicProfile).catch(() => setPublicProfile(null));
-    // Contests are created by clients only, so authorship is what distinguishes
-    // a brand account from a creator account without reading the User record.
+  // Contests are created by clients only, so authorship is what distinguishes
+  // a brand account from a creator account without reading the User record.
+  const loadCampaigns = useCallback(() => {
+    setCampaigns(null); setCampaignsErr(false);
     entities.Contest.filter({ created_by_id: id }, '-created_date', 60)
       .then((l) => setCampaigns(l || []))
-      .catch(() => setCampaigns([]));
-  }, [id, loadIdentity, loadPosts, loadWins, loadReviews]);
+      .catch(() => { setCampaigns([]); setCampaignsErr(true); });
+  }, [id]);
+
+  useEffect(() => {
+    setTab(null); setPlaying(null);
+    loadIdentity(); loadPosts(); loadWins(); loadReviews(); loadCampaigns();
+    fn('creatorPublicProfile', { creator_id: id }).then(setPublicProfile).catch(() => setPublicProfile(null));
+  }, [id, loadIdentity, loadPosts, loadWins, loadReviews, loadCampaigns]);
 
   const rating = useMemo(() => {
     const list = reviews || [];
@@ -276,7 +284,9 @@ export default function CreatorProfile() {
 
   // Both the identity record and the authorship check decide which profile this
   // is, so the page is not rendered as one kind and then re-rendered as another.
-  if (profile === undefined || campaigns === undefined) return <ProfileSkeleton />;
+  // That gate is also this list's loading branch, which is why no section
+  // skeleton follows it: below this line campaigns is always a real array.
+  if (profile === undefined || campaigns === null) return <ProfileSkeleton />;
 
   const isBrand = Boolean(profile?.company_name || profile?.industry || profile?.business_description)
     || (campaigns || []).length > 0;
@@ -292,8 +302,8 @@ export default function CreatorProfile() {
 
   const tabs = isBrand
     ? [
-      { key: 'campaigns', label: 'Campaigns', count: (campaigns || []).length },
-      { key: 'collaborations', label: 'Collaborations', count: completed.length },
+      { key: 'campaigns', label: 'Campaigns', count: campaignsErr ? null : campaigns.length },
+      { key: 'collaborations', label: 'Collaborations', count: campaignsErr ? null : completed.length },
     ]
     : [
       { key: 'portfolio', label: 'Portfolio', count: posts?.length },
@@ -312,6 +322,18 @@ export default function CreatorProfile() {
         <p role="alert" className="rounded-md bg-danger/8 px-3 py-2 text-sm text-danger">
           We couldn’t load this profile’s details right now. Some information may be missing.
         </p>
+      )}
+
+      {/* Authorship is what marks a brand, so a failed campaign load can leave
+          the page unsure which kind of profile it is showing. Say so, rather
+          than quietly render a brand as a creator with nothing behind them. */}
+      {campaignsErr && !isBrand && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-danger/8 px-3 py-2 text-sm text-danger">
+          <span>We couldn’t check this member’s campaign history right now. Nothing has been removed — if they run campaigns, those are missing from this page.</span>
+          <Button variant="secondary" size="sm" onClick={loadCampaigns}>
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />Try again
+          </Button>
+        </div>
       )}
 
       {/* Identity */}
@@ -358,9 +380,9 @@ export default function CreatorProfile() {
           <div className="mt-5 flex flex-wrap items-start gap-x-8 gap-y-4 border-t border-line pt-4">
             {isBrand ? (
               <>
-                <HeroStat label="Campaigns" value={(campaigns || []).length} />
-                <HeroStat label="Running now" value={running.length} />
-                <HeroStat label="Completed" value={completed.length} />
+                <HeroStat label="Campaigns" value={campaignsErr ? null : campaigns.length} />
+                <HeroStat label="Running now" value={campaignsErr ? null : running.length} />
+                <HeroStat label="Completed" value={campaignsErr ? null : completed.length} />
               </>
             ) : (
               <>
@@ -580,7 +602,9 @@ export default function CreatorProfile() {
       {view === 'campaigns' && (
         <section aria-labelledby="campaigns-heading" className="space-y-3">
           <h2 id="campaigns-heading" className="sr-only">Campaigns</h2>
-          {(campaigns || []).length ? (
+          {campaignsErr ? (
+            <SectionError title="Campaigns could not be loaded" onRetry={loadCampaigns} />
+          ) : campaigns.length ? (
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {campaigns.map((c) => (
                 <li key={c.id} className="min-w-0">
@@ -616,7 +640,9 @@ export default function CreatorProfile() {
       {view === 'collaborations' && (
         <section aria-labelledby="collabs-heading" className="space-y-3">
           <h2 id="collabs-heading" className="sr-only">Completed collaborations</h2>
-          {completed.length ? (
+          {campaignsErr ? (
+            <SectionError title="Collaborations could not be loaded" onRetry={loadCampaigns} />
+          ) : completed.length ? (
             <>
               <ul className="space-y-3">
                 {completed.map((c) => (

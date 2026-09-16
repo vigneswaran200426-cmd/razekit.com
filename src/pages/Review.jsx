@@ -40,12 +40,24 @@ export default function Review() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
+  // A failed load used to become an empty array, which rendered "No entries
+  // yet — Submissions appear here as creators enter." A brand was told nobody
+  // had entered their contest when the truth was that the request failed.
+  const [loadErr, setLoadErr] = useState('');
+
   const loadSubs = async () => {
-    const s = await entities.Submission.filter({ contest_id: id }, '-created_date', 100).catch(() => []);
-    const submitted = (s || []).filter((x) => x.status !== 'working');
-    setSubs(submitted);
-    if (submitted.length && !sel) setSel(submitted[0]);
-    return submitted;
+    setLoadErr('');
+    try {
+      const s = await entities.Submission.filter({ contest_id: id }, '-created_date', 100);
+      const submitted = (s || []).filter((x) => x.status !== 'working');
+      setSubs(submitted);
+      if (submitted.length && !sel) setSel(submitted[0]);
+      return submitted;
+    } catch (e) {
+      setLoadErr(e?.data?.error?.message || e?.message || 'We could not load the entries for this contest.');
+      setSubs(null);
+      return [];
+    }
   };
 
   useEffect(() => { entities.Contest.get(id).then(setContest).catch(() => {}); loadSubs(); /* eslint-disable-next-line */ }, [id]);
@@ -82,6 +94,30 @@ export default function Review() {
       setErr(e?.data?.error?.message || e.message || 'Could not finalize the winner.');
     } finally { setBusy(false); }
   };
+
+  // The error branch comes FIRST. `subs === null` means the skeleton, so a
+  // failure that left subs null would shimmer forever — the same trap the
+  // handover screen had.
+  if (loadErr) {
+    return (
+      <div className="space-y-5">
+        <Link to={`/contest/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink transition-colors">
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Contest
+        </Link>
+        <Card className="p-6">
+          <h1 className="font-display text-lg font-bold text-ink">We could not load the entries</h1>
+          <p className="mt-1 text-sm text-muted">{loadErr}</p>
+          <p className="mt-1 text-[13px] text-muted">
+            This is not a statement about how many entries the contest has — we simply could not read them. Nothing has been changed.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button onClick={loadSubs}>Try again</Button>
+            <Button variant="secondary" to={`/contest/${id}`}>Back to contest</Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (subs === null) return <ReviewSkeleton />;
 
@@ -202,7 +238,10 @@ export default function Review() {
                     engagement={sel.engagement_score}
                     traffic={sel.traffic_score}
                     final={sel.final_score}
-                    state={sel.score_state || 'final'}
+                    // Passed through, never coerced. `|| 'final'` turned a
+                    // null state — which is exactly what a reinstated entry
+                    // carries — into a claim that the score was settled.
+                    state={sel.score_state}
                   />
                 ) : (
                   <p className="text-sm text-muted">

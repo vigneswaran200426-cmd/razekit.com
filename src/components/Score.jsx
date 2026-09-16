@@ -61,7 +61,14 @@ export function ScoreBar({ label, value, hint, tone = 'primary' }) {
  * Full breakdown: both dimensions plus the Final Score and the explanation the
  * spec requires — including that popularity signals never win on their own.
  */
-export function ScoreBreakdown({ engagement, traffic, final, state = 'final', compact = false }) {
+// The default is deliberately the most cautious state, not the most flattering.
+// It used to be 'final', so an entry whose score_state was null or undefined
+// rendered a green "Final — This score is finalized and preserved" badge.
+// submissionReinstate writes score_state: null while PRESERVING the entry's
+// scores, so a reinstated entry hit exactly that path and was presented as
+// settled when it was not. Both call sites pass the state explicitly; this
+// default only governs absence, and absence is not finality.
+export function ScoreBreakdown({ engagement, traffic, final, state = 'not_started', compact = false }) {
   const f = fmt(final);
   return (
     <div className="space-y-4">

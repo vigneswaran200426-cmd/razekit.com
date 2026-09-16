@@ -1,7 +1,7 @@
 // Admin Control Center (spec 11/12).
 // A controlled operations surface — the backend remains the security authority
 // and re-checks admin on every call.
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck, AlertTriangle, Users, Target, FileText, MousePointerClick,
@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { fn } from '@/lib/api';
 import { money, dateShort } from '@/lib/format';
-import { PageHeader, Card, Segmented, Spinner, Badge, EmptyState } from '@/components/ui';
+import { PageHeader, Card, Segmented, Spinner, Badge, EmptyState, Button } from '@/components/ui';
 import Finance from '@/pages/admin/Finance';
 
 const nf = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN') : '—');
@@ -36,11 +36,44 @@ function Group({ title, icon: Icon, children }) {
   );
 }
 
+/**
+ * The surface a failed load gets instead of an empty state.
+ *
+ * A read that fails and falls back to an empty list makes this console assert a
+ * number nobody measured: "no contests", "no audit events", "zero traffic".
+ * That is the most expensive lie an operations screen can tell, because the
+ * operator acts on it. A failure therefore reads as a failure, and zero stays
+ * reserved for a zero the server actually reported.
+ */
+function LoadError({ message, note, onRetry }) {
+  return (
+    <Card className="p-5">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="text-sm text-ink">{message}</p>
+          <p className="mt-1 text-[13px] text-muted">{note}</p>
+          <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>Try again</Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function Overview() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState('');
-  useEffect(() => { fn('adminOverview').then(setD).catch((e) => setErr(e?.data?.error || e.message)); }, []);
-  if (err) return <Card className="p-5"><p className="text-sm text-danger">{String(err)}</p></Card>;
+  // e.data.error is an object ({ code, message }), so the old
+  // `setErr(e?.data?.error || e.message)` plus `String(err)` printed the
+  // literal text "[object Object]" to an operator. Reach for the message.
+  const load = useCallback(() => {
+    setErr('');
+    fn('adminOverview').then(setD).catch((e) => setErr(e?.data?.error?.message || e?.message || 'The overview could not be loaded.'));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  if (err) {
+    return <LoadError message={err} note="Nothing was changed. These figures could not be read, which is not the same as them being zero." onRetry={load} />;
+  }
   if (!d) return <div className="py-16 grid place-items-center"><Spinner className="w-7 h-7" /></div>;
   const k = d.kpis;
 
@@ -144,7 +177,29 @@ function Overview() {
 
 function Contests() {
   const [rows, setRows] = useState(null);
-  useEffect(() => { fn('adminContests').then((d) => setRows(d.contests || [])).catch(() => setRows([])); }, []);
+  const [loadErr, setLoadErr] = useState('');
+
+  const load = useCallback(async () => {
+    setLoadErr('');
+    try {
+      const d = await fn('adminContests');
+      setRows(d.contests || []);
+    } catch (e) {
+      setLoadErr(e?.data?.error?.message || e?.message || 'The contest list could not be loaded.');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loadErr) {
+    return (
+      <LoadError
+        message={loadErr}
+        note="No contest was changed. This is a failed read, not a platform with no contests on it."
+        onRetry={load}
+      />
+    );
+  }
   if (rows === null) return <div className="py-12 grid place-items-center"><Spinner /></div>;
   if (!rows.length) return <EmptyState icon={Target} title="No contests" description="Contests will appear here as brands publish them." />;
   return (
@@ -192,7 +247,32 @@ function Contests() {
 
 function Traffic() {
   const [d, setD] = useState(null);
-  useEffect(() => { fn('adminTraffic').then(setD).catch(() => setD({ total_events: 0, by_state: {}, risk_reasons: {}, recent: [] })); }, []);
+  const [loadErr, setLoadErr] = useState('');
+
+  // The old fallback here substituted a zeroed payload, so a dropped request
+  // rendered "no traffic events" and "no excluded events" with full confidence.
+  // Traffic figures are the evidence behind exclusions and payouts; a fabricated
+  // zero is the one thing this tab must never show.
+  const load = useCallback(async () => {
+    setLoadErr('');
+    try {
+      setD(await fn('adminTraffic'));
+    } catch (e) {
+      setLoadErr(e?.data?.error?.message || e?.message || 'Traffic verification data could not be loaded.');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loadErr) {
+    return (
+      <LoadError
+        message={loadErr}
+        note="Nothing was changed. No counts were retrieved, so do not read this as zero events or zero exclusions."
+        onRetry={load}
+      />
+    );
+  }
   if (!d) return <div className="py-12 grid place-items-center"><Spinner /></div>;
   return (
     <div className="space-y-4">
@@ -217,7 +297,18 @@ function Traffic() {
 
 function UsersPanel() {
   const [d, setD] = useState(null);
-  useEffect(() => { fn('adminUsers').then(setD).catch(() => setD(null)); }, []);
+  const [loadErr, setLoadErr] = useState('');
+  // Catching into null left this tab spinning forever: null is also the value
+  // that means "still loading", so a failed read was indistinguishable from one
+  // that had not finished.
+  const load = useCallback(() => {
+    setLoadErr('');
+    fn('adminUsers').then(setD).catch((e) => setLoadErr(e?.data?.error?.message || e?.message || 'The account list could not be loaded.'));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  if (loadErr) {
+    return <LoadError message={loadErr} note="Nothing was changed. No accounts were retrieved, so do not read this as an empty platform." onRetry={load} />;
+  }
   if (!d) return <div className="py-12 grid place-items-center"><Spinner /></div>;
   return (
     <div className="space-y-4">
@@ -258,7 +349,31 @@ function UsersPanel() {
 
 function Audit() {
   const [rows, setRows] = useState(null);
-  useEffect(() => { fn('adminAudit').then((d) => setRows(d.events || [])).catch(() => setRows([])); }, []);
+  const [loadErr, setLoadErr] = useState('');
+
+  const load = useCallback(async () => {
+    setLoadErr('');
+    try {
+      const d = await fn('adminAudit');
+      setRows(d.events || []);
+    } catch (e) {
+      setLoadErr(e?.data?.error?.message || e?.message || 'The audit log could not be loaded.');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  // An audit log that silently reads as empty is worse than one that fails
+  // loudly: the whole point of the record is that its absence is meaningful.
+  if (loadErr) {
+    return (
+      <LoadError
+        message={loadErr}
+        note="Nothing was changed. The record could not be read, which is not the same as there being nothing in it."
+        onRetry={load}
+      />
+    );
+  }
   if (rows === null) return <div className="py-12 grid place-items-center"><Spinner /></div>;
   if (!rows.length) return <EmptyState icon={ScrollText} title="No audit events" description="Winner finalizations and other audited actions appear here." />;
   return (

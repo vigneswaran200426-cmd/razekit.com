@@ -122,6 +122,25 @@ function ListSkeleton() {
   );
 }
 
+/**
+ * A request that failed is not a measurement. Tracker's entire claim is that it
+ * reports what was measured, so a dropped read has to say so out loud — falling
+ * through to an empty state would report a zero the product never observed.
+ */
+function LoadFailure({ message, onRetry }) {
+  return (
+    <Card className="p-5">
+      <p role="alert" className="flex items-start gap-1.5 text-sm font-medium text-danger">
+        <AlertCircle className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />{message}
+      </p>
+      <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+        Nothing was changed. This view only reads what has already been measured, so your entries and scores are untouched.
+      </p>
+      <Button className="mt-3" size="sm" variant="secondary" onClick={onRetry}>Try again</Button>
+    </Card>
+  );
+}
+
 /* ── score composition ───────────────────────────────────────────────────── */
 
 /**
@@ -713,15 +732,29 @@ function BrandTracker() {
 function CreatorTracker() {
   const [tab, setTab] = useState('overview');
   const [data, setData] = useState(null);
-  const [rows, setRows] = useState(null);
+  const [rows, setRows] = useState(null);   // null = still reading, never "none"
   const [err, setErr] = useState('');
+  const [rowsErr, setRowsErr] = useState('');
 
-  useEffect(() => {
-    fn('trackerCreatorOverview', {}).then(setData).catch((e) => setErr(msg(e, 'Could not load your performance.')));
-    fn('trackerCreatorContests', {}).then((d) => setRows(d?.contests || [])).catch(() => setRows([]));
+  const loadOverview = useCallback(async () => {
+    setErr('');
+    try { setData(await fn('trackerCreatorOverview', {})); }
+    catch (e) { setErr(msg(e, 'Could not load your performance.')); }
   }, []);
 
-  if (err) return <Card className="p-5"><p role="alert" className="text-sm text-danger">{err}</p></Card>;
+  // The contest list feeds both the "best performance" card and the contests
+  // tab. A failure here used to land as an empty list, which told a creator they
+  // had entered nothing — a fact this screen had no way of knowing.
+  const loadContests = useCallback(async () => {
+    setRowsErr(''); setRows(null);
+    try { const d = await fn('trackerCreatorContests', {}); setRows(d?.contests || []); }
+    catch (e) { setRowsErr(msg(e, 'Could not load your contests.')); }
+  }, []);
+
+  useEffect(() => { loadOverview(); }, [loadOverview]);
+  useEffect(() => { loadContests(); }, [loadContests]);
+
+  if (err) return <LoadFailure message={err} onRetry={loadOverview} />;
   if (!data) return <ListSkeleton />;
 
   const k = data.kpis;
@@ -749,7 +782,13 @@ function CreatorTracker() {
               sub={k.average_final_score === null ? 'No finalized scores yet' : 'Across finalized contests'} icon={TrendingUp} />
           </div>
 
-          {best ? (
+          {/* Same three states as the contests tab: this card reads the same
+              list, so it must not claim "nothing finalized" when the read failed. */}
+          {rowsErr ? (
+            <LoadFailure message={rowsErr} onRetry={loadContests} />
+          ) : rows === null ? (
+            <Card className="p-5"><div className="py-12 grid place-items-center"><Spinner /></div></Card>
+          ) : best ? (
             <Card className="p-5">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Your best performance</h2>
@@ -769,7 +808,8 @@ function CreatorTracker() {
       )}
 
       {tab === 'contests' && (
-        rows === null ? <div className="py-12 grid place-items-center"><Spinner /></div>
+        rowsErr ? <LoadFailure message={rowsErr} onRetry={loadContests} />
+          : rows === null ? <div className="py-12 grid place-items-center"><Spinner /></div>
           : rows.length === 0 ? (
             <EmptyState icon={Target} title="You haven't joined a contest yet"
               description="Browse open contests and submit your first entry. Your scores start once your work is published and tracked."

@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 import { Compass, Plus, Wallet as WalletIcon } from 'lucide-react';
 import { entities } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { money, moneyMinor } from '@/lib/format';
+import { money, moneyMinor, fundingStatusLabel } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { PageHeader, Button, Badge, EmptyState, Skeleton, Metric } from '@/components/ui';
 import CampaignCarousel from '@/components/CampaignCarousel';
@@ -219,7 +219,7 @@ function ClientHome({ data, user, onRetry }) {
     ...unfunded.map((c) => ({
       key: `fund-${c.id}`,
       title: c.title,
-      detail: `Funding status: ${humanize(c.funding_status)}. Creators can see the brief, but the prize is not confirmed until funding is verified.`,
+      detail: `Funding status: ${fundingStatusLabel(c.funding_status)}. Creators can see the brief, but the prize is not confirmed until funding is verified.`,
       to: `/contest/${c.id}/fund`,
       cta: 'Fund contest',
       badge: 'Funding',

@@ -41,6 +41,12 @@ const RECORD = [
   { key: 'won', label: 'Has won a contest' },
 ];
 
+/* These two sorts, and the whole RECORD group, read the finalized-record
+   overlay. Without it they would order — or filter — the directory by a value
+   that is absent for everyone, which is a ranking invented out of nothing. So
+   they are withdrawn while the overlay is unknown rather than quietly applied. */
+const RECORD_SORTS = ['wins', 'score'];
+
 /* Profile arrays arrive as arrays, JSON strings or comma-separated strings
    depending on how the profile was written. Read all three, invent none. */
 function asList(v) {
@@ -117,7 +123,7 @@ function Tabs({ value, onChange, tabs }) {
 /* One creator as a row. The row opens a detail panel rather than navigating,
    because a brand builds a shortlist by comparing — and losing the list on
    every look costs more on a phone than anywhere else. */
-function CreatorRow({ profile: p, perf, onOpen }) {
+function CreatorRow({ profile: p, perf, recordKnown, onOpen }) {
   const name = displayName(p) || 'Creator';
   const tags = [...asList(p.categories), ...asList(p.skills)].slice(0, 3);
   return (
@@ -142,8 +148,11 @@ function CreatorRow({ profile: p, perf, onOpen }) {
             </ul>
           )}
 
-          {/* Track record in one honest line: what was finalized, or that
-              nothing has been. */}
+          {/* Track record in one honest line: what was finalized, that nothing
+              has been, or — when the record overlay never arrived — that we do
+              not know. The third case is not the second: telling a brand this
+              creator has never placed, because a request failed, is a claim we
+              cannot make. */}
           <p className="mt-2 text-[12px] text-muted">
             {perf ? (
               <>
@@ -152,7 +161,7 @@ function CreatorRow({ profile: p, perf, onOpen }) {
                 <span className="nums tabular-nums">{perf.entries}</span> scored {perf.entries === 1 ? 'entry' : 'entries'}
                 {perf.average_final_score != null && <> · avg <span className="nums tabular-nums">{perf.average_final_score}</span></>}
               </>
-            ) : 'No finalized contest results yet'}
+            ) : recordKnown ? 'No finalized contest results yet' : 'Contest record unavailable'}
           </p>
         </div>
         {perf?.wins > 0 && <Badge tone="success" className="mt-0.5 shrink-0"><Trophy className="h-3 w-3" aria-hidden="true" />Winner</Badge>}
@@ -180,7 +189,7 @@ function CreatorSkeletons({ count = 6 }) {
 
 /* The detail panel: profile claims on top, finalized measurements below, and
    an unmistakable line between the two. */
-function CreatorSheet({ entry, onClose }) {
+function CreatorSheet({ entry, recordError, onClose }) {
   const p = entry?.profile;
   const perf = entry?.perf;
   const name = p ? (displayName(p) || 'Creator') : '';
@@ -221,6 +230,10 @@ function CreatorSheet({ entry, onClose }) {
             <p className="mt-1 text-[12px] leading-relaxed text-muted">
               From judged contests only. Nothing here comes from followers, views or likes.
             </p>
+            {/* Four tiles reading "Not measured" are true but silent about why.
+                Said plainly, the brand knows to look again rather than reading
+                an absence as a verdict on the creator. */}
+            {recordError && <p className="mt-1 text-[12px] leading-relaxed text-muted">{recordError}</p>}
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4">
               <Metric label="Contest wins" value={perf ? perf.wins : null} />
               <Metric label="Scored entries" value={perf ? perf.entries : null} />
@@ -346,6 +359,7 @@ export default function Explore() {
   const [profiles, setProfiles] = useState(null);
   const [profileError, setProfileError] = useState(null);
   const [perf, setPerf] = useState(null);          // creator_id → finalized record
+  const [perfError, setPerfError] = useState(null);
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
   const [record, setRecord] = useState('any');
@@ -364,15 +378,24 @@ export default function Explore() {
     entities.UserProfile.list('-created_date', PROFILE_LIMIT)
       .then((rows) => setProfiles(rows || []))
       .catch(() => setProfileError('We couldn’t load creator profiles just now.'));
-    // The performance overlay is optional: if it fails, every creator reads
-    // "Not measured" rather than the page failing or a zero appearing.
+  }, []);
+
+  /* The performance overlay is optional, so it loads and retries on its own: a
+     failure here costs the overlay, not the directory, and trying again must
+     not throw away a list that arrived fine.
+     `perf` stays null until it genuinely resolves — an empty map is truthy, and
+     a truthy empty map is exactly how "we don't know" became a measured zero on
+     every row, in the strip, and in the record filter's counts. */
+  const loadRecords = useCallback(() => {
+    setPerfError(null);
+    setPerf(null);
     fn('winnersLeaderboard', { limit: 100 })
       .then((d) => {
         const map = {};
         for (const r of d?.leaderboard || []) if (r.creator_id) map[r.creator_id] = r;
         setPerf(map);
       })
-      .catch(() => setPerf({}));
+      .catch(() => setPerfError('We couldn’t load contest records just now. Nothing was changed — every creator is still listed, with their record left unmeasured.'));
   }, []);
 
   const loadWork = useCallback(() => {
@@ -384,7 +407,13 @@ export default function Explore() {
   }, []);
 
   useEffect(loadCreators, [loadCreators]);
+  useEffect(loadRecords, [loadRecords]);
   useEffect(() => { if (tab === 'work' && posts === null && !postError) loadWork(); }, [tab, posts, postError, loadWork]);
+
+  /* Three states, not two: measured, still arriving, and unknown. Everything
+     that reads a record branches on `recordKnown`, never on `perf` alone. */
+  const recordKnown = !!perf;
+  const recordLoading = perf === null && !perfError;
 
   /* Only creator profiles, only the ones meant to be public, only the ones
      with a name to show. A brand profile in a creator directory is noise. */
@@ -403,20 +432,28 @@ export default function Explore() {
       if (!hay.includes(q.trim().toLowerCase())) return false;
     }
     if (skip !== 'cat' && cat !== 'all' && !asList(p.categories).includes(cat)) return false;
-    if (skip !== 'record') {
+    /* With no overlay every creator's record is null, so this test would hide
+       the entire directory on behalf of data we never received. It applies only
+       to records we actually hold. */
+    if (skip !== 'record' && recordKnown) {
       if (record === 'scored' && !e.perf) return false;
       if (record === 'won' && !(e.perf?.wins > 0)) return false;
     }
     return true;
-  }, [q, cat, record]);
+  }, [q, cat, record, recordKnown]);
+
+  // The select cannot offer an order it has no numbers for, and cannot keep
+  // showing one the user picked before the overlay went away.
+  const sortOptions = recordKnown ? SORTS : SORTS.filter((s) => !RECORD_SORTS.includes(s.key));
+  const activeSort = recordKnown || !RECORD_SORTS.includes(sort) ? sort : 'newest';
 
   const shownCreators = useMemo(() => {
     const list = creators.filter((e) => creatorMatches(e, null));
-    if (sort === 'name') list.sort((a, b) => displayName(a.profile).localeCompare(displayName(b.profile)));
-    else if (sort === 'wins') list.sort((a, b) => (b.perf?.wins ?? -1) - (a.perf?.wins ?? -1));
-    else if (sort === 'score') list.sort((a, b) => (b.perf?.average_final_score ?? -1) - (a.perf?.average_final_score ?? -1));
+    if (activeSort === 'name') list.sort((a, b) => displayName(a.profile).localeCompare(displayName(b.profile)));
+    else if (activeSort === 'wins') list.sort((a, b) => (b.perf?.wins ?? -1) - (a.perf?.wins ?? -1));
+    else if (activeSort === 'score') list.sort((a, b) => (b.perf?.average_final_score ?? -1) - (a.perf?.average_final_score ?? -1));
     return list;
-  }, [creators, creatorMatches, sort]);
+  }, [creators, creatorMatches, activeSort]);
 
   const categoryOptions = useMemo(() => {
     const base = creators.filter((e) => creatorMatches(e, 'cat'));
@@ -459,7 +496,10 @@ export default function Explore() {
   const creatorsLoading = profiles === null && !profileError;
   const creatorStatus = profileError ? 'error' : creatorsLoading ? 'loading' : shownCreators.length === 0 ? 'empty' : 'ready';
   const workStatus = postError ? 'error' : posts === null ? 'loading' : shownWork.length === 0 ? 'empty' : 'ready';
-  const creatorsFiltered = !!q.trim() || cat !== 'all' || record !== 'any';
+  // An inert record filter is not an applied one, so it must not colour the
+  // "no matches" copy or the Filters badge.
+  const recordFiltered = recordKnown && record !== 'any';
+  const creatorsFiltered = !!q.trim() || cat !== 'all' || recordFiltered;
   const withRecord = creators.filter((e) => !!e.perf).length;
   const categoryCount = Math.max(0, categoryOptions.length - 1);
 
@@ -468,8 +508,18 @@ export default function Explore() {
   const creatorFilters = (
     <div className="space-y-5">
       <OptionList legend="Category" options={categoryOptions} value={cat} onChange={setCat} />
-      <OptionList legend="Contest record" options={recordOptions} value={record} onChange={setRecord} />
-      {(cat !== 'all' || record !== 'any') && (
+      {/* Every count in this group is a count of finalized records. With no
+          records to count they would all read 0, which offers the brand a
+          filter that promises nothing exists — so the group is withdrawn until
+          the numbers behind it are real. */}
+      {recordKnown ? (
+        <OptionList legend="Contest record" options={recordOptions} value={record} onChange={setRecord} />
+      ) : perfError ? (
+        <p className="text-[12px] leading-relaxed text-muted">
+          Filtering by contest record is unavailable until records load.
+        </p>
+      ) : null}
+      {(cat !== 'all' || recordFiltered) && (
         <Button variant="ghost" className="h-11 w-full justify-start px-2" onClick={() => { setCat('all'); setRecord('any'); }}>
           Clear all filters
         </Button>
@@ -501,7 +551,9 @@ export default function Explore() {
           {creatorsLoading ? <StripSkeleton label="Creators" /> : <Metric label="Creators" value={profileError ? null : creators.length} />}
         </div>
         <div className="min-w-0 px-3 py-3 sm:px-4">
-          {creatorsLoading ? <StripSkeleton label="With results" /> : <Metric label="With results" value={profileError || !perf ? null : withRecord} />}
+          {creatorsLoading || recordLoading
+            ? <StripSkeleton label="With results" />
+            : <Metric label="With results" value={profileError || !recordKnown ? null : withRecord} />}
         </div>
         <div className="min-w-0 px-3 py-3 sm:px-4">
           {creatorsLoading ? <StripSkeleton label="Categories" /> : <Metric label="Categories" value={profileError ? null : categoryCount} />}
@@ -518,7 +570,7 @@ export default function Explore() {
         <div id="explore-panel-creators" role="tabpanel" aria-labelledby="explore-tab-creators" tabIndex={-1} className="space-y-4 focus:outline-none">
           <div className="flex items-center gap-2">
             <SearchField id="explore-creator-search" label="Search creators" placeholder="Name, skill, tool…" value={q} onChange={setQ} />
-            <FilterButton count={[cat !== 'all', record !== 'any'].filter(Boolean).length} onClick={() => setFilterSheet(true)} />
+            <FilterButton count={[cat !== 'all', recordFiltered].filter(Boolean).length} onClick={() => setFilterSheet(true)} />
           </div>
 
           <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
@@ -537,14 +589,24 @@ export default function Explore() {
                   <label htmlFor="explore-sort" className="text-[13px] text-muted">Sort</label>
                   <select
                     id="explore-sort"
-                    value={sort}
+                    value={activeSort}
                     onChange={(e) => setSort(e.target.value)}
                     className="h-11 rounded-md border border-line-strong bg-surface px-3 text-[13px] font-medium text-ink transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                    {sortOptions.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
                   </select>
                 </div>
               </div>
+
+              {/* The directory itself is fine, so this is a note rather than an
+                  alarm — but it has to be visible next to the rows now reading
+                  "Contest record unavailable", and it has to offer the way back. */}
+              {perfError && creatorStatus !== 'error' && (
+                <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-surface-2 px-3 py-2">
+                  <p className="min-w-0 flex-1 text-[12px] leading-relaxed text-muted">{perfError}</p>
+                  <Button variant="secondary" size="sm" onClick={loadRecords}>Try again</Button>
+                </div>
+              )}
 
               <ListState
                 status={creatorStatus}
@@ -570,7 +632,7 @@ export default function Explore() {
               >
                 <ul className="space-y-3 xl:grid xl:grid-cols-2 xl:gap-3 xl:space-y-0">
                   {shownCreators.map((e) => (
-                    <CreatorRow key={e.profile.id} profile={e.profile} perf={e.perf} onOpen={() => setOpen(e)} />
+                    <CreatorRow key={e.profile.id} profile={e.profile} perf={e.perf} recordKnown={recordKnown} onOpen={() => setOpen(e)} />
                   ))}
                 </ul>
               </ListState>
@@ -678,7 +740,7 @@ export default function Explore() {
         )}
       </aside>
 
-      <CreatorSheet entry={open} onClose={() => setOpen(null)} />
+      <CreatorSheet entry={open} recordError={perfError} onClose={() => setOpen(null)} />
     </div>
   );
 }

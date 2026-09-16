@@ -453,10 +453,17 @@ function CollaborationState({ contest, handover, state }) {
   if (state === 'loading') return <Skeleton className="h-16 rounded-lg" />;
   if (!contest) return null;
 
-  const needsHandover = contest.handover_required === true
-    || (contest.post_winner_action && contest.post_winner_action !== 'none');
-  const collab = contest.collaboration_type && contest.collaboration_type !== 'none'
-    ? contest.collaboration_type : null;
+  // These enums are stored UPPERCASE — the server's own default for
+  // post_winner_action is the string "NONE" — and this compared against
+  // lowercase 'none'. 'NONE' !== 'none' is always true, so needsHandover was
+  // true for every contest on the page, and every winner in the public hub was
+  // captioned "Account handover required". That is a contractual claim about
+  // what a creator owes a brand, displayed publicly, about creators who owe
+  // nothing of the kind. Compared case-insensitively so neither casing can
+  // reintroduce it.
+  const isNone = (v) => !v || String(v).trim().toLowerCase() === 'none';
+  const needsHandover = contest.handover_required === true || !isNone(contest.post_winner_action);
+  const collab = isNone(contest.collaboration_type) ? null : contest.collaboration_type;
   if (!needsHandover && !collab) return null;
 
   return (
