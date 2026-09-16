@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Check, Send, ShieldCheck, Clock, MessagesSquare } from 'lucide-react';
-import { entities } from '@/lib/api';
+import { AlertCircle, ArrowLeft, Check, Send, ShieldCheck, Clock, MessagesSquare } from 'lucide-react';
+import { entities, fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { dateShort } from '@/lib/format';
 import { Card, Button, Badge, Input, PageHeader, Skeleton, EmptyState } from '@/components/ui';
@@ -17,57 +17,110 @@ export default function Handover() {
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  // A failed contest load used to leave this page shimmering forever: the load
+  // swallowed the error to null and the render gate treated null as "still
+  // loading". A failure now has somewhere to go.
+  const [loadErr, setLoadErr] = useState('');
+  const [actionErr, setActionErr] = useState('');
   const endRef = useRef(null);
 
   const loadMsgs = async (hid) => { const m = await entities.HandoverMessage.filter({ handover_id: hid }, 'created_date', 200).catch(() => []); setMsgs(m || []); };
 
-  useEffect(() => {
-    (async () => {
-      const c = await entities.Contest.get(id).catch(() => null);
+  const load = useCallback(async () => {
+    setLoadErr('');
+    try {
+      const c = await entities.Contest.get(id);
       setContest(c);
       const list = await entities.Handover.filter({ contest_id: id }, '-created_date', 1).catch(() => []);
       const h = (list || [])[0] || null;
       setHo(h);
       if (h) loadMsgs(h.id);
-    })();
+    } catch (e) {
+      setLoadErr(e?.data?.error?.message || e?.message || 'We could not load this handover.');
+      setHo(null);
+    }
   }, [id]);
+
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs.length]);
 
   const isClient = contest && user?.id === contest.created_by_id;
   const isWinner = contest && user?.id === contest.winner_user_id;
 
+  // Every mutation below goes through a server function. The browser used to
+  // write status, client_id, winner_id and completed_at directly; all four are
+  // server-only, so each of these actions was a silent 403 that changed nothing
+  // and said nothing. The client now states an intent and the server decides.
   const start = async () => {
-    setBusy(true);
+    setBusy(true); setActionErr('');
     try {
-      const h = await entities.Handover.create({ contest_id: id, contest_title: contest.title, client_id: contest.created_by_id, winner_id: contest.winner_user_id, status: 'initiated', started_at: new Date().toISOString() });
-      setHo(h);
+      const r = await fn('handoverStart', { contest_id: id });
+      setHo(r.handover);
+      if (r.handover) loadMsgs(r.handover.id);
+    } catch (e) {
+      setActionErr(e?.data?.error?.message || e?.message || 'The handover could not be started.');
     } finally { setBusy(false); }
   };
 
   const confirm = async () => {
     if (!ho) return;
-    setBusy(true);
+    setBusy(true); setActionErr('');
     try {
-      const patch = {};
-      if (isWinner) { patch.creator_confirmation = true; patch.creator_confirmed_at = new Date().toISOString(); }
-      if (isClient) { patch.client_confirmation = true; patch.client_confirmed_at = new Date().toISOString(); }
-      const bothAfter = (ho.creator_confirmation || isWinner) && (ho.client_confirmation || isClient);
-      patch.status = bothAfter ? 'completed' : (isWinner ? 'winner_confirmed' : 'in_progress');
-      if (bothAfter) patch.completed_at = new Date().toISOString();
-      const updated = await entities.Handover.update(ho.id, patch);
-      setHo(updated);
-      if (bothAfter) await entities.Contest.update(id, { status: 'completed', completed_at: new Date().toISOString() }).catch(() => {});
+      // Which side the caller is on, whether both have now confirmed, and the
+      // resulting status are all decided server-side. Completion gates payout,
+      // so it is not a conclusion a browser gets to reach.
+      const r = await fn('handoverConfirm', { handover_id: ho.id });
+      setHo(r.handover);
+      if (r.completed) await load();
+    } catch (e) {
+      setActionErr(e?.data?.error?.message || e?.message || 'Your confirmation could not be recorded.');
     } finally { setBusy(false); }
   };
 
   const send = async (e) => {
     e.preventDefault();
-    if (!text.trim() || !ho) return;
-    const body = text.trim(); setText('');
-    const m = await entities.HandoverMessage.create({ handover_id: ho.id, contest_id: id, client_id: ho.client_id, winner_id: ho.winner_id, sender_id: user.id, sender_role: isClient ? 'client' : 'creator', body }).catch(() => null);
-    if (m) setMsgs((p) => [...p, m]);
+    const body = text.trim();
+    if (!body || !ho) return;
+    setActionErr('');
+    try {
+      const r = await fn('handoverSend', { handover_id: ho.id, body });
+      // The composer is cleared only once the message exists. It used to be
+      // cleared first, so a rejected send destroyed what the user had typed in
+      // a room they were told was how the two parties coordinate.
+      setText('');
+      if (r.message) setMsgs((p) => [...p, r.message]);
+    } catch (err) {
+      setActionErr(err?.data?.error?.message || err?.message || 'That message could not be sent. Your text is still here.');
+    }
   };
+
+  // A real failure gets a real surface. `!contest` alone used to mean "keep
+  // shimmering", which turned every 404, 403 and dropped connection into a page
+  // that never resolved and offered no way out but the back button.
+  if (loadErr) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-5">
+        <Link to={`/contest/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Contest
+        </Link>
+        <Card className="p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
+            <div>
+              <h1 className="font-display text-lg font-bold text-ink">This handover could not be loaded</h1>
+              <p className="mt-1 text-sm text-muted">{loadErr}</p>
+              <p className="mt-1 text-[13px] text-muted">Nothing has been changed. It is safe to try again.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={load}>Try again</Button>
+                <Button variant="secondary" to={`/contest/${id}`}>Back to contest</Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (ho === undefined || !contest) {
     return (
@@ -118,6 +171,12 @@ export default function Handover() {
           </ol>
 
           <div className="mt-2 pt-5 border-t border-line">
+            {actionErr && (
+              <div role="alert" className="mb-3 flex items-start gap-2 rounded-md border border-danger/25 bg-danger-wash px-3 py-2 text-[13px] text-danger">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{actionErr}</span>
+              </div>
+            )}
             {!ho ? (
               (isClient || isWinner) ? <Button loading={busy} onClick={start}>Start handover</Button> : <p className="text-sm text-muted">Waiting for the handover to begin.</p>
             ) : ho.status === 'completed' ? (

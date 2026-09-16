@@ -21,6 +21,7 @@ import {
   financeWithdrawalApprove, financeWithdrawalTransferSent, financeWithdrawalConfirm,
   financeWithdrawalFail, financeWithdrawalReverse,
 } from './withdrawals.js';
+import { handoverStart, handoverConfirm, handoverSend } from './handover.js';
 import {
   payoutAccountSave, payoutOverview, payoutRequest,
   financePayoutQueue, financePayoutDetail, financeApprovePayout, financeRecordPayout,
@@ -56,6 +57,7 @@ import {
 // wallet/escrow/fees domain in money/*.ts is reused underneath, and ledger/*.ts
 // is the single book of record — there is no second ledger.
 export const HANDLERS = {
+  handoverStart, handoverConfirm, handoverSend,
   visualAssetRequest, visualAssetAdmin, visualAssetWorker,
   winnerFinalize,
   trackingLinkCreate, trackingLinkList,
@@ -121,6 +123,10 @@ export const HANDLERS = {
 // Functions callable over HTTP via the /api/functions/:name route.
 // visualAssetWorker is intentionally NOT here — it runs only from the scheduler.
 export const HTTP_ALLOWED = new Set([
+  // The handover state machine. These replace direct entity writes from the
+  // browser: status, both party ids and completed_at are server-only, so the
+  // client states an intent and the server decides what it means.
+  'handoverStart', 'handoverConfirm', 'handoverSend',
   'visualAssetRequest', 'visualAssetAdmin',
   // winnerFinalize does its own owner/admin check and is the ONLY way a winner
   // is set, so it is exposed to authenticated callers rather than admin-only.
