@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Heart, MessageCircle, Bookmark, Plus, ImagePlus, X, Loader2 } from 'lucide-react';
+import { AlertCircle, Heart, MessageCircle, Bookmark, Plus, ImagePlus, Loader2 } from 'lucide-react';
 import { entities, uploads } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initials, dateShort } from '@/lib/format';
-import { PageHeader, Card, Button, Badge, Avatar, EmptyState, Skeleton, Input } from '@/components/ui';
+import { PageHeader, Card, Button, Badge, Avatar, EmptyState, Skeleton, Input, Sheet } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
 function PostCard({ post, liked, onLike }) {
@@ -67,10 +67,25 @@ function CreateModal({ onClose, onCreated }) {
     } finally { setSaving(false); }
   };
 
+  // This was the only hand-rolled overlay left in the product: a bare div with
+  // an onClick, no role="dialog", no aria-modal, no accessible name, no Escape
+  // handler, no focus move and no scroll lock. A keyboard user tabbed straight
+  // through it into the page behind and could not dismiss it without a mouse;
+  // a screen-reader user was never told a dialog had opened. Sheet already
+  // provides every one of those, plus a 44px close target and the
+  // bottom-sheet-on-mobile behaviour the rest of the product uses.
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/50 backdrop-blur-sm p-4" onClick={onClose}>
-      <Card className="w-full max-w-lg p-5" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4"><h2 className="font-display text-lg font-bold text-ink">Share your work</h2><button onClick={onClose} className="text-muted hover:text-ink"><X className="w-5 h-5" /></button></div>
+    <Sheet
+      open
+      onClose={onClose}
+      title="Share your work"
+      footer={(
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button loading={saving} disabled={!mediaUrl && !caption.trim()} onClick={submit}>Post</Button>
+        </div>
+      )}
+    >
         <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={onFile} />
         {mediaUrl ? (
           <div className="relative rounded-md overflow-hidden border border-line mb-3">
@@ -81,12 +96,12 @@ function CreateModal({ onClose, onCreated }) {
             {uploading ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <ImagePlus className="w-6 h-6" />}<span className="text-sm font-medium">{uploading ? 'Uploading…' : 'Add image or video'}</span>
           </button>
         )}
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (optional)" className="mb-2" />
-        <textarea rows={3} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Say something about it…"
+        <label htmlFor="feed-title" className="sr-only">Title</label>
+        <Input id="feed-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (optional)" className="mb-2" />
+        <label htmlFor="feed-caption" className="sr-only">Say something about your work</label>
+        <textarea id="feed-caption" rows={3} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Say something about it…"
           className="w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/70 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-        <div className="flex justify-end gap-2 mt-4"><Button variant="secondary" onClick={onClose}>Cancel</Button><Button loading={saving} disabled={!mediaUrl && !caption.trim()} onClick={submit}>Post</Button></div>
-      </Card>
-    </div>
+    </Sheet>
   );
 }
 
