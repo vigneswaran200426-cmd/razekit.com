@@ -39,14 +39,28 @@ const NOTIF = [
   { key: 'notif_winners', label: 'Winners', description: 'When a winner is selected on a contest you are part of.' },
   { key: 'notif_payments', label: 'Payments', description: 'Funding, verification and payment status changes.' },
   { key: 'notif_payouts', label: 'Payouts', description: 'When a withdrawal changes state.' },
-  { key: 'notif_messages', label: 'Messages', description: 'Replies in a handover conversation.' },
   { key: 'notif_support', label: 'Support', description: 'Updates on a support ticket you opened.' },
 ];
+// notif_messages is intentionally not offered: no notification category emits
+// it, so the switch would govern nothing. UserPreference keeps the field for
+// when a message category exists.
 
-const PRIVACY = [
-  { key: 'allow_messages', label: 'Allow messages', description: 'Let brands you have worked with start a conversation.' },
-  { key: 'show_earnings', label: 'Show earnings on my profile', description: 'Display total prize money won. Off by default.' },
-];
+// Security notices are deliberately not switchable, and neither is anything
+// marked critical — a failed payout has to reach the person whose money it is,
+// whatever they ticked. emit() enforces both.
+
+// Privacy has exactly one control, because exactly one is wired to anything.
+//
+// UserPreference also carries allow_messages and show_earnings. Neither is read
+// by any code in this repo, and show_earnings would additionally contradict a
+// deliberate decision: CreatorProfile states in its own copy that "Your
+// earnings, balance and payouts are never shown here". Offering a switch to
+// reveal something the product refuses to reveal would be a lie in both
+// directions, so neither is shown until something reads them.
+//
+// profile_visibility IS read — Explore hides any profile whose value is not
+// 'public' — but it is read from the UserProfile row, not UserPreference, which
+// is why this one control writes a different entity from the switches above.
 
 /** One settings group: icon, heading, supporting line, then its controls. */
 function Section({ icon: Icon, title, description, children }) {
@@ -167,12 +181,88 @@ function Preferences({ userId, onError }) {
           : rows(NOTIF.map((f) => ({ ...f, defaultOn: true })))}
       </Section>
 
-      <Section icon={Eye} title="Privacy" description="What other people on RazeKit can see and do.">
-        {prefs === null
-          ? <SwitchSkeleton rows={PRIVACY.length} />
-          : rows(PRIVACY.map((f) => ({ ...f, defaultOn: f.key === 'allow_messages' })))}
-      </Section>
+      <ProfileVisibility userId={userId} onError={onError} />
     </>
+  );
+}
+
+/**
+ * The one privacy control that governs something real.
+ *
+ * Explore hides any profile whose `profile_visibility` is set and is not
+ * 'public' (src/pages/Explore.jsx). That value lives on the UserProfile row, so
+ * this writes a different entity from the notification switches above — writing
+ * it to UserPreference, where a field of the same name also exists, would have
+ * hidden nobody.
+ */
+function ProfileVisibility({ userId, onError }) {
+  const [profile, setProfile] = useState(null);
+  const [loadErr, setLoadErr] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoadErr('');
+    try {
+      const rows = await entities.UserProfile.filter({ created_by_id: userId }, '-created_date', 1);
+      setProfile(rows?.[0] || {});
+    } catch (e) {
+      setLoadErr(e?.message || 'We could not load your profile settings.');
+    }
+  }, [userId]);
+
+  useEffect(() => { if (userId) load(); }, [userId, load]);
+
+  // An unset value means visible: Explore only hides a profile that carries an
+  // explicit non-public value, so absence has to read as "public" here too or
+  // the switch would misreport where the account actually stands.
+  const isPublic = (profile?.profile_visibility ?? 'public') === 'public';
+
+  const set = async (next) => {
+    if (!profile?.id) {
+      onError('Your profile has not been created yet. Add your details on the Profile page first.');
+      return;
+    }
+    setBusy(true);
+    onError('');
+    try {
+      await entities.UserProfile.update(profile.id, { profile_visibility: next ? 'public' : 'private' });
+      setProfile((p) => ({ ...p, profile_visibility: next ? 'public' : 'private' }));
+    } catch (e) {
+      onError(e?.data?.error?.message || e?.message || 'That change could not be saved. Nothing was altered.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Section icon={Eye} title="Privacy" description="What other people on RazeKit can see.">
+      {loadErr ? (
+        <div className="rounded-md border border-line-strong bg-surface-2 p-4">
+          <p className="text-sm text-ink">{loadErr}</p>
+          <p className="mt-1 text-[13px] text-muted">Your current visibility is unchanged.</p>
+          <Button variant="secondary" size="sm" className="mt-3" onClick={load}>Try again</Button>
+        </div>
+      ) : profile === null ? (
+        <SwitchSkeleton rows={1} />
+      ) : (
+        <>
+          <Switch
+            id="pref-profile-visibility"
+            label="Show my profile in Explore"
+            description="When this is off, your profile is not listed in the creator directory. Work you have already published stays published."
+            checked={isPublic}
+            busy={busy}
+            disabled={!profile?.id}
+            onChange={set}
+          />
+          {!profile?.id && (
+            <p className="mt-3 text-[13px] text-muted">
+              You do not have a profile yet, so there is nothing to list. Create one from the Profile page.
+            </p>
+          )}
+        </>
+      )}
+    </Section>
   );
 }
 

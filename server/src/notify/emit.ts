@@ -40,6 +40,46 @@ export const SEVERITY = {
   CRITICAL: 'critical',
 };
 
+/**
+ * Which preference switch governs each category.
+ *
+ * SECURITY and SYSTEM are deliberately absent, and that absence is the design:
+ * a sign-in from a new device or an account action is not a subscription, and
+ * there is no notif_security field for a user to turn off. CRITICAL severity
+ * overrides every switch below for the same reason — a failed payout has to
+ * reach the person whose money it is, whatever they ticked.
+ *
+ * Until this existed, UserPreference held seven notification fields that
+ * NOTHING read. The settings screen could have shown seven switches that
+ * changed nothing at all, which is worse than not offering the choice.
+ */
+const PREF_FOR_CATEGORY = {
+  [CATEGORY.CONTEST]: 'notif_contests',
+  [CATEGORY.SUBMISSION]: 'notif_submissions',
+  [CATEGORY.WINNER]: 'notif_winners',
+  [CATEGORY.PAYMENT]: 'notif_payments',
+  [CATEGORY.PAYOUT]: 'notif_payouts',
+  [CATEGORY.SUPPORT]: 'notif_support',
+};
+
+/**
+ * Has this recipient opted out of this category?
+ *
+ * Absence means yes-send: a user who has never opened settings has no row, and
+ * a field the server never wrote is undefined. Only an explicit `false` is an
+ * opt-out, so a lookup failure or a partial row can never silently mute
+ * someone.
+ */
+async function recipientWants(svc, recipientId, category, severity) {
+  if (severity === SEVERITY.CRITICAL) return true;
+  const key = PREF_FOR_CATEGORY[category];
+  if (!key) return true;
+  const rows = await svc.entities.UserPreference
+    .filter({ user_id: recipientId }, '-created_date', 1)
+    .catch(() => []);
+  return rows?.[0]?.[key] !== false;
+}
+
 /** Severities that must persist on screen while the issue is live. */
 export const PERSISTENT = [SEVERITY.CRITICAL];
 
@@ -64,6 +104,10 @@ export async function emit(svc, {
   email = null,
 }) {
   if (!recipientId || !title) return null;
+
+  // Checked before the row is written, so an opt-out means the notification
+  // does not happen rather than happening invisibly.
+  if (!(await recipientWants(svc, recipientId, category, severity))) return null;
 
   if (dedupeKey) {
     const existing = await svc.entities.Notification
