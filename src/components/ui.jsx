@@ -212,4 +212,59 @@ export function StatTile({ label, value, icon: Icon, className }) {
 
 /* Additional primitives live in primitives.jsx so this file stays a stable
    surface; re-exported here so every screen still imports from one place. */
+/**
+ * A two-state control that commits immediately.
+ *
+ * Built on a real <button> with role="switch", so Space and Enter work and the
+ * state is announced rather than inferred from a colour. A styled div with an
+ * onClick gives neither.
+ *
+ * `busy` exists because every switch on the settings screen writes to the
+ * server the moment it is pressed. Without it the control snaps to its new
+ * position and the user cannot tell whether the change landed — and if it
+ * failed, the interface is quietly misreporting what the server holds.
+ */
+export function Switch({ id, checked, onChange, label, description, disabled, busy }) {
+  const on = Boolean(checked);
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-line py-3.5 first:pt-0 last:border-0 last:pb-0">
+      <div className="min-w-0">
+        <label htmlFor={id} className={cn('block text-sm font-medium', disabled ? 'text-disabled' : 'text-ink')}>
+          {label}
+        </label>
+        {description && <p className="mt-0.5 text-[13px] leading-relaxed text-muted">{description}</p>}
+      </div>
+      <button
+        id={id}
+        type="button"
+        role="switch"
+        aria-checked={on}
+        disabled={disabled || busy}
+        onClick={() => onChange(!on)}
+        className={cn(
+          'relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
+          'duration-fast ease-brand focus-visible:outline-none focus-visible:ring-2',
+          'focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
+          // A 44px hit area under a finger without the track itself growing:
+          // the control stays 24px tall, the touchable region does not.
+          'after:absolute after:-inset-2.5 after:content-[""] [@media(pointer:coarse)]:after:-inset-3',
+          on ? 'border-primary-hover bg-primary-hover' : 'border-line-strong bg-surface-2',
+          (disabled || busy) && 'cursor-not-allowed opacity-60',
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none grid h-[18px] w-[18px] place-items-center rounded-full bg-white shadow-sm',
+            'transition-transform duration-fast ease-brand',
+            on ? 'translate-x-[22px]' : 'translate-x-[3px]',
+          )}
+        >
+          {busy && <Spinner className="h-3 w-3 text-muted" />}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export { Sheet, Metric, ScoreBar, Timeline, Field } from '@/components/primitives';
