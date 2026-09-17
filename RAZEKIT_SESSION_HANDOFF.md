@@ -129,6 +129,66 @@ runnable in this state. Pre-existing; not introduced this session. Low severity,
 
 ---
 
+## 4-00. Session 5 (2026-09-17) — copy audit, dependencies, forensic checks
+
+### Copy audit — the premise did not survive the evidence
+
+Scanned every user-facing string in `src/`: **452** prose strings ≥70 chars, **282** ≥90, plus a
+search for the 24 stock AI-marketing phrases.
+
+**The AI-phrase search returned 2 hits in the entire frontend, and one is a code comment** about
+seamless texture tiling. This copy is specific and human. Most of the longest strings are the legal
+pages, which are required and untouched.
+
+What was real was **structural duplication**, fixed in `32aacc0`:
+
+- Winners printed its heading twice — "Winning work" as the selected tab *and* as an `<h2>` directly
+  beneath it; same for "Leaderboard". Now `sr-only`. **This is the house pattern already**:
+  `CreatorProfile.jsx` labels its four tab panels exactly this way, so Winners was the outlier.
+- Settings: icon + "Account" + "The details we hold for this account." — three ways of saying
+  Account. Description removed; the other three Settings sections keep theirs because each adds
+  something.
+- Balance: "Withdrawals" description began with the word "Withdrawals".
+- Create Contest: the field hint and the textarea placeholder listed the same five items.
+- Track Record: "Your complete competitive history on RazeKit" sat directly under an eyebrow reading
+  "Track record".
+
+Scanners are in the scratchpad (`scan-copy.mjs`, `scan-dupes.mjs`) — the dupe scanner correctly
+treats an `sr-only` heading as the *fix*, not an instance.
+
+### Dependencies (`22e20f2`)
+
+Server **9 → 5** vulnerabilities. Fixed: qs, body-parser, express, and **nodemailer 6 → 10**, which
+clears twelve high advisories (SMTP command injection, delivery to attacker-controlled domains via
+IDN bypass, arbitrary file read + SSRF). Verified first that `integrations/email.ts` uses only
+`createTransport`/`sendMail`, unchanged in v10.
+
+Left deliberately, with reasons:
+- **prisma / @prisma/config / deepmerge-ts** (3 high) — 6.19.3 is already the newest 6.x; the fix is
+  **Prisma 7**, a major ORM migration unverifiable without a database.
+- **node-cron 3 / uuid** (2 moderate) — the uuid advisory needs a caller-supplied `buf`; node-cron
+  generates task ids and never passes one. Not reachable.
+- **react-router-dom** (2 moderate, frontend) — the advisory is SSR-hydration only
+  (`deserializeErrors`). `main.jsx` uses `createRoot`, not `hydrateRoot`; `App.jsx` uses a plain
+  `BrowserRouter`. **No SSR path exists**, and the fix is a React Router 7 major. Not applicable.
+
+### Production forensics — all clean
+
+Scanned the **live** bundle (401 KB fetched from razekit.com), not just the local build:
+
+| Check | Result |
+|---|---|
+| Secrets (AWS/OpenAI/Resend/private key/service_role) | none |
+| `base44`, `neon.tech`, `old-logo`, postgres URL | none |
+| API base baked in | `https://razekit-api.onrender.com` (correct) |
+| `localhost` | one hit — the unreachable `\|\|` fallback in `api.js`; `VITE_API_URL` is set |
+| SPA fallback | `/winners`, `/discover`, `/explore`, `/register`, `/cookies`, unknown contest → all 200 + app shell |
+| CORS | `razekit.com` allowed; `evil.example.com` gets **no** allow-origin header |
+| Security headers | HSTS, nosniff, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, strict CSP |
+
+Note: a local `dist` scan *does* show `127.0.0.1` — that is `.env.local` leaking into a local build,
+not a production defect. Always scan the deployed bundle.
+
 ## 4-0. Session 4 (2026-09-17) — registration and app icon
 
 `main` at `9f947a6`. Both deployed and verified in production.
