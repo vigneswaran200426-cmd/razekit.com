@@ -129,6 +129,57 @@ runnable in this state. Pre-existing; not introduced this session. Low severity,
 
 ---
 
+## 4a. Session 3 (2026-09-17) — everything pushed and deployed
+
+`main` is at `2821118`. **All work is pushed and live.** Verified against production after deploy.
+
+| Commit | What |
+|---|---|
+| `6ee57b0` | Discover: `contestDiscover` endpoint, seeded contests excluded |
+| `93beb71` | **Membership not absence** — the seed filter was failing open (§4d) |
+| `2850b3c` | Cookie consent: honest banner, `/cookies`, real gating machinery |
+| `2821118` | AI Creator Agents poll → Higgsfield (inert until the seed script is run) |
+
+**Production verified after deploy:**
+
+| Endpoint | Before | Now |
+|---|---|---|
+| `platformStats.winners` | 2 | **0** |
+| `winnersShowcase` | 109 | **0** |
+| `winnersLeaderboard` | 50 | **0** |
+| `contestDiscover` | (61 via entity read) | **2** — "kmk", "vikki" |
+
+All four now agree. `platformStats.contests = 5` against Discover's 2 is correct and not a
+disagreement: 5 contests exist in total, 2 of them are still open.
+
+`razekit.com/winners` now shows "No finalized winners yet" instead of 109 fabricated results, and
+`razekit.com/cookies` is live. Server **307/307**, frontend 13/13, typecheck clean, build clean.
+
+## 4d. The real bug: the seed filter was failing open
+
+Deploying session 2's fix exposed a worse version of the same defect. Three public surfaces gave
+three different answers: platformStats said 2 winners, the leaderboard listed 7, the showcase said 0.
+
+Cause: **"not a seed account" passes anything whose id matches no account at all.** The QA accounts
+(`creator.qa*@razekit.test`) were purged from production at some point while their `ScoreSnapshot`
+rows survived, still carrying denormalised names like "Creator QA 10". Those creator ids resolve to
+nothing, so they were in no exclusion list and went straight through. The showcase reported 0 only
+because it also tested `client_id`, and those seeded brands still existed to be excluded.
+
+Fix: `realUserIds()` in `compliance/seedAccounts.ts` inverts the test. A record is published only
+when its creator — and for a winner, its brand — still resolves to a real, non-seeded account.
+Applied to `winnersShowcase`, `winnersLeaderboard`, `contestDiscover` and `platformStats` together.
+Account status is deliberately not checked: a suspended creator's past win still happened.
+
+A test now fails if absence-based filtering returns.
+
+**Root cause still present:** simulation data is still in the production database. The real fix is
+`npm run clean:sim` / `clean:demo`, which needs a `DATABASE_URL` nobody has from this session. The
+filtering makes the public surface honest and stays correct afterwards.
+
+Also found: `platformStats` filters `!c.demo`, but **Contest has no `demo` column** — that clause has
+always been a no-op.
+
 ## 4b. Work done in session 2 (2026-09-17, after the audit)
 
 Decision taken by the owner: **keep Neon.** The Supabase migration is not happening. Section 6
@@ -328,15 +379,30 @@ right next body of work.
 
 ## 10. Next actions
 
-1. **Push and deploy the six commits.** They are all local. The winners fix in particular is
-   correcting something visitors can see right now.
-2. **Fix Discover the same way (§4c)** — it is the last public surface still presenting simulated
-   records as real.
-3. Look at Notifications, Money and Tracker in a real session; they were changed but never seen
-   rendered.
-4. Add an `eslint.config.js` so `npm run lint` is a real gate (§4).
-5. Refresh or delete `DESIGN.md` and `AGENTS.md` (§2) — both actively mislead a fresh agent.
-6. Clone and inspect `admin-razekit.com`; it has never been reviewed in this session line.
-7. Still owner-only and unmoved: Resend DNS at Wix, OpenAI billing, UroPay merchant onboarding.
+Needs a `DATABASE_URL` (the biggest remaining category):
+
+1. **`npm run clean:sim` and `clean:demo` against production** — removes the simulation data at the
+   root instead of filtering it at every public surface.
+2. **Run `seed-razekit-campaigns.ts`** to make the Higgsfield swap live. Until then production still
+   shows the AI Creator Agents poll.
+3. Re-check the four public counts afterwards; they should stay in agreement.
+
+Needs a signed-in session:
+
+4. Look at Notifications, Money and Tracker rendered. They were changed across sessions 2–3,
+   typechecked and built, but never seen in a browser — creating an account against production is
+   not something to do casually.
+
+Ordinary engineering:
+
+5. The art-direction pass on the remaining ~20 of the 40 screens. Homepage, Winners, Explore,
+   Discover, Notifications, Money and Tracker have been done.
+6. Add an `eslint.config.js` so `npm run lint` is a real gate (§4).
+7. Refresh or delete `DESIGN.md` and `AGENTS.md` (§2) — both actively mislead a fresh agent.
+8. Clone and inspect `admin-razekit.com`; it has never been reviewed in this session line.
+
+Owner-only, unmoved:
+
+9. Resend DNS at Wix (email is still entirely broken), OpenAI billing, UroPay merchant onboarding.
 
 Database: **Neon stays.** Settled 2026-09-17.
