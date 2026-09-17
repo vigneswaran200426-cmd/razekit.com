@@ -24,7 +24,15 @@ export const PAYMENT_MODE = {
 export type PaymentMode = (typeof PAYMENT_MODE)[keyof typeof PAYMENT_MODE];
 
 export function paymentMode(): PaymentMode {
-  const m = String(config.payments.mode || '').toUpperCase();
+  // Read the environment, not the boot-time snapshot in `config`. PAYMENT_MODE is
+  // the operational pause switch, and payments/gateway.ts has always read it live
+  // — so a snapshot here meant the gateway could be in MAINTENANCE while the
+  // notice shown to a brand still described an open bank-transfer flow. Two
+  // readers disagreeing about whether funding is open is the failure that lets
+  // someone transfer money into a paused platform. `config.payments.mode` stays
+  // as the fallback so the resolution order is unchanged when the variable is
+  // absent, and on Render the environment is fixed before boot either way.
+  const m = String(process.env.PAYMENT_MODE || config.payments.mode || '').toUpperCase();
   return (PAYMENT_MODE as any)[m] ? (m as PaymentMode) : PAYMENT_MODE.MANUAL_BETA;
 }
 
