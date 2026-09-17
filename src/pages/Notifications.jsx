@@ -9,7 +9,7 @@ import { Bell, BellOff, Check, Inbox, RefreshCw } from 'lucide-react';
 import { fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/cn';
-import { Button, Card, EmptyState, PageHeader, Skeleton } from '@/components/ui';
+import { Button, Card, EmptyState, PageHeader, Segmented, Skeleton } from '@/components/ui';
 import {
   CATEGORY_META, actionLabel, categoryMeta, notificationTime, useNotifications,
 } from '@/components/Notifications';
@@ -36,7 +36,7 @@ export default function NotificationsPage() {
   // it is not mounted, talk to the API directly rather than pretending to work.
   const markRead = ctx.mounted ? ctx.markRead : (id) => fn('notificationRead', { ids: [id] }).catch(() => {});
   const markAllRead = ctx.mounted ? ctx.markAllRead : () => fn('notificationRead', { all: true }).catch(() => {});
-  const { unreadByCategory, categories } = ctx;
+  const { categories } = ctx;
 
   const [category, setCategory] = useState(ALL);
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -122,7 +122,6 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader
-        eyebrow="Notification centre"
         title="Notifications"
         description={
           unread > 0
@@ -139,32 +138,43 @@ export default function NotificationsPage() {
         )}
       />
 
-      {/* Filters. Scrolls inside itself — the page never scrolls sideways. */}
-      <div className="space-y-3">
-        <div className="-mx-1 overflow-x-auto px-1 pb-1">
-          <div className="flex w-max items-center gap-1.5" role="group" aria-label="Filter by category">
-            <Chip active={category === ALL} onClick={() => setCategory(ALL)} count={unread}>All</Chip>
-            {catKeys.map((c) => (
-              <Chip key={c} active={category === c} onClick={() => setCategory(c)} count={unreadByCategory?.[c] || 0}>
-                {categoryMeta(c).label}
-              </Chip>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-[13px] font-medium text-ink">
-            <input
-              type="checkbox"
-              checked={unreadOnly}
-              onChange={(e) => setUnreadOnly(e.target.checked)}
-              className="h-4 w-4 rounded border-line-strong text-primary focus:ring-2 focus:ring-primary/30"
-            />
-            Unread only
-          </label>
+      {/* One filter, not two.
+          This was a horizontally scrolling wall of nine category chips, each with
+          its own unread badge, plus a separate "Unread only" checkbox underneath
+          — two filter systems stacked above a list that is usually short enough
+          to just read. All / Unread is what a notification centre is expected to
+          offer, so it is the control that gets the weight.
+
+          Category still filters, because people with a lot of payout or support
+          traffic genuinely use it; it is a compact select beside the refresh
+          indicator rather than a row competing with the list. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Segmented
+          value={unreadOnly ? 'unread' : ALL}
+          onChange={(k) => setUnreadOnly(k === 'unread')}
+          tabs={[
+            { key: ALL, label: 'All' },
+            { key: 'unread', label: unread > 0 ? `Unread (${unread})` : 'Unread' },
+          ]}
+        />
+        <div className="flex items-center gap-3">
           {busy && seenOnce.current && (
             <span className="inline-flex items-center gap-1.5 text-[12px] text-muted" aria-live="polite">
               <RefreshCw className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Refreshing
             </span>
+          )}
+          {catKeys.length > 1 && (
+            <select
+              aria-label="Filter by category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="h-9 rounded-md border border-line-strong bg-surface px-2.5 text-[13px] font-medium text-ink [@media(pointer:coarse)]:h-11 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value={ALL}>All categories</option>
+              {catKeys.map((c) => (
+                <option key={c} value={c}>{categoryMeta(c).label}</option>
+              ))}
+            </select>
           )}
         </div>
       </div>
@@ -230,27 +240,6 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function Chip({ active, onClick, count, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md border px-3 text-[13px] font-semibold transition-colors sm:h-9',
-        active ? 'border-primary bg-primary/8 text-primary' : 'border-line bg-surface text-muted hover:border-line-strong hover:text-ink',
-      )}
-    >
-      {children}
-      {count > 0 && (
-        <span className={cn('nums rounded-full px-1.5 py-0.5 text-[10px] font-bold', active ? 'bg-primary-hover text-white' : 'bg-surface-2 text-ink')}>
-          {count > 99 ? '99+' : count}
-        </span>
-      )}
-    </button>
   );
 }
 

@@ -124,6 +124,20 @@ const RowList = ({ items }) => (
 );
 
 /* ── balance overview ──────────────────────────────────────────────────────── */
+/**
+ * One number, and the ledger behind it on request.
+ *
+ * Six figures used to sit permanently on screen — total, available, reserved,
+ * pending, withdrawable and paid-out — each with a paragraph explaining itself.
+ * That is the platform's accounting model, and a creator who opened this page to
+ * find out what they can withdraw had to work out which of six numbers was the
+ * answer. The one figure that decides what this person can do next now gets the
+ * page; the rest stays, complete and unaltered, one click away.
+ *
+ * A native <details> rather than React state: it is keyboard-operable, announced
+ * correctly, survives without JavaScript, and is findable by in-page search even
+ * while collapsed.
+ */
 function Overview({ balance, isClient }) {
   const defs = balance.definitions || {};
   // The one number that decides what this person can do next.
@@ -131,37 +145,43 @@ function Overview({ balance, isClient }) {
   const HeroIcon = hero.icon;
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-      <Card className="border-ink bg-ink p-6 text-white">
+    <div className="space-y-4">
+      <Card className="border-ink bg-ink p-6 text-white sm:p-7">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/60">
           <HeroIcon className="h-4 w-4" aria-hidden="true" />{hero.label}
         </p>
-        <p className="mt-2 font-display text-[34px] font-extrabold leading-none nums">{moneyMinor(balance[hero.field], balance.currency)}</p>
-        <p className="mt-2.5 text-[13px] leading-relaxed text-white/70">{defs[hero.key]}</p>
+        <p className="mt-2 font-display text-[40px] font-extrabold leading-none tracking-tight nums sm:text-[52px]">
+          {moneyMinor(balance[hero.field], balance.currency)}
+        </p>
+        <p className="mt-3 max-w-prose text-[13px] leading-relaxed text-white/70">{defs[hero.key]}</p>
       </Card>
 
-      <Card className="p-5 sm:p-6">
-        <h2 className="font-display text-base font-bold text-ink">Balance breakdown</h2>
-        <p className="mt-0.5 text-[13px] text-muted">What each figure means, so no number on this page needs guessing.</p>
-        <dl className="mt-4 divide-y divide-line">
-          {FIGURES.map(({ key, label, field, icon: Icon }) => (
-            <div key={key} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-3 first:pt-0">
-              <div className="min-w-0 max-w-md">
-                <dt className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                  <Icon className="h-3.5 w-3.5 text-muted" aria-hidden="true" />{label}
-                </dt>
-                {defs[key] && <p className="mt-0.5 text-xs leading-relaxed text-muted">{defs[key]}</p>}
+      <Card as="details" className="overflow-hidden p-0">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-ink hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
+          Balance breakdown
+          <span className="text-[12px] font-medium text-muted">What each figure means</span>
+        </summary>
+        <div className="border-t border-line px-5 pb-5 pt-1 sm:px-6">
+          <dl className="divide-y divide-line">
+            {FIGURES.map(({ key, label, field, icon: Icon }) => (
+              <div key={key} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-3">
+                <div className="min-w-0 max-w-md">
+                  <dt className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                    <Icon className="h-3.5 w-3.5 text-muted" aria-hidden="true" />{label}
+                  </dt>
+                  {defs[key] && <p className="mt-0.5 text-xs leading-relaxed text-muted">{defs[key]}</p>}
+                </div>
+                <dd className="font-display text-lg font-extrabold text-ink nums">{moneyMinor(balance[field], balance.currency)}</dd>
               </div>
-              <dd className="font-display text-lg font-extrabold text-ink nums">{moneyMinor(balance[field], balance.currency)}</dd>
+            ))}
+          </dl>
+          <div className="mt-4 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 rounded-md bg-surface-2 px-3 py-3">
+            <div className="min-w-0 max-w-md">
+              <p className="text-sm font-semibold text-ink">Paid out (history)</p>
+              {defs.paid_out && <p className="mt-0.5 text-xs leading-relaxed text-muted">{defs.paid_out}</p>}
             </div>
-          ))}
-        </dl>
-        <div className="mt-4 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 rounded-md bg-surface-2 px-3 py-3">
-          <div className="min-w-0 max-w-md">
-            <p className="text-sm font-semibold text-ink">Paid out (history)</p>
-            {defs.paid_out && <p className="mt-0.5 text-xs leading-relaxed text-muted">{defs.paid_out}</p>}
+            <p className="font-display text-lg font-extrabold text-ink nums">{moneyMinor(balance.paid_out_minor, balance.currency)}</p>
           </div>
-          <p className="font-display text-lg font-extrabold text-ink nums">{moneyMinor(balance.paid_out_minor, balance.currency)}</p>
         </div>
       </Card>
     </div>
