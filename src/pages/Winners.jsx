@@ -379,27 +379,19 @@ function WinnerCard({ w, media, mediaState, onRetry, active, onActivate, onOpen 
       />
 
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Badge tone="success" className="mb-1.5">
-              <Trophy className="h-3 w-3" aria-hidden="true" /> Winner
-            </Badge>
-            <h3 className="font-display text-[15px] font-bold leading-snug text-ink">
-              <Link
-                to={`/contest/${w.contest_id}`}
-                className="line-clamp-2 rounded hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-              >
-                {w.title}
-              </Link>
-            </h3>
-            {w.brand_name && <p className="mt-0.5 text-[12px] text-muted">for {w.brand_name}</p>}
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Final</p>
-            <p className={cn('font-display font-extrabold nums leading-tight text-ink', f === null ? 'text-[11px] text-muted' : 'text-xl')}>
-              {f === null ? 'Not measured' : f}
-            </p>
-          </div>
+        <div className="min-w-0">
+          <Badge tone="success" className="mb-1.5">
+            <Trophy className="h-3 w-3" aria-hidden="true" /> Winner
+          </Badge>
+          <h3 className="font-display text-[15px] font-bold leading-snug text-ink">
+            <Link
+              to={`/contest/${w.contest_id}`}
+              className="line-clamp-2 rounded hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            >
+              {w.title}
+            </Link>
+          </h3>
+          {w.brand_name && <p className="mt-0.5 text-[12px] text-muted">for {w.brand_name}</p>}
         </div>
 
         {w.creator_id ? (
@@ -414,25 +406,113 @@ function WinnerCard({ w, media, mediaState, onRetry, active, onActivate, onOpen 
           <p className="text-[13px] text-muted">Creator not recorded</p>
         )}
 
-        <ScoreDimensions w={w} />
-
-        <div className="mt-auto flex flex-wrap items-end justify-between gap-2 border-t border-line pt-3">
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Prize</p>
-            <p className="font-display text-lg font-extrabold text-primary nums">{money(w.prize_amount, w.currency)}</p>
+        {/* The prize is the result. It used to sit at 18px in the corner while
+            three full score bars and a 20px "Final" numeral filled the card —
+            so a page about winning work read as a page about measurement. The
+            prize now carries the size, and the score follows it as one line of
+            supporting text. The score bars moved to the detail sheet, which is
+            where someone who actually wants the breakdown goes. */}
+        <div className="mt-auto border-t border-line pt-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Prize</p>
+          <div className="mt-0.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <p className="font-display text-[28px] font-extrabold leading-none text-ink nums">
+              {money(w.prize_amount, w.currency)}
+            </p>
+            <p className="text-[11px] text-muted nums">
+              {f === null
+                ? 'Final score not measured'
+                : <>Final score <span className="font-semibold text-ink">{f}</span></>}
+            </p>
           </div>
-          <div className="text-right">
-            {w.finalized_at
-              ? <p className="text-[11px] text-muted">Finalized {dateShort(w.finalized_at)}</p>
-              : <p className="text-[11px] text-muted">Finalized date not recorded</p>}
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-muted">
+              {w.finalized_at ? `Finalized ${dateShort(w.finalized_at)}` : 'Finalized date not recorded'}
+            </p>
             <button
               type="button"
               onClick={onOpen}
-              className="mt-0.5 rounded text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              className="rounded text-[13px] font-semibold text-primary-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
             >
               Full result
             </button>
           </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ── Featured winner ────────────────────────────────────────────────────── */
+
+/**
+ * The first result of whatever sort is active, given the room to land.
+ *
+ * A uniform grid gives every winner the same weight, so the page opens with no
+ * focal point and reads as a list of records. One large composition — the work
+ * at size, the prize at size — is what makes this a showcase rather than an
+ * index. It is the same record as the card beside it, rendered larger; no extra
+ * request, no different data, and the same refusal to invent media.
+ */
+function FeaturedWinner({ w, media, mediaState, onRetry, active, onActivate, onOpen }) {
+  const f = score(w.final_score);
+  return (
+    <Card as="article" className="overflow-hidden lg:grid lg:grid-cols-5 lg:items-stretch">
+      <div className="lg:col-span-3">
+        <WinnerMedia
+          media={media}
+          state={mediaState}
+          onRetry={onRetry}
+          creatorName={w.creator_name}
+          active={active}
+          onActivate={onActivate}
+          className="lg:h-full"
+        />
+      </div>
+
+      <div className="flex flex-col justify-center gap-4 p-5 sm:p-7 lg:col-span-2">
+        <div className="min-w-0">
+          <Badge tone="success" className="mb-2">
+            <Trophy className="h-3 w-3" aria-hidden="true" /> Featured winner
+          </Badge>
+          <h3 className="font-display text-xl font-extrabold leading-tight tracking-tight text-ink sm:text-2xl">
+            <Link
+              to={`/contest/${w.contest_id}`}
+              className="rounded hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            >
+              {w.title}
+            </Link>
+          </h3>
+          {w.brand_name && <p className="mt-1 text-[13px] text-muted">for {w.brand_name}</p>}
+        </div>
+
+        {w.creator_id ? (
+          <Link
+            to={`/u/${w.creator_id}`}
+            className="-mx-1 flex min-h-[44px] items-center gap-2.5 rounded px-1 hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <Avatar name={w.creator_name || 'Creator'} size={36} />
+            <span className="truncate text-sm font-semibold text-ink">{w.creator_name || 'Creator'}</span>
+          </Link>
+        ) : (
+          <p className="text-[13px] text-muted">Creator not recorded</p>
+        )}
+
+        <div className="border-t border-line pt-4">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Prize</p>
+          <p className="mt-1 font-display text-[40px] font-extrabold leading-none tracking-tight text-ink nums sm:text-[52px]">
+            {money(w.prize_amount, w.currency)}
+          </p>
+          <p className="mt-2 text-[12px] text-muted nums">
+            {f === null
+              ? 'Final score not measured'
+              : <>Final score <span className="font-semibold text-ink">{f}</span></>}
+            {w.finalized_at && <> · Finalized {dateShort(w.finalized_at)}</>}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={onOpen}>Full result</Button>
+          <Button to={`/contest/${w.contest_id}`} variant="secondary">Open the contest</Button>
         </div>
       </div>
     </Card>
@@ -691,24 +771,44 @@ function Showcase() {
           action={<Button variant="secondary" onClick={loadWinners}><RotateCcw className="h-4 w-4" aria-hidden="true" />Try again</Button>}
         />
       ) : sorted.length ? (
-        <ul className="grid list-none gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {sorted.map((w) => {
+        <div className="space-y-4">
+          {(() => {
+            const w = sorted[0];
             const key = w.submission_id || w.contest_id;
             return (
-              <li key={key} className="min-w-0">
-                <WinnerCard
-                  w={w}
-                  media={mediaFor(w)}
-                  mediaState={mediaState}
-                  onRetry={loadMedia}
-                  active={playing === key}
-                  onActivate={() => setPlaying(key)}
-                  onOpen={() => { setPlaying(null); setOpen(key); }}
-                />
-              </li>
+              <FeaturedWinner
+                w={w}
+                media={mediaFor(w)}
+                mediaState={mediaState}
+                onRetry={loadMedia}
+                active={playing === key}
+                onActivate={() => setPlaying(key)}
+                onOpen={() => { setPlaying(null); setOpen(key); }}
+              />
             );
-          })}
-        </ul>
+          })()}
+
+          {sorted.length > 1 && (
+            <ul className="grid list-none gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {sorted.slice(1).map((w) => {
+                const key = w.submission_id || w.contest_id;
+                return (
+                  <li key={key} className="min-w-0">
+                    <WinnerCard
+                      w={w}
+                      media={mediaFor(w)}
+                      mediaState={mediaState}
+                      onRetry={loadMedia}
+                      active={playing === key}
+                      onActivate={() => setPlaying(key)}
+                      onOpen={() => { setPlaying(null); setOpen(key); }}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       ) : (
         <EmptyState
           icon={Trophy}
