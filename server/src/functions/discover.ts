@@ -15,7 +15,7 @@
 // production (`npm run clean:sim`), which needs database access; this makes the
 // public surface honest in the meantime, and stays correct afterwards.
 import { json } from './context.js';
-import { seedUserIds } from '../compliance/seedAccounts.js';
+import { realUserIds } from '../compliance/seedAccounts.js';
 
 /**
  * Drop seeded rows, then cut to the page size — in that order.
@@ -26,9 +26,9 @@ import { seedUserIds } from '../compliance/seedAccounts.js';
  *
  * Exported so the filtering can be tested without a database.
  */
-export function publicContests(rows, seedIds, limit) {
+export function publicContests(rows, realIds, limit) {
   return (rows || [])
-    .filter((c) => c && !seedIds.has(c.created_by_id))
+    .filter((c) => c && realIds.has(c.created_by_id))
     .slice(0, limit);
 }
 
@@ -38,12 +38,12 @@ export async function contestDiscover(ctx) {
   const limit = Math.min(Number(ctx.body?.limit) || 200, 300);
 
   // Over-read, because the rows removed below are the most recent ones.
-  const [rows, seedIds] = await Promise.all([
+  const [rows, realIds] = await Promise.all([
     svc.entities.Contest
       .filter({ status: 'open' }, '-created_date', Math.min(limit * 4, 1000))
       .catch(() => []),
-    seedUserIds(),
+    realUserIds(),
   ]);
 
-  return json({ contests: publicContests(rows, seedIds, limit) });
+  return json({ contests: publicContests(rows, realIds, limit) });
 }

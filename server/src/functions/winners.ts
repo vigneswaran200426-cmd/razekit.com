@@ -6,7 +6,7 @@
 // performance, never by followers, views or popularity.
 import { json } from './context.js';
 import { SCORING_VERSION } from '../scoring/index.js';
-import { seedUserIds } from '../compliance/seedAccounts.js';
+import { realUserIds } from '../compliance/seedAccounts.js';
 
 const round1 = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 10) / 10 : null);
 
@@ -17,16 +17,19 @@ export async function winnersShowcase(ctx) {
 
   // Snapshots are the authoritative winner record.
   //
-  // Seeded and simulated creators are excluded, exactly as platformStats already
-  // excludes them. Without this the homepage said "2 winners" while this endpoint
-  // published 109 — 107 of them simulation records carrying invented brand names,
-  // prize amounts and finalized scores, shown to the public as real results. A
-  // fabricated winner is worse than no winner, and the two public surfaces have
-  // to agree about which is which.
-  const seedIds = await seedUserIds();
+  // A winner is published only when its creator AND its brand both still resolve
+  // to real, non-seeded accounts. Without this the homepage said "2 winners"
+  // while this endpoint published 109 — 107 of them simulation records carrying
+  // invented brand names, prize amounts and finalized scores, shown to the
+  // public as real results.
+  //
+  // Membership, not absence: testing "not a seed account" let orphaned snapshots
+  // through, because purged QA accounts leave ids that match nothing and are
+  // therefore in no exclusion list. See realUserIds().
+  const realIds = await realUserIds();
   const snaps = (await svc.entities.ScoreSnapshot.filter({ is_winner: true }, '-created_date', 500).catch(() => []))
     .filter((s) => s.contest_id)
-    .filter((s) => !seedIds.has(s.creator_id) && !seedIds.has(s.client_id));
+    .filter((s) => realIds.has(s.creator_id) && realIds.has(s.client_id));
 
   // Single query: the snapshot carries its own display fields (denormalised at
   // finalization). Previously this did a contest + two user lookups PER winner —
@@ -69,11 +72,13 @@ export async function winnersShowcase(ctx) {
  */
 export async function winnersLeaderboard(ctx) {
   const svc = ctx.svc;
-  // Same exclusion as the showcase: a public ranking of simulated creators is a
-  // fabricated ranking, however real the arithmetic behind it is.
-  const seedIds = await seedUserIds();
+  // Same rule as the showcase: a public ranking of simulated or vanished
+  // creators is a fabricated ranking, however real the arithmetic behind it is.
+  // This listed seven "Creator QA" accounts in production under the old
+  // absence-based test.
+  const realIds = await realUserIds();
   const snaps = (await svc.entities.ScoreSnapshot.filter({}, '-created_date', 2000).catch(() => []))
-    .filter((s) => !seedIds.has(s.creator_id));
+    .filter((s) => realIds.has(s.creator_id));
 
   const byCreator = new Map();
   for (const s of snaps) {

@@ -23,7 +23,7 @@ import { prisma, adminPrisma, hasSeparateAdminDb } from '../db.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { paymentMode } from '../payments/config.js';
 import { displayName } from '../finance/notify.js';
-import { isSeedEmail, notSeedWhere, seedUserIds } from '../compliance/seedAccounts.js';
+import { isSeedEmail, notSeedWhere, realUserIds } from '../compliance/seedAccounts.js';
 
 const nowIso = () => new Date().toISOString();
 const err = (code, message, status = 400, extra = {}) => json({ error: { code, message, ...extra } }, status);
@@ -527,9 +527,14 @@ export async function platformStats(ctx) {
     svc.entities.ScoreSnapshot.filter({ is_winner: true }, '-created_date', 2000).catch(() => []),
   ]);
 
-  const seedIds = await seedUserIds();
-  const realContests = contests.filter((c) => !seedIds.has(c.created_by_id) && !c.demo);
-  const realWins = snapshots.filter((s) => !seedIds.has(s.creator_id));
+  // Membership, not absence — the same correction the public winners and
+  // Discover endpoints needed. Testing "not seeded" counted orphaned records
+  // whose creator no longer exists as real, which is how this reported 2 winners
+  // that were both a purged QA account's. `c.demo` is kept for the day the field
+  // exists; there is no `demo` column on Contest today, so it does nothing.
+  const realIds = await realUserIds();
+  const realContests = contests.filter((c) => realIds.has(c.created_by_id) && !c.demo);
+  const realWins = snapshots.filter((s) => realIds.has(s.creator_id));
 
   return json({
     creators, clients,

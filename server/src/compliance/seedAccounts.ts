@@ -38,3 +38,30 @@ export async function seedUserIds(): Promise<Set<string>> {
     .catch(() => [] as Array<{ id: string }>);
   return new Set(rows.map((u) => u.id));
 }
+
+/**
+ * The ids of every account that is a real person — and the set public surfaces
+ * should actually be tested against.
+ *
+ * "Not in the seed list" fails open, and production proved it: the QA accounts
+ * were purged at some point while their ScoreSnapshot rows survived, carrying
+ * denormalised names like "Creator QA 10". Those ids match no account at all,
+ * so they are absent from the seed set and sailed straight through the filter —
+ * which is why the homepage counted 2 winners, the leaderboard listed 7 QA
+ * creators, and the showcase (which also tested client_id) showed 0. Three
+ * public numbers, three different answers, one bad rule.
+ *
+ * Requiring membership here fails closed instead: a record is published only
+ * when its creator still resolves to a real account. An orphaned snapshot whose
+ * creator no longer exists is not a winner anyone can look up, and publishing it
+ * as one is the same fabrication in a different costume.
+ *
+ * Account status is deliberately NOT checked — a suspended creator's past win
+ * still happened, and erasing history is not this function's job.
+ */
+export async function realUserIds(): Promise<Set<string>> {
+  const rows = await prisma.appUser
+    .findMany({ where: notSeedWhere, select: { id: true } })
+    .catch(() => [] as Array<{ id: string }>);
+  return new Set(rows.map((u) => u.id));
+}

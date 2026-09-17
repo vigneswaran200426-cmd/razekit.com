@@ -56,19 +56,27 @@ const winnersSource = readFileSync(
   'utf8',
 );
 
-test('the public winners showcase filters seeded accounts out', () => {
-  assert.match(winnersSource, /seedUserIds/,
-    'winnersShowcase must consult the seeded-account list');
-  assert.match(winnersSource, /!seedIds\.has\(s\.creator_id\)/,
-    'a snapshot whose creator is a seeded account must not reach the public showcase');
+test('the public winners showcase publishes only real accounts', () => {
+  assert.match(winnersSource, /realUserIds/,
+    'winnersShowcase must consult the real-account list');
+  assert.match(winnersSource, /realIds\.has\(s\.creator_id\)/,
+    'a snapshot is published only when its creator resolves to a real account');
 });
 
-test('the public leaderboard filters seeded accounts out', () => {
+test('the public surfaces test membership, never absence', () => {
+  // The distinction is the whole fix. "Not a seed account" passes anything whose
+  // id matches no account at all, and production had exactly that: purged QA
+  // accounts leaving ScoreSnapshot rows behind with denormalised names.
+  assert.doesNotMatch(winnersSource, /!seedIds\.has/,
+    'absence-based exclusion fails open on orphaned records — require membership instead');
+});
+
+test('the public leaderboard applies the same rule as the showcase', () => {
   // Two call sites, one per endpoint: deleting either reintroduces the bug in
   // only one surface, which is how it went unnoticed the first time.
-  const calls = winnersSource.match(/await seedUserIds\(\)/g) || [];
+  const calls = winnersSource.match(/await realUserIds\(\)/g) || [];
   assert.equal(calls.length, 2,
-    'both winnersShowcase and winnersLeaderboard must exclude seeded accounts');
+    'both winnersShowcase and winnersLeaderboard must require real accounts');
 });
 
 // ── Discover ────────────────────────────────────────────────────────────────
@@ -76,13 +84,13 @@ test('the public leaderboard filters seeded accounts out', () => {
 // Same defect, different page: /discover advertised 61 open briefs against 5
 // real contests, every seeded one already past its deadline.
 
-const seeded = new Set(['seed-1', 'seed-2']);
+const real = new Set(['real-1', 'real-2']);
 const row = (id, owner) => ({ id, created_by_id: owner });
 
 test('a seeded contest never reaches the public Discover page', () => {
   const out = publicContests(
     [row('a', 'seed-1'), row('b', 'real-1'), row('c', 'seed-2')],
-    seeded,
+    real,
     50,
   );
   assert.deepEqual(out.map((c) => c.id), ['b']);
@@ -97,19 +105,20 @@ test('filtering happens before the page is cut, not after', () => {
     row('real-a', 'real-1'),
     row('real-b', 'real-2'),
   ];
-  const out = publicContests(rows, seeded, 2);
+  const out = publicContests(rows, real, 2);
   assert.deepEqual(out.map((c) => c.id), ['real-a', 'real-b']);
 });
 
 test('an empty or unreadable contest list yields an empty page, not a crash', () => {
-  assert.deepEqual(publicContests([], seeded, 10), []);
-  assert.deepEqual(publicContests(null as any, seeded, 10), []);
-  assert.deepEqual(publicContests([null as any, row('b', 'real-1')], seeded, 10).map((c) => c.id), ['b']);
+  assert.deepEqual(publicContests([], real, 10), []);
+  assert.deepEqual(publicContests(null as any, real, 10), []);
+  assert.deepEqual(publicContests([null as any, row('b', 'real-1')], real, 10).map((c) => c.id), ['b']);
 });
 
-test('a contest with no recorded owner is still shown', () => {
-  // created_by_id can be absent on older rows. Undefined is not in the seed set,
-  // so it survives — hiding a real contest because its owner field is missing
-  // would be the worse failure.
-  assert.deepEqual(publicContests([row('x', undefined)], seeded, 10).map((c) => c.id), ['x']);
+test('a contest whose owner no longer exists is not published', () => {
+  // The orphan case, and the reason this tests membership rather than absence.
+  // A contest with a missing or dangling created_by_id resolves to nobody, so
+  // there is no brand behind it for a creator to enter a contest with.
+  assert.deepEqual(publicContests([row('x', undefined)], real, 10), []);
+  assert.deepEqual(publicContests([row('y', 'deleted-account')], real, 10), []);
 });
