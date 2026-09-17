@@ -14,7 +14,11 @@
     <meta name="theme-color" content="#0d1b3a" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/og.png" />
+    <!-- A real 180x180 square. This pointed at /og.png — a 1200x630 social
+         banner — and iOS crops a home-screen icon to a square rather than
+         letterboxing it, so the app icon was the middle stripe of the banner
+         with the mark cut off. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <meta property="og:type" content="website" />
@@ -50,7 +54,7 @@
           "@id": "https://razekit.com/#organization",
           "name": "RazeKit",
           "url": "https://razekit.com/",
-          "logo": "https://razekit.com/og.png",
+          "logo": "https://razekit.com/app-icon-512.png",
           "description": "A contest marketplace where brands fund creative briefs and creators compete on measured performance.",
           "contactPoint": {
             "@type": "ContactPoint",
