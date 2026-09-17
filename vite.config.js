@@ -14,9 +14,14 @@ export default defineConfig(({ mode }) => {
   // loadEnv, not process.env: the value lives in .env.local, which Vite exposes
   // to the client bundle but does not put on process.env for the config itself.
   const devApiProxy = loadEnv(mode, process.cwd(), '').VITE_DEV_API_PROXY;
+  // Anchored regexes, not bare prefixes. Vite matches a plain string key as a
+  // PREFIX, so '/r' — the tracking-redirect mount — also swallowed '/register',
+  // '/review' and '/reports', and the dev server answered them with the API's
+  // 404 instead of the app. Each path only ever has children, so requiring the
+  // trailing slash is both correct and enough.
   const proxy = devApiProxy
     ? Object.fromEntries(
-        ['/api', '/files', '/r'].map((p) => [p, { target: devApiProxy, changeOrigin: true, secure: true }]),
+        ['^/api/', '^/files/', '^/r/'].map((p) => [p, { target: devApiProxy, changeOrigin: true, secure: true }]),
       )
     : undefined;
 

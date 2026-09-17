@@ -25,13 +25,25 @@ authRouter.post('/register', authLimiter, async (req, res) => {
   const password = String(req.body?.password || '');
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  // Accepting the terms is part of creating the account, not a checkbox the
+  // frontend ticks on its own. Enforced here so the record exists even if the
+  // request never came from our form, and recorded with a timestamp because
+  // "they agreed" without "when" is not much of an acceptance record.
+  if (req.body?.accepted_terms !== true) {
+    return res.status(400).json({ error: 'You must accept the Terms and Privacy Policy to create an account.' });
+  }
   const existing = await prisma.appUser.findUnique({ where: { email } });
   if (existing) return res.status(409).json({ error: 'An account already exists with this email.' });
   const passwordHash = await hashPassword(password);
+  const termsProfile = { terms_accepted_at: new Date().toISOString() };
 
   const createSession = async () => {
     const user = await prisma.appUser.create({
-      data: { email, passwordHash, fullName: req.body?.full_name || null, emailVerified: true, userRole: 'visitor', role: 'user' },
+      data: {
+        email, passwordHash, fullName: req.body?.full_name || null,
+        emailVerified: true, userRole: 'visitor', role: 'user',
+        profile: termsProfile,
+      },
     });
     return res.json({ access_token: signToken(user.id), user: publicUser(user), requiresOtp: false });
   };
@@ -42,7 +54,13 @@ authRouter.post('/register', authLimiter, async (req, res) => {
   // configured / unverified domain), fall back to direct signup so a user is
   // never blocked from creating an account.
   try {
-    await issueOtp(email, 'register', { passwordHash, full_name: req.body?.full_name || '' });
+    // Carried on the OTP payload so the acceptance survives to the account the
+    // verification step creates, rather than being lost between the two calls.
+    await issueOtp(email, 'register', {
+      passwordHash,
+      full_name: req.body?.full_name || '',
+      terms_accepted_at: termsProfile.terms_accepted_at,
+    });
     return res.json({ ok: true, requiresOtp: true });
   } catch (e) {
     console.warn('[register] OTP email failed, creating account directly:', (e as Error).message);
@@ -59,7 +77,16 @@ authRouter.post('/verify-otp', otpLimiter, async (req, res) => {
   let user = await prisma.appUser.findUnique({ where: { email } });
   if (!user) {
     user = await prisma.appUser.create({
-      data: { email, passwordHash: (result.payload.passwordHash as string) || null, fullName: (result.payload.full_name as string) || null, emailVerified: true, userRole: 'visitor', role: 'user' },
+      data: {
+        email,
+        passwordHash: (result.payload.passwordHash as string) || null,
+        fullName: (result.payload.full_name as string) || null,
+        emailVerified: true, userRole: 'visitor', role: 'user',
+        // Carried from the register call that issued this code.
+        profile: result.payload.terms_accepted_at
+          ? { terms_accepted_at: result.payload.terms_accepted_at as string }
+          : {},
+      },
     });
   } else {
     user = await prisma.appUser.update({ where: { id: user.id }, data: { emailVerified: true } });

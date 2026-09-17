@@ -39,10 +39,10 @@ export default function Login() {
   return (
     <AuthShell title="Welcome back" subtitle="Log in to your RazeKit account"
       footer={<>New to RazeKit? <Link to="/register" className="text-primary-ink font-semibold hover:underline">Create an account</Link></>}>
-      <GoogleButton label="Continue with Google" />
-      <div className="relative my-6 text-center"><span className="relative z-10 bg-bg px-3 text-xs uppercase tracking-wide text-muted">or</span><div className="absolute inset-x-0 top-1/2 h-px bg-line" /></div>
-
-      {err && <div className="mb-4 rounded-md bg-danger/8 text-danger text-sm px-3 py-2">{err}</div>}
+      {/* Email and password first, Google below — same reasoning as Register.
+          Signing in to a RazeKit account is the primary path; Google is one way
+          of doing it, not the front door. */}
+      {err && <div className="mb-4 rounded-md bg-danger/8 text-danger text-sm px-3 py-2" role="alert">{err}</div>}
       {note && <div className="mb-4 rounded-md bg-primary/8 text-primary text-sm px-3 py-2">{note}</div>}
 
       <form onSubmit={submit} className="space-y-4">
@@ -59,8 +59,16 @@ export default function Login() {
           <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9" placeholder="••••••••" /></div>
         </div>
-        <Button type="submit" size="lg" loading={loading} className="w-full">Log in</Button>
+        <Button type="submit" size="lg" loading={loading} className="w-full">
+          {loading ? 'Signing in…' : 'Log in'}
+        </Button>
       </form>
+
+      <div className="relative my-6 text-center">
+        <span className="relative z-10 bg-bg px-3 text-xs uppercase tracking-wide text-muted">or</span>
+        <div className="absolute inset-x-0 top-1/2 h-px bg-line" />
+      </div>
+      <GoogleButton label="Continue with Google" />
     </AuthShell>
   );
 }
