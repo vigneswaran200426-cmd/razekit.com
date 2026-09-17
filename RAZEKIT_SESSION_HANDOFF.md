@@ -129,7 +129,71 @@ runnable in this state. Pre-existing; not introduced this session. Low severity,
 
 ---
 
-## 5. Change made this session
+## 4b. Work done in session 2 (2026-09-17, after the audit)
+
+Decision taken by the owner: **keep Neon.** The Supabase migration is not happening. Section 6
+is retained only as the record of why it was never started.
+
+Six commits on `main`, all local — **nothing has been pushed or deployed**:
+
+| Commit | What |
+|---|---|
+| `e1980b1` | `paymentMode()` split-brain (§5) |
+| `78889ef` | Winners: showcase hierarchy + featured winner + dev API proxy |
+| `79d237a` | Notifications: one filter. Money: one number |
+| `3b23ea7` | Tracker: scoring rulebook folded away; 5-in-4 KPI grid fixed |
+| `9b5415e` | **107 simulated winners no longer published as real** (§4c) |
+| `7ed9620` | Explore opens on creators, not a census |
+
+Verified after all of it: server **302/302 tests pass** (was 295 — seven new), typecheck clean,
+frontend 13/13, `npm run build` succeeds, entry chunk still ~125 kB gzip with route splitting intact.
+
+Visual QA was done against the live public API through a dev proxy (`VITE_DEV_API_PROXY`, added in
+`78889ef`) so production CORS never had to be loosened. Winners and Explore were checked at 1280px
+and at 375px — no horizontal overflow at either.
+
+**Authenticated screens were not visually verified.** Notifications, Money, Tracker and Dashboard
+all need a session, and creating an account is not something to do against production. Those
+changes are typechecked, built and reasoned about, but nobody has looked at them rendered.
+
+## 4c. The public-data defect found and fixed
+
+The homepage and the Winners page disagreed about what was real, and only the homepage was right.
+
+`platformStats` excludes seed/demo/simulation accounts and reported **1 creator, 1 brand,
+2 winners**. `winnersShowcase` applied no such filter and returned **109 winners**;
+`winnersLeaderboard` ranked **50 creators**. Checked against production: 107 of the 109 are
+simulation records carrying invented brand names — "Brand QA 04", "Ridge Labs", "Zenith Works" —
+with prize amounts, final scores and finalized dates, all presented publicly as officially
+finalized results.
+
+Fixed in `9b5415e`. The exclusion now lives in `server/src/compliance/seedAccounts.ts`; both public
+winners endpoints apply it, `adminConsole` imports it instead of keeping a second copy, and
+`server/test/public-data.test.ts` guards both call sites. No record was altered or deleted — the
+simulated data is still in the database and still visible to admin.
+
+### The same bug is still live on Discover — NOT fixed
+
+`/discover` shows **61 "open briefs"** from the same simulated brands, while `platformStats` counts
+**5 real contests**. Every card also renders "Closed", because those contests have `status: 'open'`
+with a deadline in the past — so the page's own headline figure ("Open briefs 61") contradicts every
+card beneath it.
+
+Why it was left alone rather than fixed blind:
+
+- `Contest.rls.read` is `{}` — fully public — and `Discover.jsx` reads the entity directly
+  (`entities.Contest.filter({ status: 'open' })`), not a purpose-built endpoint. Unlike the winners
+  endpoints, there is no single server function to add a filter to.
+- Fixing it properly means a new public function plus registry wiring plus changing Discover's data
+  source. `server/test/registry.test.ts` explicitly guards that "the public surface stays small and
+  deliberate", and none of it can be exercised without a database.
+- Worth knowing: `platformStats` filters `!c.demo`, but **there is no `demo` field on the Contest
+  schema**, so that clause is a no-op. The only thing doing real work there is the seed-creator
+  check.
+
+The fix is small and well-understood; it just needs a database to verify against.
+
+## 5. Change made in session 1
 
 **`server/src/payments/config.ts` — `paymentMode()` now reads the live environment.**
 
@@ -264,10 +328,15 @@ right next body of work.
 
 ## 10. Next actions
 
-1. **User decides: Neon or Supabase.** Everything database-shaped waits on this.
-2. Commit and deploy the `paymentMode()` fix (§5).
-3. Art-direction / composition pass across the screens (§8) — the work that does not need
-   credentials and is what the user is actually asking for.
+1. **Push and deploy the six commits.** They are all local. The winners fix in particular is
+   correcting something visitors can see right now.
+2. **Fix Discover the same way (§4c)** — it is the last public surface still presenting simulated
+   records as real.
+3. Look at Notifications, Money and Tracker in a real session; they were changed but never seen
+   rendered.
 4. Add an `eslint.config.js` so `npm run lint` is a real gate (§4).
 5. Refresh or delete `DESIGN.md` and `AGENTS.md` (§2) — both actively mislead a fresh agent.
 6. Clone and inspect `admin-razekit.com`; it has never been reviewed in this session line.
+7. Still owner-only and unmoved: Resend DNS at Wix, OpenAI billing, UroPay merchant onboarding.
+
+Database: **Neon stays.** Settled 2026-09-17.
