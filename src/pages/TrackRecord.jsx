@@ -231,8 +231,11 @@ export default function TrackRecord() {
         <header>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Track record</p>
           <h1 className="mt-2 font-display text-[26px] font-extrabold leading-tight tracking-tight text-ink sm:text-[32px]">{headline}</h1>
+          {/* "Your complete competitive history on RazeKit" restated the eyebrow
+              directly above it. What the line is actually for is the half after
+              the dash, so that is all that is left. */}
           <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted">
-            Your complete competitive history on RazeKit — every finished contest, scored the same way, in the order it was finalised.
+            Every finished contest, scored the same way, in the order it was finalised.
           </p>
         </header>
 

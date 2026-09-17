@@ -744,8 +744,14 @@ function Showcase() {
 
   return (
     <section className="space-y-4" aria-labelledby="winning-work-heading">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="winning-work-heading" className="font-display text-lg font-bold text-ink">Winning work</h2>
+      {/* The heading is for screen readers only. The tab above already says
+          "Winning work" and it is the selected one, so rendering an <h2> with
+          the same two words directly underneath it printed the label twice —
+          the icon+title+title-again pattern, in text form. The section still
+          needs a name to be labelled by, so the name stays and only the
+          duplicate pixels go. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 id="winning-work-heading" className="sr-only">Winning work</h2>
         <div className="overflow-x-auto">
           <Segmented
             value={tab}
@@ -908,7 +914,8 @@ function LeaderboardPanel() {
 
   return (
     <section className="space-y-5" aria-labelledby="leaderboard-heading">
-      <h2 id="leaderboard-heading" className="font-display text-lg font-bold text-ink">Leaderboard</h2>
+      {/* Same as the showcase: the selected tab already says "Leaderboard". */}
+      <h2 id="leaderboard-heading" className="sr-only">Leaderboard</h2>
 
       {/* A three-up podium needs width to be readable; on a phone the top three
           are just the first three rows of the same list. */}

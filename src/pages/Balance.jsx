@@ -543,7 +543,7 @@ export default function Balance() {
 
       {!isClient && (
         <Section title="Withdrawals"
-          description="Withdrawals are prepared and transferred by a person during the beta, not by an automated system.">
+          description="Prepared and transferred by a person during the beta, not automatically.">
           {openRequest && (
             <OpenRequest request={openRequest} currency={currency}
               onCancelled={() => refresh('Your withdrawal request was cancelled and the amount is available again.')} />

@@ -509,6 +509,11 @@ export default function CreateContest() {
           <Card className="space-y-4 p-4 sm:p-5">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Brief</h2>
 
+            {/* The hint and the placeholder used to list the same five things —
+                platform, duration, footage, CTA, what not to do — once above the
+                box and once inside it. The hint keeps the list, because it says
+                why precision pays off; the placeholder just shows what an answer
+                looks like. */}
             <Field
               id="description" label="What creators must make"
               hint="The more precise this is, the better RazeKit can suggest requirements — platform, duration, footage, call to action, and anything creators must not do."
@@ -516,7 +521,7 @@ export default function CreateContest() {
               <textarea
                 id="description" rows={6} value={f.description} onChange={set('description')}
                 className={TEXTAREA_CLS}
-                placeholder="Describe the deliverable, duration, platform, footage, CTA, branding, and anything creators must not do…"
+                placeholder="A 30-second vertical reel for Instagram, showing the product in use…"
               />
             </Field>
 

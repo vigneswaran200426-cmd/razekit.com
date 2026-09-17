@@ -323,7 +323,9 @@ export default function Settings() {
         <div role="status" className="rounded-md bg-success/8 text-success text-sm font-medium px-3 py-2">{note}</div>
       )}
 
-      <Section icon={UserRound} title="Account" description="The details we hold for this account.">
+      {/* No description: an icon, the word "Account", and then "The details we
+          hold for this account" is the same thing said three times. */}
+      <Section icon={UserRound} title="Account">
         <div className="flex items-center gap-3 pb-4 mb-1 border-b border-line">
           <Avatar name={user?.full_name || user?.email} size={44} />
           <p className="font-display text-[15px] font-bold text-ink truncate">{displayName}</p>
