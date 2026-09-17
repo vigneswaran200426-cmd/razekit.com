@@ -460,30 +460,46 @@ function EntryList({ heading, note, tone, entries, disqualified, ctx, empty }) {
   );
 }
 
+/**
+ * The formula stays; the rulebook folds away.
+ *
+ * The weighting is the answer to "why is this entry ranked above that one", so
+ * it belongs on screen, above the ranking it explains. The winner method,
+ * tie-break, rules version, lock reason and the note about who computes scores
+ * are all reference material — correct, occasionally important, and read once.
+ * Keeping them permanently open put five lines of small print between the
+ * campaign's numbers and its ranking, which is the part of this screen people
+ * came for.
+ */
 function ScoringRules({ scoring }) {
   if (!scoring?.config) return null;
   const { engagement_weight: we, traffic_weight: wt, winner_method: method, tie_break: tie, version } = scoring.config;
   return (
-    <Card className="p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <Card as="details" className="overflow-hidden p-0">
+      <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 p-4 hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
         <div className="min-w-0">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Scoring rules for this campaign</h2>
           <p className="mt-1.5 font-display text-[15px] font-bold text-ink nums">
             Final score = <span className="text-primary">{we}% Video Engagement</span> + <span className="text-accent">{wt}% Brand Traffic</span>
           </p>
         </div>
-        {scoring.locked && <Badge tone="neutral"><Lock className="w-3 h-3" aria-hidden="true" /> Locked</Badge>}
+        <div className="flex shrink-0 items-center gap-2">
+          {scoring.locked && <Badge tone="neutral"><Lock className="w-3 h-3" aria-hidden="true" /> Locked</Badge>}
+          <span className="text-[12px] font-medium text-muted">Details</span>
+        </div>
+      </summary>
+      <div className="border-t border-line p-4 sm:p-5">
+        <p className="text-[11px] leading-relaxed text-muted">
+          Winner method: <span className="text-ink font-medium">{words(method)}</span>
+          {tie && <> · Tie-break: <span className="text-ink font-medium">{words(tie)}</span></>}
+          {version && <> · Rules version <span className="nums">{version}</span></>}
+        </p>
+        {scoring.lock_reason && <p className="mt-1.5 text-[11px] leading-relaxed text-muted">{scoring.lock_reason}</p>}
+        <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted">
+          <ShieldCheck className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          RazeKit calculates every score. You can inspect exactly how a score was composed, but you cannot change it.
+        </p>
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted">
-        Winner method: <span className="text-ink font-medium">{words(method)}</span>
-        {tie && <> · Tie-break: <span className="text-ink font-medium">{words(tie)}</span></>}
-        {version && <> · Rules version <span className="nums">{version}</span></>}
-      </p>
-      {scoring.lock_reason && <p className="mt-1.5 text-[11px] leading-relaxed text-muted">{scoring.lock_reason}</p>}
-      <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted">
-        <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-px" aria-hidden="true" />
-        RazeKit calculates every score. You can inspect exactly how a score was composed, but you cannot change it.
-      </p>
     </Card>
   );
 }
@@ -770,7 +786,9 @@ function CreatorTracker() {
 
       {tab === 'overview' && (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Five tiles in a four-column grid left one stranded on its own row at
+              every desktop width. Five columns, so the row resolves. */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <Kpi label="Contests joined" value={nf(k.contests_joined)} sub={`${nf(k.active_contests)} active`} icon={Target} />
             <Kpi label="Wins" value={nf(k.wins)} sub={k.win_rate === null ? 'No completed contests yet' : `${k.win_rate}% win rate`} icon={Trophy} accent />
             {/* Two separate facts. What you WON is not what has reached your
