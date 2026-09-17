@@ -23,7 +23,7 @@ import { useAuth } from '@/lib/auth';
 import { money } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { PageHeader, Button, Badge, Avatar, EmptyState, Skeleton, Sheet, Metric } from '@/components/ui';
-import { ListState, SearchField, OptionList, FilterButton, StripSkeleton } from '@/pages/Discover';
+import { ListState, SearchField, OptionList, FilterButton } from '@/pages/Discover';
 
 const PROFILE_LIMIT = 200;
 const WORK_LIMIT = 60;
@@ -413,7 +413,6 @@ export default function Explore() {
   /* Three states, not two: measured, still arriving, and unknown. Everything
      that reads a record branches on `recordKnown`, never on `perf` alone. */
   const recordKnown = !!perf;
-  const recordLoading = perf === null && !perfError;
 
   /* Only creator profiles, only the ones meant to be public, only the ones
      with a name to show. A brand profile in a creator directory is noise. */
@@ -498,10 +497,10 @@ export default function Explore() {
   const workStatus = postError ? 'error' : posts === null ? 'loading' : shownWork.length === 0 ? 'empty' : 'ready';
   // An inert record filter is not an applied one, so it must not colour the
   // "no matches" copy or the Filters badge.
+  // True when some creator would actually be returned by a record filter.
+  const recordHasMatches = recordOptions.some((o) => o.key !== 'any' && o.count > 0);
   const recordFiltered = recordKnown && record !== 'any';
   const creatorsFiltered = !!q.trim() || cat !== 'all' || recordFiltered;
-  const withRecord = creators.filter((e) => !!e.perf).length;
-  const categoryCount = Math.max(0, categoryOptions.length - 1);
 
   // Defined once and placed twice — a rail on a wide screen, a sheet on a
   // phone — so the two can never drift apart.
@@ -522,8 +521,15 @@ export default function Explore() {
       {/* Every count in this group is a count of finalized records. With no
           records to count they would all read 0, which offers the brand a
           filter that promises nothing exists — so the group is withdrawn until
-          the numbers behind it are real. */}
-      {recordKnown ? (
+          the numbers behind it are real.
+
+          `recordKnown` alone was too weak a test: it only says the records
+          payload arrived, not that anybody has a record. On a young platform it
+          arrives successfully and empty, so the rail still offered "Has
+          finalized results 0" and "Has won a contest 0" — two controls whose
+          only possible outcome is an empty directory. Now the group appears
+          when at least one creator can actually be found by it. */}
+      {recordKnown && recordHasMatches ? (
         <OptionList legend="Contest record" options={recordOptions} value={record} onChange={setRecord} />
       ) : perfError ? (
         <p className="text-[12px] leading-relaxed text-muted">
@@ -557,19 +563,13 @@ export default function Explore() {
         description="Search the people who compete on RazeKit, and the work they publish. Contest results shown here come from judged contests — never from follower counts."
       />
 
-      <section aria-label="Directory at a glance" className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-lg border border-line bg-surface">
-        <div className="min-w-0 px-3 py-3 sm:px-4">
-          {creatorsLoading ? <StripSkeleton label="Creators" /> : <Metric label="Creators" value={profileError ? null : creators.length} />}
-        </div>
-        <div className="min-w-0 px-3 py-3 sm:px-4">
-          {creatorsLoading || recordLoading
-            ? <StripSkeleton label="With results" />
-            : <Metric label="With results" value={profileError || !recordKnown ? null : withRecord} />}
-        </div>
-        <div className="min-w-0 px-3 py-3 sm:px-4">
-          {creatorsLoading ? <StripSkeleton label="Categories" /> : <Metric label="Categories" value={profileError ? null : categoryCount} />}
-        </div>
-      </section>
+      {/* The "Directory at a glance" strip stood here: Creators / With results /
+          Categories. A brand arrives on this page to find someone who can make
+          their idea, and the first thing it showed them was a census — on a young
+          platform, two of those three numbers are zero. The directory below
+          already states its own size ("1 creator"), and the category counts live
+          in the filter that uses them, so nothing was lost by letting the page
+          open on the people instead. */}
 
       <Tabs
         value={tab}
