@@ -51,6 +51,10 @@ test('the public surface stays small and deliberate', () => {
   // growing without anyone noticing is the thing to catch. If a new public
   // endpoint is genuinely wanted, this list is where it gets argued for.
   const expected = [
+    // Narrows a read that was already public: Discover previously queried the
+    // Contest entity straight from the browser, which is public by RLS and
+    // returned seeded simulation contests alongside real ones.
+    'contestDiscover',
     'creatorPublicProfile',
     'paymentModeInfo',
     'platformStats',

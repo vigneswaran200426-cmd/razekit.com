@@ -19,7 +19,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Check, Clock, Compass, Search, SlidersHorizontal, X } from 'lucide-react';
-import { entities } from '@/lib/api';
+import { entities, fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money, timeLeft } from '@/lib/format';
 import { cn } from '@/lib/cn';
@@ -357,11 +357,16 @@ export default function Discover() {
   const [sort, setSort] = useState('ending');
   const [sheet, setSheet] = useState(false);
 
+  // contestDiscover rather than the Contest entity directly. The entity read is
+  // public, so it returned every open contest — including the ones seeded client
+  // accounts create for simulation runs, which is why this page advertised 61
+  // open briefs against 5 real contests, all of them already past their
+  // deadline. The endpoint returns the same rows with those excluded.
   const load = useCallback(() => {
     setError(null);
     setContests(null);
-    entities.Contest.filter({ status: 'open' }, '-created_date', LIMIT)
-      .then((rows) => setContests(rows || []))
+    fn('contestDiscover', { limit: LIMIT })
+      .then((d) => setContests(d?.contests || []))
       .catch(() => setError('We couldn’t load open briefs just now.'));
   }, []);
 

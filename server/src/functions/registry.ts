@@ -5,6 +5,7 @@ import { trackingLinkCreate, trackingLinkList } from './tracking.js';
 import { criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet } from './criteria.js';
 import { complianceEvaluate, complianceGet, complianceReview } from './compliance.js';
 import { winnersShowcase, winnersLeaderboard, creatorPublicProfile } from './winners.js';
+import { contestDiscover } from './discover.js';
 import { adminOverview, adminContests, adminTraffic, adminUsers, adminAudit } from './admin.js';
 import { supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge } from './support.js';
 import { trackerCreatorOverview, trackerCreatorContests, trackerBrandOverview, trackerBrandCampaigns, trackerCampaignDetail } from './tracker.js';
@@ -66,6 +67,7 @@ export const HANDLERS = {
   supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge,
   adminOverview, adminContests, adminTraffic, adminUsers, adminAudit,
   winnersShowcase, winnersLeaderboard, creatorPublicProfile,
+  contestDiscover,
   criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet,
   complianceEvaluate, complianceGet, complianceReview,
 
@@ -146,6 +148,9 @@ export const HTTP_ALLOWED = new Set([
   'platformStats',
   // Public winner results + leaderboard (finalized data only).
   'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile',
+  // Open contests for the public Discover page. Returns the same rows the
+  // Contest entity already serves publicly, minus seeded accounts.
+  'contestDiscover',
   // Contest Intelligence. Each handler enforces its own ownership check;
   // criteriaGet is readable by participants so creators can see the rules.
   'criteriaLibrary', 'criteriaRecommend', 'criteriaConfirm', 'criteriaGet',
@@ -202,6 +207,9 @@ export const PUBLIC_FUNCTIONS = new Set([
   'winnersShowcase', 'winnersLeaderboard', 'creatorPublicProfile', 'paymentModeInfo',
   // Aggregate counts only, seed accounts excluded. Nothing identifying.
   'platformStats',
+  // Discover is a public page, and the Contest entity it used to read directly
+  // is public already — this narrows that read rather than widening anything.
+  'contestDiscover',
   // The upcoming-tournament banners are on the public home page, and a visitor
   // can vote — pollVote derives an anti-abuse voter key rather than requiring
   // an account, so both are reachable without a session.

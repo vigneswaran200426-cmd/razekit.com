@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { isSeedEmail, notSeedWhere, SEED_SUFFIXES } from '../src/compliance/seedAccounts.js';
+import { publicContests } from '../src/functions/discover.js';
 
 // Seeded creators and simulated brands are rendered exactly like real ones:
 // same names, same prize amounts, same finalized scores. This list is the only
@@ -68,4 +69,47 @@ test('the public leaderboard filters seeded accounts out', () => {
   const calls = winnersSource.match(/await seedUserIds\(\)/g) || [];
   assert.equal(calls.length, 2,
     'both winnersShowcase and winnersLeaderboard must exclude seeded accounts');
+});
+
+// ── Discover ────────────────────────────────────────────────────────────────
+//
+// Same defect, different page: /discover advertised 61 open briefs against 5
+// real contests, every seeded one already past its deadline.
+
+const seeded = new Set(['seed-1', 'seed-2']);
+const row = (id, owner) => ({ id, created_by_id: owner });
+
+test('a seeded contest never reaches the public Discover page', () => {
+  const out = publicContests(
+    [row('a', 'seed-1'), row('b', 'real-1'), row('c', 'seed-2')],
+    seeded,
+    50,
+  );
+  assert.deepEqual(out.map((c) => c.id), ['b']);
+});
+
+test('filtering happens before the page is cut, not after', () => {
+  // The seeded rows are the newest, so they arrive first. Slicing first would
+  // return a page of rows that are then thrown away, leaving Discover looking
+  // empty while real contests sat just past the cut.
+  const rows = [
+    ...Array.from({ length: 10 }, (_, i) => row(`s${i}`, 'seed-1')),
+    row('real-a', 'real-1'),
+    row('real-b', 'real-2'),
+  ];
+  const out = publicContests(rows, seeded, 2);
+  assert.deepEqual(out.map((c) => c.id), ['real-a', 'real-b']);
+});
+
+test('an empty or unreadable contest list yields an empty page, not a crash', () => {
+  assert.deepEqual(publicContests([], seeded, 10), []);
+  assert.deepEqual(publicContests(null as any, seeded, 10), []);
+  assert.deepEqual(publicContests([null as any, row('b', 'real-1')], seeded, 10).map((c) => c.id), ['b']);
+});
+
+test('a contest with no recorded owner is still shown', () => {
+  // created_by_id can be absent on older rows. Undefined is not in the seed set,
+  // so it survives — hiding a real contest because its owner field is missing
+  // would be the worse failure.
+  assert.deepEqual(publicContests([row('x', undefined)], seeded, 10).map((c) => c.id), ['x']);
 });
