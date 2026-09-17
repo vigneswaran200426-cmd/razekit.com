@@ -37,25 +37,31 @@ export default function CookieNotice() {
       // announced politely rather than assertively so it does not interrupt a
       // screen reader mid-sentence on arrival.
       role="region"
-      aria-label="Cookies on RazeKit"
+      aria-label="What RazeKit stores on this device"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85 motion-safe:animate-slide-in-bottom"
     >
       <div className="shell flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="flex min-w-0 gap-3">
           <Cookie className="mt-0.5 hidden h-5 w-5 shrink-0 text-primary sm:block" aria-hidden="true" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">Cookies on RazeKit</p>
+            {/* "Cookies on RazeKit" was the heading, and it was not true: checked
+                against the live site, RazeKit sets no cookies at all —
+                document.cookie is empty. Everything it keeps is localStorage on
+                your own device. Calling that a cookie notice is the convention,
+                but saying it stores cookies when it does not is exactly the kind
+                of borrowed boilerplate this should avoid. */}
+            <p className="text-sm font-semibold text-ink">What RazeKit stores on this device</p>
             <p className="mt-0.5 max-w-prose text-[13px] leading-relaxed text-muted">
               {optional ? (
                 <>
-                  We use essential cookies to keep RazeKit working, and optional ones to understand
-                  how the site is used. You choose the optional ones.
+                  Essential storage keeps RazeKit working. Optional storage tells us how the site is
+                  used, and that part is your choice.
                 </>
               ) : (
                 <>
-                  RazeKit uses only what it needs to work — your sign-in session, an autosaved
-                  contest draft, and this choice. There is no analytics and no third-party tracking
-                  on this site.
+                  Your sign-in session, an autosaved contest draft, and this choice — kept in your
+                  browser, on this device. RazeKit sets no cookies, runs no analytics and loads no
+                  third-party scripts.
                 </>
               )}{' '}
               <Link

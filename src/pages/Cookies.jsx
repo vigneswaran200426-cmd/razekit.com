@@ -35,6 +35,14 @@ export default function Cookies() {
         description="Everything RazeKit stores in your browser, and what each item is for."
       />
 
+      {/* Stated because it is true and checkable: verified against the live site,
+          document.cookie is empty. The page keeps the name people look for while
+          the body says what actually happens. */}
+      <p className="text-[13px] leading-relaxed text-muted">
+        RazeKit sets no cookies. Everything below is stored by your browser on this device using
+        local storage, and none of it is sent to anyone else.
+      </p>
+
       {/* The honest headline. If this ever stops being true, OPTIONAL_CATEGORIES
           stops being empty and this whole block changes with it. */}
       {!optional && (
@@ -43,9 +51,9 @@ export default function Cookies() {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-ink">No tracking on this site</p>
             <p className="mt-1 text-[13px] leading-relaxed text-muted">
-              RazeKit runs no analytics, no advertising pixels and no third-party scripts. There is
-              nothing optional to turn off, so there is nothing here asking you to. The list below is
-              everything, and all of it is needed for the site to work.
+              No analytics, no advertising pixels, no third-party scripts. There is nothing optional
+              to turn off, so there is nothing here asking you to. The list below is everything, and
+              all of it is needed for the site to work.
             </p>
           </div>
         </Card>
