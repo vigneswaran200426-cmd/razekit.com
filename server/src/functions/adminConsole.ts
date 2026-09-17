@@ -23,6 +23,7 @@ import { prisma, adminPrisma, hasSeparateAdminDb } from '../db.js';
 import { SCORING_VERSION } from '../scoring/index.js';
 import { paymentMode } from '../payments/config.js';
 import { displayName } from '../finance/notify.js';
+import { isSeedEmail, notSeedWhere, seedUserIds } from '../compliance/seedAccounts.js';
 
 const nowIso = () => new Date().toISOString();
 const err = (code, message, status = 400, extra = {}) => json({ error: { code, message, ...extra } }, status);
@@ -36,8 +37,9 @@ const requireAdmin = (ctx) => {
   return null;
 };
 
-const SEED_SUFFIXES = ['@razekit.test', '@razekit.demo', '@razekit.sim'];
-const isSeed = (email) => SEED_SUFFIXES.some((s) => String(email || '').endsWith(s));
+// Defined in compliance/seedAccounts.ts so the public winners endpoints and this
+// console cannot disagree about which accounts are real.
+const isSeed = isSeedEmail;
 
 async function audit(svc, { actorId, action, subjectUserId, status = 'success', reason = '', result = {} }) {
   return svc.entities.AuditLog.create({
@@ -517,19 +519,15 @@ function uropayStatusLine() {
  */
 export async function platformStats(ctx) {
   const svc = ctx.svc;
-  const notSeed = { NOT: { OR: SEED_SUFFIXES.map((s) => ({ email: { endsWith: s } })) } };
 
   const [creators, clients, contests, snapshots] = await Promise.all([
-    prisma.appUser.count({ where: { ...notSeed, userRole: 'creator', accountStatus: 'active' } }),
-    prisma.appUser.count({ where: { ...notSeed, userRole: 'client', accountStatus: 'active' } }),
+    prisma.appUser.count({ where: { ...notSeedWhere, userRole: 'creator', accountStatus: 'active' } }),
+    prisma.appUser.count({ where: { ...notSeedWhere, userRole: 'client', accountStatus: 'active' } }),
     svc.entities.Contest.filter({}, '-created_date', 2000).catch(() => []),
     svc.entities.ScoreSnapshot.filter({ is_winner: true }, '-created_date', 2000).catch(() => []),
   ]);
 
-  const seedIds = new Set(
-    (await prisma.appUser.findMany({ where: { OR: SEED_SUFFIXES.map((s) => ({ email: { endsWith: s } })) }, select: { id: true } }))
-      .map((u) => u.id)
-  );
+  const seedIds = await seedUserIds();
   const realContests = contests.filter((c) => !seedIds.has(c.created_by_id) && !c.demo);
   const realWins = snapshots.filter((s) => !seedIds.has(s.creator_id));
 
