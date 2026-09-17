@@ -129,6 +129,58 @@ runnable in this state. Pre-existing; not introduced this session. Low severity,
 
 ---
 
+## 4-0. Session 4 (2026-09-17) — registration and app icon
+
+`main` at `9f947a6`. Both deployed and verified in production.
+
+### "Register sends you to Google" — root cause
+
+`/register` **never redirected.** It rendered `GoogleButton` as the *first element on the page*,
+above the divider and above every field. At 375px that is the entire first screen: opening Register
+on a phone showed nothing but "Sign up with Google", with the email/password form below the fold.
+
+Fixed in `3bb5d6e`: the form comes first on Register and Login, Google sits under an "or" divider.
+Nothing in the OAuth flow, callback or account-linking changed — it moved.
+
+Also added: a **Terms checkbox**, unticked by default, submit disabled until ticked, and the server
+does not trust it — `POST /api/auth/register` now returns 400 without `accepted_terms` and records
+`terms_accepted_at`. Verified live: the endpoint rejects a request without it.
+
+**Mobile number is deliberately NOT implemented.** `AppUser` has no phone column. Doing it properly
+needs a migration, a unique constraint and a verification path, against a database no session can
+reach. Putting an unvalidated, non-unique number in the `profile` JSON blob would create exactly the
+duplicate-phone problem the requirement warns against.
+
+**Role selection stays on `/onboarding`**, which already does it correctly and is server-gated
+(`SELECTABLE_ROLES`, writable once while onboarding is incomplete, or by an admin). Register now
+tells the user that step is coming rather than letting them discover it.
+
+### "The live site shows the old logo" — it does not
+
+Investigated properly. **There is no old logo in this repository.** One logo component,
+`src/components/Brand.jsx`, whose mark is geometrically identical to `public/favicon.svg` — both the
+locked blue diagonal stacked parallelograms. No Base44 or previous-brand string exists anywhere in
+source. Production serves that same `favicon.svg` byte for byte on a 300-second cache.
+
+**What was genuinely wrong: the app icon.** `apple-touch-icon` and the manifest both pointed at
+`og.png`, a **1200×630 social banner**. iOS and Android crop a home-screen icon to a square rather
+than letterboxing it, so the app icon was the middle stripe of that banner with the mark cut off.
+That is very plausibly the "wrong logo" being seen.
+
+Fixed in `9f947a6`: `scripts/make-app-icon.mjs` generates a real 180×180 apple-touch-icon plus
+192/512 and a maskable 512 from the locked geometry (copied from `favicon.svg`, not redrawn, so the
+two cannot drift). JSON-LD `Organization.logo` moved off the banner. `og.png` stays where it
+belongs — `og:image` and `twitter:image`.
+
+Note the plate is `#070f22`, not the manifest's `theme_color` `#0d1b3a`: the lowest of the three
+bars ends at that exact navy and vanished into its own background on the first render.
+
+### Also fixed: a bug I introduced in session 3
+
+The dev proxy key `/r` matches by **prefix**, so it swallowed `/register`, `/review` and `/reports`
+and answered them with the API's 404. Keys are now anchored regexes (`^/api/`, `^/files/`, `^/r/`).
+Dev-only, but it broke local QA of the very page being fixed.
+
 ## 4a. Session 3 (2026-09-17) — everything pushed and deployed
 
 `main` is at `2821118`. **All work is pushed and live.** Verified against production after deploy.
