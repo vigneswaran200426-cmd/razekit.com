@@ -4,8 +4,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ShieldCheck, AlertTriangle, Users, Target, FileText, MousePointerClick,
-  Trophy, LifeBuoy, Activity, ScrollText, Gauge,
+  ShieldCheck, AlertTriangle, Target, FileText, MousePointerClick,
+  Trophy, LifeBuoy, ScrollText, Gauge,
 } from 'lucide-react';
 import { fn } from '@/lib/api';
 import { money, dateShort } from '@/lib/format';

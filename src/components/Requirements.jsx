@@ -4,9 +4,9 @@
 // eligible — the specific requirement and the evidence. It never exposes
 // internal detection thresholds or fraud logic.
 import { useEffect, useState } from 'react';
-import { ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Clock, HelpCircle } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, XCircle, Clock, HelpCircle } from 'lucide-react';
 import { fn } from '@/lib/api';
-import { Card, Badge, Skeleton, EmptyState } from '@/components/ui';
+import { Card, Badge, Skeleton } from '@/components/ui';
 
 const FINDING_UI = {
   pass: { icon: CheckCircle2, tone: 'success', label: 'Met' },

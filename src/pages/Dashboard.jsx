@@ -212,11 +212,19 @@ function ClientHome({ data, user, onRetry }) {
   const active = mine.filter((c) => !CLIENT_CLOSED.includes(c.status)).sort(byDeadline);
   const drafts = mine.filter((c) => c.status === 'draft');
   const decided = mine.filter((c) => ['winner_selected', 'completed'].includes(c.status));
-  const unfunded = mine.filter((c) => c.status !== 'draft' && c.funding_status && c.funding_status !== 'FUNDED');
+  // The two lists above this file's FUNDING_ constants exist to separate are
+  // separated here. They were declared, commented — "showing one as the other is
+  // how someone pays twice" — and then never used: every contest that was not
+  // FUNDED landed in one bucket with a "Fund contest" button. So a brand that
+  // had already transferred the money and was waiting on verification was told
+  // to go and fund it again. That is the exact failure the comment warns about.
+  const notFunded = mine.filter((c) => c.status !== 'draft' && c.funding_status && c.funding_status !== 'FUNDED');
+  const needsPayment = notFunded.filter((c) => FUNDING_NEEDS_BRAND.includes(c.funding_status));
+  const inReview = notFunded.filter((c) => FUNDING_IN_REVIEW.includes(c.funding_status));
   const judging = mine.filter((c) => ['submitted', 'reviewing'].includes(c.status));
 
   const todo = [
-    ...unfunded.map((c) => ({
+    ...needsPayment.map((c) => ({
       key: `fund-${c.id}`,
       title: c.title,
       detail: `Funding status: ${fundingStatusLabel(c.funding_status)}. Creators can see the brief, but the prize is not confirmed until funding is verified.`,
@@ -224,6 +232,17 @@ function ClientHome({ data, user, onRetry }) {
       cta: 'Fund contest',
       badge: 'Funding',
       tone: 'warning',
+    })),
+    // No call to action, deliberately: there is nothing for the brand to do, and
+    // the only button that could go here is the one that takes their money again.
+    ...inReview.map((c) => ({
+      key: `funding-review-${c.id}`,
+      title: c.title,
+      detail: `Funding status: ${fundingStatusLabel(c.funding_status)}. Your transfer is with a RazeKit reviewer — you do not need to send it again.`,
+      to: `/contest/${c.id}/fund`,
+      cta: 'View funding',
+      badge: 'Funding',
+      tone: 'primary',
     })),
     ...judging.map((c) => ({
       key: `review-${c.id}`,
@@ -269,7 +288,7 @@ function ClientHome({ data, user, onRetry }) {
         items={[
           { label: 'Active campaigns', value: active.length },
           { label: 'Entries received', value: failed.subs ? null : subs.length },
-          { label: 'Needs funding', value: unfunded.length },
+          { label: 'Needs funding', value: needsPayment.length },
           { label: 'Winners picked', value: decided.length },
         ]}
       />

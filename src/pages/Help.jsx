@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BookOpen, MessageSquare, LifeBuoy, ChevronLeft, ChevronRight, Search,
+  MessageSquare, LifeBuoy, ChevronLeft, ChevronRight, Search,
   ShieldCheck, Trophy, Target, Activity, Wallet, Users, Sparkles, Send, Clock,
   AlertCircle, RotateCcw,
 } from 'lucide-react';

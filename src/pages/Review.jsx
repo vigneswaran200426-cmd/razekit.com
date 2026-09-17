@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Trophy, Check, Film, ExternalLink, ShieldCheck } from 'lucide-react';
 import { entities, uploads, fn } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { Card, Button, Badge, Spinner, EmptyState, PageHeader, Skeleton } from '@/components/ui';
 import { ScoreBreakdown, ScorePill, ScoreStateBadge } from '@/components/Score';
 import { ComplianceResult } from '@/components/Requirements';
@@ -32,7 +31,6 @@ function ReviewSkeleton() {
 export default function Review() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [contest, setContest] = useState(null);
   const [subs, setSubs] = useState(null);
   const [sel, setSel] = useState(null);
@@ -60,7 +58,11 @@ export default function Review() {
     }
   };
 
-  useEffect(() => { entities.Contest.get(id).then(setContest).catch(() => {}); loadSubs(); /* eslint-disable-next-line */ }, [id]);
+  // The eslint-disable that used to sit here was at the END of the line, so it
+  // suppressed the line below instead of this one and did nothing. Removed
+  // rather than repositioned: the missing `loadSubs` dependency is a real
+  // warning and should stay visible.
+  useEffect(() => { entities.Contest.get(id).then(setContest).catch(() => {}); loadSubs(); }, [id]);
 
   useEffect(() => {
     setMedia(null);

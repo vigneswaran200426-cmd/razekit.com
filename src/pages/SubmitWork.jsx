@@ -11,7 +11,7 @@
 // submitted. That checklist is the creator's own: ticking it sends nothing and
 // proves nothing. RazeKit checks the entry itself, after submission.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, UploadCloud, CheckCircle2, Film, Loader2, AlertCircle, Trophy,
   Clock, Link2, Smartphone, ShieldCheck, RefreshCw,
@@ -154,7 +154,6 @@ function RuleChecklist({ contestId }) {
 
 export default function SubmitWork() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const fileRef = useRef(null);
   const rootRef = useRef(null);

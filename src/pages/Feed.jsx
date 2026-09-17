@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AlertCircle, Heart, MessageCircle, Bookmark, Plus, ImagePlus, Loader2 } from 'lucide-react';
 import { entities, uploads } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { initials, dateShort } from '@/lib/format';
+import { dateShort } from '@/lib/format';
 import { PageHeader, Card, Button, Badge, Avatar, EmptyState, Skeleton, Input, Sheet } from '@/components/ui';
 import { cn } from '@/lib/cn';
 

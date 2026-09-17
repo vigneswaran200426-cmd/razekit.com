@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Activity, Bell, Briefcase, Check, ChevronDown, Compass, FolderKanban, HelpCircle, LayoutDashboard, LineChart, LogOut, Menu, Newspaper, Search, Settings, Shield, Trophy, User, Video, Wallet, X,
+  Activity, Bell, Briefcase, ChevronDown, Compass, FolderKanban, HelpCircle, LayoutDashboard, LogOut, Menu, Search, Settings, Shield, Trophy, User, Video, Wallet, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { entities } from '@/lib/api';

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { fn } from '@/lib/api';
 import { money } from '@/lib/format';
-import { Card, Button, Input, Label, Badge, Skeleton, EmptyState, PageHeader } from '@/components/ui';
+import { Card, Button, Input, Label, Skeleton, EmptyState } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
 const TONE = { success: 'success', danger: 'danger', warning: 'warning', primary: 'primary', neutral: 'neutral' };
