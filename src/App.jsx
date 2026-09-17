@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import ConnectionStatus from '@/components/ConnectionStatus';
+import CookieNotice from '@/components/CookieNotice';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RouteSeo } from '@/components/Seo';
 import { AuthProvider } from '@/lib/auth';
@@ -49,6 +50,7 @@ const Terms = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Terms
 const Privacy = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Privacy })));
 const About = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.About })));
 const Contact = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Contact })));
+const Cookies = lazy(() => import('@/pages/Cookies'));
 
 
 /**
@@ -90,6 +92,11 @@ export default function App() {
               purpose: a chunk that must be FETCHED to report a lost connection
               is the one chunk that cannot arrive when it is needed. */}
           <ConnectionStatus />
+          {/* Eagerly imported, like ConnectionStatus: a notice about storage
+              that itself needs a lazy chunk to arrive is a notice that shows up
+              after the storage decision already mattered. It renders null once
+              a choice exists, which is the common case. */}
+          <CookieNotice />
           <Suspense fallback={<RouteFallback />}>
           <Routes>
 
@@ -114,6 +121,9 @@ export default function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            {/* Public and deliberately so: changing what is stored about you
+                must not require signing in first. */}
+            <Route path="/cookies" element={<Cookies />} />
             {/* Authenticated */}
             <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

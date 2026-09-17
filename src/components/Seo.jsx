@@ -154,6 +154,10 @@ const ROUTE_SEO = {
     title: 'Privacy Policy',
     description: 'What data RazeKit collects, why it is collected, how it is used and what choices you have.',
   },
+  '/cookies': {
+    title: 'Cookie Settings',
+    description: 'Every item RazeKit stores in your browser, what each one is for, and how to change your choice. No analytics and no third-party tracking.',
+  },
 };
 
 /** Drop once inside the router; it re-runs on every navigation. */

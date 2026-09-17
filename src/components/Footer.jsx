@@ -24,6 +24,7 @@ const LINKS = [
   { to: '/contact', label: 'Contact' },
   { to: '/terms', label: 'Terms' },
   { to: '/privacy', label: 'Privacy' },
+  { to: '/cookies', label: 'Cookies' },
 ];
 
 export default function Footer() {
