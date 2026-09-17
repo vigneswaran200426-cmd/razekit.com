@@ -124,21 +124,32 @@ const POLLS = [
       + 'nothing implying OpenAI created, endorsed or licensed this.',
   },
   {
-    slug: 'ai-creator-agents',
-    theme: 'AI Creator Agents',
-    title: 'THE AI CREATOR AGENT CHALLENGE',
-    question: 'Can creators and AI agents redefine what a one-minute video can become?',
-    supporting_line: 'You direct. It assists. The cut is still yours to answer for.',
+    slug: 'higgsfield',
+    theme: 'Higgsfield',
+    title: 'TURN AN IDEA INTO A VISUAL WORLD',
+    question: 'Should RazeKit run a cinematic AI visual-creation challenge?',
+    supporting_line: 'Sixty seconds to build somewhere that has never existed.',
     display_order: 3,
-    banner_alt: 'A creator and a luminous abstract companion form working side by side.',
+    banner_alt: 'An abstract landscape assembling itself out of light above a creator’s desk.',
     banner_prompt:
-      'Cinematic two-shot of a creator at a workstation beside a translucent luminous abstract companion form, '
-      + 'soft rim light, deep shadow, muted amber and steel grade, a sense of collaboration rather than replacement, '
-      + '9:16 and 16:9 crops. '
-      + 'ORIGINAL ARTWORK ONLY: no real company logos, product names, assistant branding or UI; '
-      + 'no implication of endorsement by any AI company.',
+      'Cinematic wide shot of an abstract landscape assembling itself from planes of light and particulate '
+      + 'matter above a darkened workstation, a lone creator silhouetted watching it form, volumetric haze, '
+      + 'deep indigo and warm amber grade, anamorphic flare, 9:16 and 16:9 crops. '
+      + 'ORIGINAL ARTWORK ONLY: no real company logos, wordmarks, product names, model names, UI screenshots '
+      + 'or brand marks; nothing implying any company created, endorsed, sponsored or licensed this.',
   },
 ];
+
+/**
+ * Polls that are no longer promoted.
+ *
+ * Archived, never deleted: real people voted in these, and destroying their
+ * votes to tidy a lineup would be exactly the fabrication this codebase spends
+ * so much effort avoiding. 'archived' is in the poll module's HIDDEN_STATUSES,
+ * so the record stops appearing on the site while its tally stays intact and
+ * auditable.
+ */
+const RETIRED_POLL_SLUGS = ['ai-creator-agents'];
 
 async function seedPolls() {
   for (const p of POLLS) {
@@ -170,6 +181,24 @@ async function seedPolls() {
       disclosure: DISCLOSURE,
     });
     note(created, `PollCampaign "${p.slug}" — ${p.title} (0 votes, target ${VOTE_TARGET.toLocaleString('en-IN')})`, '+');
+  }
+
+  // Retire superseded polls in the same pass, so the lineup cannot end up with
+  // four promoted campaigns because the swap ran halfway.
+  for (const slug of RETIRED_POLL_SLUGS) {
+    const [poll] = await svc.entities.PollCampaign.filter({ slug }, '-created_date', 1);
+    if (!poll) continue;
+    if (poll.status === 'archived') {
+      note(existed, `PollCampaign "${slug}" already archived`, '=');
+      continue;
+    }
+    await svc.entities.PollCampaign.update(poll.id, { status: 'archived' });
+    note(
+      created,
+      `PollCampaign "${slug}" archived — hidden from the site, `
+      + `${poll.total_votes || 0} vote(s) preserved`,
+      '~',
+    );
   }
 }
 

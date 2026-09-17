@@ -333,12 +333,17 @@ const TREATMENTS = { nightcity: NightCity, orbital: Orbital, collab: Collab, sig
 const BY_SLUG = {
   'gta-6': 'nightcity',
   'gpt-6-astra': 'orbital',
+  higgsfield: 'signal',
+  // Superseded by higgsfield as the third promotional poll, and archived rather
+  // than deleted because real people voted in it. Kept here so an archived poll
+  // surfaced in admin still draws the art it was written for.
   'ai-creator-agents': 'collab',
 };
 
 const BY_THEME = {
   'gta 6': 'nightcity',
   'gpt-6 astra': 'orbital',
+  higgsfield: 'signal',
   'ai creator agents': 'collab',
 };
 
