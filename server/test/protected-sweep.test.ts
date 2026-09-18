@@ -48,7 +48,46 @@ const USER_OWNED = new Set([
   // User role/status are stripped for non-admins in entities/service.ts's user
   // path, which is a different mechanism from PROTECTED_FIELDS.
   'User.role', 'User.user_role', 'User.account_status',
+
+  // Surfaced when the sweep widened past `rls.create === true`. Both match a
+  // VERDICT keyword by name only:
+  //   Submission.resolution is the video's resolution — it sits between
+  //   `duration` and `file_size`, not next to anything adjudicated.
+  //   Contest.max_downloads is how many times the owner permits their own
+  //   footage to be downloaded, alongside require_otp and manual_approval. The
+  //   client setting a limit on their own material is the feature.
+  'Submission.resolution',
+  'Contest.max_downloads',
 ]);
+
+/**
+ * Can a NON-ADMIN create this entity through the generic API?
+ *
+ * This used to be `rls.create === true`, and that is how SocialCampaignPost got
+ * through. Its create rule is not the literal `true` — it is
+ * `{$or:[{user_condition:{user_role:'client'}}, {user_condition:{role:'admin'}}]}`
+ * — so the sweep skipped it entirely and never noticed that `metrics`, which
+ * scoring/compute.ts turns into the engagement half of Final Score, was
+ * writable by the brand running the contest.
+ *
+ * A rule that only recognises one spelling of "a user may create this" is not a
+ * sweep. Admin-only creation is still skipped: an admin is trusted here.
+ */
+function clientCreatable(rule: any): boolean {
+  if (rule === true) return true;
+  if (!rule || typeof rule !== 'object') return false;
+  if (Array.isArray(rule.$or)) return rule.$or.some(clientCreatable);
+  if (Array.isArray(rule.$and)) return rule.$and.every(clientCreatable);
+  const cond = rule.user_condition;
+  if (cond) {
+    // `{role: 'admin'}` is the only condition that means "not a client".
+    if (cond.role === 'admin' && !cond.user_role) return false;
+    return true;
+  }
+  // Self-scoped rules — `created_by_id: {{user.id}}`, `data.user_id: {{user.id}}`
+  // — are creatable by an ordinary user on their own row.
+  return Object.keys(rule).some((k) => k === 'created_by_id' || k.startsWith('data.'));
+}
 
 function guardedFields(entity: string): Set<string> | '*' {
   const list = (PROTECTED_FIELDS as Record<string, string[]>)[entity];
@@ -62,8 +101,8 @@ test('every client-creatable entity guards its verdict fields', () => {
 
   for (const [entity, def] of Object.entries<any>(schemas)) {
     const rls = def?.rls || {};
-    // Only entities a client may actually create through the generic API.
-    if (rls.create !== true) continue;
+    // Only entities a non-admin may actually create through the generic API.
+    if (!clientCreatable(rls.create)) continue;
 
     const guarded = guardedFields(entity);
     if (guarded === '*') continue; // the whole entity is server-only
@@ -96,6 +135,13 @@ test('the specific fields that were exploitable are now guarded', () => {
     ['Comment', 'moderation_status'],     // self-approved moderation
     ['Report', 'status'],                 // closed one's own report
     ['SocialConnection', 'verified'],     // forged an account-ownership claim
+    // The brand running a contest could write the engagement numbers that
+    // decide which creator wins it. compute.ts reads `metrics` off this row.
+    ['SocialCampaignPost', 'metrics'],
+    ['SocialCampaignPost', 'submission_id'],  // and choose whose score it became
+    ['FootageAccessRequest', 'otp_verified'], // the other half of the footage gate
+    ['FootageAccessRequest', 'status'],
+    ['Review', 'verified'],                   // self-awarded "verified review" badge
   ];
   for (const [entity, field] of mustGuard) {
     const guarded = guardedFields(entity);

@@ -104,6 +104,24 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   MonthlyLeaderboard: ['*'],
   SocialMetric: ['*'],
   SocialPost: ['*'],
+  // Its two siblings above were locked and this one was not, which made it the
+  // only writable input to a score that decides who gets paid.
+  //
+  // scoring/compute.ts:113 reads SocialCampaignPost for the contest, and
+  // engagementInputs() takes views/likes/comments/shares/saves/watch_time/
+  // follower_growth straight off `metrics`. That becomes engagement_score, half
+  // of Final Score, which selects the winner. The entity's RLS lets
+  // `user_role: client` create and the owning client update — so the brand
+  // running a contest could write the numbers that decide which creator wins
+  // it, and pick the winner by editing a JSON blob.
+  //
+  // Nothing in the application writes this entity: the only writers are
+  // seed-simulation.ts and verify-e2e.ts, both of which run through
+  // serviceClient() and bypass this check (service.ts:260, 311). So locking it
+  // entirely costs nothing today and closes the hole. With no provider
+  // integration there is no trustworthy engagement data anyway, and the scorer
+  // already treats a missing metric as "Not measured" rather than zero.
+  SocialCampaignPost: ['*'],
   ScoreSnapshot: ['*'],
   TrafficEvent: ['*'],
   TrackingLink: ['*'],
@@ -121,6 +139,12 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   // material, so self-verifying one is a direct route to material the creator
   // was not granted.
   OtpVerification: ['verified', 'verified_at', 'attempts', 'expires_at', 'code_hash', 'status'],
+  // Same gate, other entity. OtpVerification.verified was closed above while
+  // FootageAccessRequest.otp_verified — which is also what stands between a
+  // creator and licensed footage — was left open, along with the status the
+  // reviewer sets and the lockout counters that make brute force expensive.
+  FootageAccessRequest: ['status', 'otp_verified', 'otp_attempts', 'otp_locked_until',
+    'reviewed_at', 'rejection_reason', 'client_id', 'worker_id'],
   DownloadSession: ['status', 'downloads_used', 'max_downloads', 'expires_at', 'revoked_at', 'revoked_by'],
   DownloadLog: ['status', 'session_id', 'bytes'],
 
@@ -137,6 +161,13 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   Comment: ['moderation_status', 'moderated_by', 'moderated_at'],
   // A user files a Report; its status and resolution belong to whoever reviews it.
   Report: ['status', 'reviewed_by', 'reviewed_at', 'resolution', 'resolution_notes', 'severity'],
+
+  // A review is written BY one party ABOUT the other, and rls.update lets the
+  // author, the creator and the client all write the row. `verified` is the
+  // badge saying RazeKit confirmed this review came from a real completed
+  // contest — a trust signal the reviewer was able to award themselves. The
+  // ratings and the prose stay writable; only the badge and the lifecycle do not.
+  Review: ['verified', 'status'],
 
   // Dormant today (nothing reads it), which is exactly when to close it: the
   // moment something trusts `verified`, a browser-set true becomes a forged
