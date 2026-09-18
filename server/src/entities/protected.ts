@@ -178,6 +178,11 @@ export const PROTECTED_FIELDS: Record<string, string[]> = {
   // A notification is emitted by the server in response to a real event. A
   // client writing one could fabricate "your payout completed".
   Notification: ['*'],
+
+  // OAuth tokens for connected social accounts. Admin-only at the RLS layer and
+  // sealed with AES-256-GCM on top of that; this is the third lock. Nothing
+  // outside social/tokens.ts, running as service role, ever writes it.
+  SocialToken: ['*'],
 };
 
 // Status values that only the server may assign (the client may still move a

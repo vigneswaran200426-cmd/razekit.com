@@ -48,6 +48,46 @@ export const config = {
     redirectUri: process.env.GOOGLE_REDIRECT_URI || '',
   },
 
+  // ── Social platform integrations ───────────────────────────────────────────
+  // Every platform is independently optional. An adapter with no credentials
+  // reports configured() === false, and the product says "not available" rather
+  // than rendering an empty dashboard that reads as zero engagement.
+  //
+  // tokenKey encrypts OAuth tokens at rest. Without it the token store refuses
+  // to write rather than storing a creator's access token in plaintext, so a
+  // deployment that forgets it loses the feature instead of leaking accounts.
+  social: {
+    tokenKey: process.env.SOCIAL_TOKEN_KEY || '',
+    instagram: {
+      clientId: process.env.INSTAGRAM_CLIENT_ID || '',
+      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
+    },
+    threads: {
+      clientId: process.env.THREADS_CLIENT_ID || '',
+      clientSecret: process.env.THREADS_CLIENT_SECRET || '',
+    },
+    tiktok: {
+      clientKey: process.env.TIKTOK_CLIENT_KEY || '',
+      clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
+    },
+    youtube: {
+      clientId: process.env.YOUTUBE_CLIENT_ID || '',
+      clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '',
+      // Data API v3 public statistics need only a key, not a user token.
+      apiKey: process.env.YOUTUBE_API_KEY || '',
+    },
+    x: {
+      clientId: process.env.X_CLIENT_ID || '',
+      clientSecret: process.env.X_CLIENT_SECRET || '',
+    },
+    reddit: {
+      clientId: process.env.REDDIT_CLIENT_ID || '',
+      clientSecret: process.env.REDDIT_CLIENT_SECRET || '',
+      // Reddit requires a descriptive, contactable User-Agent or it 429s hard.
+      userAgent: process.env.REDDIT_USER_AGENT || 'web:com.razekit.tracker:v1.0 (by /u/razekit)',
+    },
+  },
+
   storage: {
     driver: (process.env.STORAGE_DRIVER || 'local') as 'local' | 's3',
     publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL || 'http://localhost:4000/files',

@@ -4849,5 +4849,47 @@
       "read": {},
       "write": false
     }
+  },
+  "SocialToken": {
+    "name": "SocialToken",
+    "required": [
+      "social_connection_id",
+      "provider",
+      "access_token"
+    ],
+    "defaults": {},
+    "fields": [
+      "owner_user_id",
+      "social_connection_id",
+      "provider",
+      "access_token",
+      "refresh_token",
+      "provider_account_id",
+      "expires_at",
+      "scopes",
+      "updated_at"
+    ],
+    "rls": {
+      "read": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "create": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "update": {
+        "user_condition": {
+          "role": "admin"
+        }
+      },
+      "delete": {
+        "user_condition": {
+          "role": "admin"
+        }
+      }
+    }
   }
 }
