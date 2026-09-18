@@ -12,6 +12,7 @@ import { filesRouter } from './integrations/files.js';
 import { miscRouter } from './misc/routes.js';
 import { developmentRouter } from './development/routes.js';
 import { trafficRouter } from './traffic/routes.js';
+import { socialRouter } from './social/routes.js';
 import { paymentsRouter } from './payments/routes.js';
 import { ensureFinanceConstraints } from './db.js';
 import { captureError, errorMiddleware } from './errors/capture.js';
@@ -39,6 +40,9 @@ app.use(attachUser);
 // Public campaign redirect (Brand Traffic attribution). Must stay above the
 // API routers so /r/:code is never shadowed.
 app.use('/r', trafficRouter);
+// OAuth callbacks from the social platforms. A GET route because it is a
+// browser redirect; identity comes from the signed state, not a session.
+app.use('/api/social', socialRouter);
 app.use('/files', filesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/entities', entitiesRouter);

@@ -60,6 +60,11 @@ test('the public surface stays small and deliberate', () => {
     'platformStats',
     'pollList',
     'pollVote',
+    // What each platform's API can actually measure. Carries no credentials and
+    // no user data — only capability. A creator deciding whether to enter a
+    // contest, and a brand deciding which platform to run it on, both need to
+    // know that Reddit cannot report views BEFORE they commit to it.
+    'socialCapabilities',
     'uropayAvailability',
     'uropayWebhook',
     'winnersLeaderboard',
