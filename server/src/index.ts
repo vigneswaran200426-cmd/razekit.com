@@ -10,6 +10,7 @@ import { functionsRouter } from './functions/routes.js';
 import { integrationsRouter } from './integrations/routes.js';
 import { filesRouter } from './integrations/files.js';
 import { miscRouter } from './misc/routes.js';
+import { developmentRouter } from './development/routes.js';
 import { trafficRouter } from './traffic/routes.js';
 import { paymentsRouter } from './payments/routes.js';
 import { ensureFinanceConstraints } from './db.js';
@@ -46,6 +47,10 @@ app.use('/api/integrations/core', integrationsRouter);
 // Multipart money routes (funding proof, admin UPI QR). Each re-checks
 // ownership or the finance permission itself.
 app.use('/api/payments', paymentsRouter);
+// The Development product area. Its domain logic lives in the RazeKit DEV
+// engine; this router only authenticates the caller and scopes them to their
+// own tenant. Mounted above miscRouter so its paths are never shadowed.
+app.use('/api/development', developmentRouter);
 app.use('/api', miscRouter);
 
 app.get('/', (_req, res) => res.json({ service: 'razekit-api', ok: true }));

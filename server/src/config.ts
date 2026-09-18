@@ -132,6 +132,23 @@ export const config = {
 
   enableScheduler: (process.env.ENABLE_SCHEDULER || 'true') === 'true',
 
+  // ── Development area (RazeKit DEV engine) ──────────────────────────────────
+  // The autonomous app/website/game build area. Entirely optional: with no
+  // engineUrl the area reports itself unconfigured and the rest of RazeKit —
+  // contests, brand, creator — is untouched.
+  //
+  // principalSecret is what lets RazeKit vouch for a signed-in account to the
+  // engine, so the engine needs no user table of its own. It is server-only and
+  // must match RAZEKIT_PRINCIPAL_SECRET on the engine; without it the area
+  // refuses to run rather than falling back to unsigned headers that any caller
+  // could forge.
+  development: {
+    engineUrl: (process.env.DEV_ENGINE_URL || '').replace(/\/+$/, ''),
+    principalSecret: process.env.DEV_PRINCIPAL_SECRET || '',
+    principalTtlMs: Number(process.env.DEV_PRINCIPAL_TTL_MS || 120_000),
+    timeoutMs: Number(process.env.DEV_ENGINE_TIMEOUT_MS || 30_000),
+  },
+
   // ── Beta manual payment ────────────────────────────────────────────────────
   // Server-only. `bank` is never serialised into a public response, a client
   // bundle, or a log line; payments/config.ts is the single reader and it masks
