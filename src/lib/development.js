@@ -8,6 +8,18 @@ import { development } from '@/lib/api';
 // section that leads to "not configured", or hide a section that works — and
 // the check would run again on every route change.
 
+/**
+ * Whether a rejection is just a request the caller abandoned.
+ *
+ * The API client reports an abandoned request as a NetworkError with code
+ * ABORTED — not as a DOMException named AbortError. Checking for the latter
+ * matches nothing, so leaving a page (or React's development double-effect)
+ * would put "Request cancelled" on screen as though something had failed.
+ */
+export function isAbandonedRequest(error) {
+  return error?.code === 'ABORTED' || error?.name === 'AbortError';
+}
+
 let cached = null;
 let inFlight = null;
 const listeners = new Set();

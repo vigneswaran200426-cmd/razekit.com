@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { development } from '@/lib/api';
 import { Badge, Button, Card, Input, Spinner } from '@/components/ui';
+import { isAbandonedRequest } from '@/lib/development';
 import { cn } from '@/lib/cn';
 
 // The Control Center for one build.
@@ -154,7 +155,7 @@ export default function BuildDetail() {
         setAcceptance(criteria || []);
         setError(null);
       } catch (e) {
-        if (e.name === 'AbortError') return;
+        if (isAbandonedRequest(e)) return;
         setError(e.message || 'Could not load this build');
       }
     },
@@ -236,8 +237,12 @@ export default function BuildDetail() {
         />
       ))}
 
+      {/* min-w-0 on both columns: a grid item defaults to min-width:auto, so it
+          refuses to shrink below its content's intrinsic width. A long
+          deliverable path or an unbroken chat message would then push the
+          whole page wider than a phone screen. */}
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {/* Chat is the control surface: the user talks to the build, and the
               build answers. Tool calls and test output are filtered out
               server-side, so this stays a conversation rather than a log. */}
@@ -249,7 +254,9 @@ export default function BuildDetail() {
                   <div
                     key={m.id}
                     className={cn(
-                      'max-w-[85%] rounded-lg px-3 py-2 text-[13px] leading-relaxed',
+                      // break-words because a message can carry a path, a URL or
+                      // an error string with no space in it to wrap at.
+                      'max-w-[85%] break-words rounded-lg px-3 py-2 text-[13px] leading-relaxed',
                       m.role === 'user'
                         ? 'ml-auto bg-primary/10 text-ink'
                         : m.role === 'system'
@@ -298,7 +305,7 @@ export default function BuildDetail() {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Progress progress={data.progress} budget={data.budget} />
 
           {/* Verification is shown as its own fact, separate from progress: a

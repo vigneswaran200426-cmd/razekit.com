@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppWindow, Gamepad2, Globe, Plus, Sparkles } from 'lucide-react';
 import { development } from '@/lib/api';
 import { Badge, Button, Card, EmptyState, Input, Label, PageHeader, Skeleton } from '@/components/ui';
+import { isAbandonedRequest } from '@/lib/development';
 import { cn } from '@/lib/cn';
 
 // The Development area's front door.
@@ -221,7 +222,7 @@ export default function Development() {
       if (!status.configured) { setTasks([]); return; }
       setTasks(await development.list({ signal }));
     } catch (e) {
-      if (e.name === 'AbortError') return;
+      if (isAbandonedRequest(e)) return;
       setError(e.message || 'Could not load your builds');
       setTasks([]);
     }
