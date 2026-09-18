@@ -127,9 +127,24 @@ description (Settings), label/hint/placeholder repetition (Create Contest), Trac
 exception list (legal, provider names, accessibility, diagnostics). And an OLD → NEW → REASON report
 for meaningful rewrites.
 
-**Important calibration:** a 24-phrase grep of `src/` returned only 2 hits, one a code comment. The
-frontend product copy is genuinely good and specific. Do **not** mass-delete it. The problem is
-structural repetition and the unswept non-frontend surfaces — not the prose.
+**Important calibration:** the copy itself is genuinely good. A full sweep of the owner's ~100-phrase
+list across `src/`, `server/src/` and `server/scripts/` (196 files) found **no real AI-slop in
+user-facing prose**. Every apparent hit was CSS (`transition-transform`), an image-generation *prompt*
+word in `visual/registry.ts`, a test-script name (`end-to-end`), or a domain term (`payment_unlocked`).
+A prose-only repeated-word scan found **zero** — all 379 raw hits were Tailwind (`border border-line`,
+`flex flex-col`). **Do not mass-delete or "de-slop" this prose.**
+
+The real problems are (a) structural repetition — icon + title + title again, two of the same control
+— and (b) the surfaces that were never swept at all. Proof that (b) matters:
+
+> **The wallet bug.** `money/settlement.ts:99` told a brand *"...has been refunded to your wallet."*
+> `AppShell.jsx:56` states the rule — *"Balance", never "Wallet": RazeKit is not a wallet provider and
+> the product language must not imply one* — and the Terms say the same. It survived because it is a
+> **server-generated notification**, and every copy pass so far only looked at the frontend.
+> *(Fixed 2026-09-19.)* Assume its siblings in the email and notification templates are still wrong.
+
+`Wallet` as an entity name, a lucide icon import, a variable, and the `/wallet` route alias are all
+internal and correct — leave them. Only user-visible strings matter here.
 
 ---
 

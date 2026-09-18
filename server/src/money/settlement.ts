@@ -96,7 +96,12 @@ export async function refundCapturedPayment(sdk, { payment, contest }) {
   await sdk.entities.Notification.create({
     type: 'payment_received',
     title: 'Refund processed',
-    description: `Your contest funding (${payment.reference}) has been refunded to your wallet.`,
+    // "balance", never "wallet". AppShell states the rule — RazeKit is not a
+    // wallet provider and the product language must not imply one — and the
+    // Terms say the same. This notification was the one place still saying it,
+    // because it is generated server-side and the copy sweep only ever covered
+    // the frontend.
+    description: `Your contest funding (${payment.reference}) has been refunded to your RazeKit balance.`,
     recipient_user_id: payment.brand_id,
     contest_id: payment.contest_id,
   }).catch(() => null);
