@@ -129,6 +129,72 @@ runnable in this state. Pre-existing; not introduced this session. Low severity,
 
 ---
 
+## 4-000. Session 6 (2026-09-18) — P0 scoring exploit, lint, audit leads
+
+### P0 — a brand could pick the winner of its own contest (`2f9b16a`)
+
+`scoring/compute.ts:113` reads `SocialCampaignPost` for the contest;
+`engagementInputs()` takes views/likes/comments/shares/saves/watch_time/follower_growth straight off
+that row's `metrics`. That becomes `engagement_score` → half of Final Score → **winner selection and
+prize release.**
+
+`SocialCampaignPost` had **no entry in `PROTECTED_FIELDS` at all**, and its RLS grants create to any
+`user_role: client` and update to the owning client. Its siblings `SocialMetric` and `SocialPost`
+were already `['*']`. This one was missed.
+
+Now `['*']`. Nothing in the app writes it — only `seed-simulation.ts` and `verify-e2e.ts`, both via
+`serviceClient()`, which skips the check (`service.ts:260, 311`).
+
+**Root cause, and the part that matters:** `protected-sweep.test.ts:66` read
+`if (rls.create !== true) continue`. This entity's create is a *role condition*, not literal `true`,
+so the sweep built to catch exactly this class never looked at it. The sweep now resolves
+`$or`/`$and`, role conditions and self-scoped rules, and still skips admin-only creation.
+
+Widening it immediately found three more:
+- **`Review.verified`** — the "RazeKit confirmed this review" badge, writable by the person writing
+  the review. Now server-only with `Review.status`.
+- `Submission.resolution` — false positive (video resolution, beside `duration`/`file_size`).
+- `Contest.max_downloads` — false positive (owner-set footage policy, beside `require_otp`).
+
+Also closed `FootageAccessRequest` (`status`, `otp_verified`, `otp_attempts`, `otp_locked_until`…) —
+`OtpVerification.verified` was guarded long ago while the other half of the same footage gate was not.
+
+### Lint runnable for the first time (`2a2f3c2`)
+
+`npm run lint` had **never been able to run** — ESLint 9 needs a flat config and there was none.
+Added `eslint.config.js` (defect rules, not formatting). First run: 34 problems.
+
+The important one: `Dashboard.jsx` declared `FUNDING_NEEDS_BRAND` / `FUNDING_IN_REVIEW` with a
+comment saying *"showing one as the other is how someone pays twice"* — **and never used them.**
+Every non-FUNDED contest got one bucket and a "Fund contest" button, so a brand awaiting
+verification was told to pay again. Fixed; contests in review now get their own card with no payment
+action. `npm run lint` exits 0; 10 `exhaustive-deps` warnings left deliberately visible.
+
+### Consent copy corrected against the live site (`efee9e0`)
+
+Checked the deployed site: `document.cookie` empty, localStorage empty on first visit, no
+third-party scripts, no gtag/dataLayer/fbq. **RazeKit sets no cookies at all.** The banner said
+"Cookies on RazeKit" anyway. Reworded; `/cookies` route kept because that is what people search for.
+
+### Audit leads — NOT verified, do not treat as fact
+
+A 6-dimension multi-agent audit completed, but **all 62 verification agents died on a session
+limit**, so nothing below was adversarially checked. I hand-verified only the scoring exploit above.
+Treat these as leads with file references, and confirm before acting:
+
+- **The social provider layer does not exist.** No adapter for any of the six platforms, no social
+  OAuth, no token storage, no scheduled metric sync. (Partially confirmed: `server/src/social/`
+  contains only `publication.ts`; the only OAuth is Google *login*.) Public Terms may claim
+  integrations that do not exist — worth checking before launch.
+- Post ownership is never verified — a creator could submit someone else's post.
+- Traffic dedupe is a read-then-write with **no unique index**, and counters are a stale
+  read-modify-write, so concurrent replay double-counts (`traffic/service.ts:38, 70-77`).
+- No contest-window cutoff on traffic; `is_unique` decided from lifetime events.
+- Several route gaps claimed: no Edit Contest, no Unauthorized surface, password recovery a dead
+  end, client-facing Refund Request absent, `/feed` orphaned.
+
+Full journal: `…/subagents/workflows/wf_9c9e668d-d80/journal.jsonl`.
+
 ## 4-00. Session 5 (2026-09-17) — copy audit, dependencies, forensic checks
 
 ### Copy audit — the premise did not survive the evidence
