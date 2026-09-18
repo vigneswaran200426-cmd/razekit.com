@@ -27,7 +27,8 @@
     "verify:admin": "tsx scripts/verify-admin.ts",
     "verify:split-db": "tsx scripts/verify-split-db.ts",
     "verify:winner": "tsx scripts/verify-winner-flow.ts",
-    "verify:reports": "tsx scripts/verify-reports.ts"
+    "verify:reports": "tsx scripts/verify-reports.ts",
+    "verify:development": "tsx scripts/verify-development-e2e.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
