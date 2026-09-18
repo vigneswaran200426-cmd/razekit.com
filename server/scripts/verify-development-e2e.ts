@@ -37,7 +37,10 @@ const HAS_REAL_MODELS = Boolean(process.env.FABLE_API_KEY?.trim() && process.env
 const MODEL_MODE = HAS_REAL_MODELS ? 'real' : 'test';
 
 // Configured before the client module is imported: it reads config at import
-// time, exactly as it does in the running server.
+// time, exactly as it does in the running server. The area is switched on here
+// because this script's whole job is to verify it — the default everywhere else
+// is off, and that default is asserted in test/development.test.ts.
+process.env.DEV_AREA_ENABLED = 'true';
 process.env.DEV_ENGINE_URL = ENGINE_URL;
 process.env.DEV_PRINCIPAL_SECRET = SECRET;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'e2e-insecure-secret';

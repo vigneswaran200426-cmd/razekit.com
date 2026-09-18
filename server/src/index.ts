@@ -54,7 +54,14 @@ app.use('/api/payments', paymentsRouter);
 // The Development product area. Its domain logic lives in the RazeKit DEV
 // engine; this router only authenticates the caller and scopes them to their
 // own tenant. Mounted above miscRouter so its paths are never shadowed.
-app.use('/api/development', developmentRouter);
+//
+// Mounted ONLY when the area is switched on. Leaving it mounted and answering
+// 401 or 503 would still tell anyone probing that the feature exists and is
+// merely switched off; not mounting it means those paths fall through to the
+// same 404 as any other path that was never built.
+if (config.development.enabled) {
+  app.use('/api/development', developmentRouter);
+}
 app.use('/api', miscRouter);
 
 app.get('/', (_req, res) => res.json({ service: 'razekit-api', ok: true }));

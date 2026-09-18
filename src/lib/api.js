@@ -3,6 +3,10 @@
 // `import.meta.env` is guarded rather than assumed: Vite defines it at build
 // time, but this module is also loaded directly by the network-policy test
 // under plain node, where it does not exist.
+// A relative path, not the @ alias: this module is also imported directly by
+// the network-policy test under plain node, which has no Vite alias resolution.
+import { DEV_AREA_VISIBLE } from './flags.js';
+
 const ENV = (typeof import.meta !== 'undefined' && import.meta.env) || {};
 const BASE = (ENV.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 const TOKEN_KEY = 'rk_token';
@@ -232,7 +236,11 @@ export const contestRules = () => request('GET', '/api/contest-rules');
 // The autonomous build area. These go to RazeKit's own API like everything
 // else — the browser never talks to the development engine directly, because
 // the signed principal that identifies the account is minted server-side.
-export const development = {
+//
+// Behind the build-time switch, so a build with the area off ships none of
+// these paths at all: the whole object folds to null and the endpoints it names
+// never appear in the bundle for anyone to read off.
+export const development = DEV_AREA_VISIBLE ? {
   status: (opts) => request('GET', '/api/development/status', { ...opts }),
   analyze: (input) => request('POST', '/api/development/tasks/analyze', { body: input }),
   list: (opts) => request('GET', '/api/development/tasks', { ...opts }),
@@ -247,9 +255,12 @@ export const development = {
   denyChange: (id, changeId, reason) =>
     request('POST', `/api/development/tasks/${enc(id)}/changes/${enc(changeId)}/deny`, { body: { reason } }),
   cancel: (id) => request('POST', `/api/development/tasks/${enc(id)}/cancel`),
-};
+} : null;
 
 export const analytics = { track: (evt) => { try { request('POST', '/api/analytics/track', { body: evt || {} }); } catch {} } };
 
-export const api = { BASE, token, request, entities, auth, fn, uploads, analytics, contestRules, development, onNetworkChange, NetworkError };
+// Spread conditionally rather than listed: with the area off the key folds away
+// entirely, so the aggregate does not carry a `development: null` that tells a
+// reader the feature exists and is switched off.
+export const api = { BASE, token, request, entities, auth, fn, uploads, analytics, contestRules, ...(DEV_AREA_VISIBLE ? { development } : {}), onNetworkChange, NetworkError };
 export default api;

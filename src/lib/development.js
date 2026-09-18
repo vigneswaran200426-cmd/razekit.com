@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { development } from '@/lib/api';
+import { DEV_AREA_VISIBLE } from '@/lib/flags';
 
-// Whether the Development area is switched on for this deployment.
+// Whether the Development area is usable for this deployment.
 //
-// The answer is a property of the deployment, not of the page, so it is fetched
-// once per session and shared. Without this the navigation would either show a
-// section that leads to "not configured", or hide a section that works — and
-// the check would run again on every route change.
+// Two separate questions, and both must be yes. DEV_AREA_VISIBLE is the product
+// decision — should this exist for users at all. The probe below is the
+// operational one — is an engine actually wired up behind it. The probe answer
+// is a property of the deployment rather than of the page, so it is fetched
+// once per session and shared.
 
 /**
  * Whether a rejection is just a request the caller abandoned.
@@ -43,9 +45,14 @@ function load() {
 }
 
 export function useDevelopmentEnabled() {
-  const [enabled, setEnabled] = useState(cached);
+  const [enabled, setEnabled] = useState(DEV_AREA_VISIBLE ? cached : false);
 
   useEffect(() => {
+    // When the area is switched off there is nothing to ask about, and asking
+    // anyway would put a request for a hidden feature in the network log of
+    // every page load.
+    if (!DEV_AREA_VISIBLE) return undefined;
+
     let active = true;
     const listener = (value) => { if (active) setEnabled(value); };
     listeners.add(listener);
@@ -53,5 +60,5 @@ export function useDevelopmentEnabled() {
     return () => { active = false; listeners.delete(listener); };
   }, []);
 
-  return enabled === true;
+  return DEV_AREA_VISIBLE && enabled === true;
 }

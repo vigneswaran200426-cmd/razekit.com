@@ -3,6 +3,37 @@
 The autonomous app, website and game build area inside RazeKit, powered by the
 [RazeKit DEV](https://github.com/vigneswaran200426-cmd/razekit-dev) engine.
 
+## Status: switched off
+
+**The Development area is off, and off is the default.** Two switches, both of
+which must be on before any of it exists:
+
+| Switch | Where | Default | Effect when off |
+|---|---|---|---|
+| `DEV_AREA_ENABLED` | RazeKit API | `false` | The router is never mounted. `/api/development/*` returns the same 404 as an address that was never built. |
+| `VITE_DEV_AREA_ENABLED` | RazeKit web build | `false` | No route, no navigation entry, no page chunk, no API surface in the bundle. `/development` is not an address. |
+
+This is deliberately not derived from `DEV_ENGINE_URL`. "An engine happens to be
+configured" and "this area should exist for users" are different decisions, and
+only the second is a product decision.
+
+Verified by building with the switch off and checking the output: the
+`Development` and `BuildDetail` chunks are not emitted, and the strings
+`development`, `Development` and `BuildDetail` appear **zero** times across
+`dist/assets/*.js`. Turning the switch on restores both chunks and all routes.
+
+To turn it on:
+
+```bash
+# RazeKit API
+DEV_AREA_ENABLED=true
+DEV_ENGINE_URL=https://your-engine
+DEV_PRINCIPAL_SECRET=...        # must match the engine
+
+# RazeKit web (build-time — requires a rebuild/redeploy)
+VITE_DEV_AREA_ENABLED=true
+```
+
 ## One product, several areas
 
 RazeKit is **one website and one application**. Development is a product area
@@ -184,8 +215,10 @@ error type, never the response body.
 
 | Symptom | Cause |
 |---|---|
-| Development missing from the navigation | `DEV_ENGINE_URL` unset, or `/api/development/status` returned `configured: false`. |
-| `The Development area is not configured` | Same, on a direct visit to `/development`. |
+| `/development` shows Not Found | The area is off. The web app was built without `VITE_DEV_AREA_ENABLED=true`, so the route does not exist. This is the default. |
+| `/api/development/*` returns 404 | The area is off on the API: `DEV_AREA_ENABLED` is not `true`. This is the default. |
+| Turned on the API but the page is still missing | The web switch is build-time. Setting it needs a rebuild and redeploy, not a restart. |
+| Development missing from the navigation | Both switches are on but `DEV_ENGINE_URL` is unset, so `/api/development/status` returned `configured: false`. |
 | `Signed principal authorization is required` | `RAZEKIT_REQUIRE_SIGNED_PRINCIPAL=true` but `DEV_PRINCIPAL_SECRET` is unset or does not match. |
 | A build stops at DECISION NEEDED immediately | No model configured. Check `/health` → `models.mode`; `unconfigured` means neither the real nor the test pair was registered. |
 | `RAZEKIT_MODEL_MODE=real requires both FABLE_API_KEY and ASTRA_API_KEY` | Deliberate. `real` never silently falls back to canned adapters. |

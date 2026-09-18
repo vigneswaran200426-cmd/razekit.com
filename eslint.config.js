@@ -27,7 +27,11 @@ export default [
       ecmaVersion: 2023,
       sourceType: 'module',
       parserOptions: { ecmaFeatures: { jsx: true } },
-      globals: { ...globals.browser, ...globals.es2021 },
+      // __DEV_AREA_VISIBLE__ is substituted by Vite's `define` at build time
+      // (vite.config.js). It is genuinely undeclared in source, which is the
+      // point — declaring it would defeat the constant folding that removes the
+      // Development area from the bundle — so it is named here instead.
+      globals: { ...globals.browser, ...globals.es2021, __DEV_AREA_VISIBLE__: 'readonly' },
     },
     settings: { react: { version: 'detect' } },
     plugins: { react, 'react-hooks': reactHooks },

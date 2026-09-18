@@ -12,6 +12,7 @@ import { createHmac } from 'node:crypto';
 process.env.DEV_ENGINE_URL = 'http://dev-engine.test';
 process.env.DEV_PRINCIPAL_SECRET = 'test-principal-secret';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
+// Deliberately NOT setting DEV_AREA_ENABLED, so the default is what gets tested.
 
 const { callDevEngine, DevEngineError, tenantIdFor, developmentConfigured } = await import(
   '../src/development/client.js'
@@ -63,6 +64,39 @@ const client = { id: 'user_client_2', role: 'user', user_role: 'client' };
 
 test('the area reports itself configured only when it actually is', () => {
   assert.equal(developmentConfigured(), true);
+});
+
+test('the area is off unless a deployment deliberately turns it on', async () => {
+  const { config } = await import('../src/config.js');
+
+  // A fully-configured engine is NOT enough. Whether this area exists for users
+  // is a product decision, and it defaults to no — which is also what keeps an
+  // unfinished area off production if its code reaches main early.
+  assert.equal(config.development.enabled, false);
+  assert.ok(config.development.engineUrl, 'the engine is configured in this test');
+  assert.ok(config.development.principalSecret, 'the secret is configured in this test');
+});
+
+test('only an exact opt-in turns the area on', async () => {
+  const previous = process.env.DEV_AREA_ENABLED;
+  // Anything other than the literal "true" leaves it off: a half-set variable
+  // must not half-enable a feature.
+  for (const value of ['', 'false', '1', 'yes', 'TRUE', 'on']) {
+    process.env.DEV_AREA_ENABLED = value;
+    const fresh = await import(`../src/config.js?enabled=${encodeURIComponent(value)}`);
+    assert.equal(
+      fresh.config.development.enabled,
+      false,
+      `DEV_AREA_ENABLED=${JSON.stringify(value)} must not enable the area`,
+    );
+  }
+
+  process.env.DEV_AREA_ENABLED = 'true';
+  const on = await import('../src/config.js?enabled=true-exact');
+  assert.equal(on.config.development.enabled, true);
+
+  if (previous === undefined) delete process.env.DEV_AREA_ENABLED;
+  else process.env.DEV_AREA_ENABLED = previous;
 });
 
 test('a RazeKit account maps to exactly one development tenant', () => {

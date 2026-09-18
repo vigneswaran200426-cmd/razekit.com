@@ -13,7 +13,8 @@ import path from 'node:path';
 export default defineConfig(({ mode }) => {
   // loadEnv, not process.env: the value lives in .env.local, which Vite exposes
   // to the client bundle but does not put on process.env for the config itself.
-  const devApiProxy = loadEnv(mode, process.cwd(), '').VITE_DEV_API_PROXY;
+  const env = loadEnv(mode, process.cwd(), '');
+  const devApiProxy = env.VITE_DEV_API_PROXY;
   // Anchored regexes, not bare prefixes. Vite matches a plain string key as a
   // PREFIX, so '/r' — the tracking-redirect mount — also swallowed '/register',
   // '/review' and '/reports', and the dev server answered them with the API's
@@ -28,6 +29,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     resolve: { alias: { '@': path.resolve(process.cwd(), 'src') } },
+    // A real boolean literal, not a string read from import.meta.env.
+    //
+    // This is what makes the Development area disappear from the bundle rather
+    // than merely hide inside it. Reading `import.meta.env.VITE_DEV_AREA_ENABLED`
+    // leaves a runtime comparison that Rollup cannot fold, so the routes and
+    // page chunks survive the build; substituting `false` here lets everything
+    // behind the flag be eliminated. Verified by checking dist for the chunks.
+    define: {
+      __DEV_AREA_VISIBLE__: JSON.stringify(env.VITE_DEV_AREA_ENABLED === 'true'),
+    },
     server: { port: 5173, proxy },
   };
 });

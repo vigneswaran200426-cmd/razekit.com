@@ -5,6 +5,7 @@ import {
   Activity, Bell, Briefcase, ChevronDown, Code2, Compass, FolderKanban, HelpCircle, LayoutDashboard, LogOut, Menu, Search, Settings, Shield, Trophy, User, Video, Wallet, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { DEV_AREA_VISIBLE } from '@/lib/flags';
 import { useDevelopmentEnabled } from '@/lib/development';
 import { entities } from '@/lib/api';
 import { cn } from '@/lib/cn';
@@ -46,8 +47,9 @@ const NAV = {
 //
 // Appended to the nav above rather than folded into it: the contest IA is
 // deliberate and stays exactly as it is. This is an additional area of the same
-// product, shown only to signed-in accounts and only where the deployment has
-// the build engine configured, so a deployment without it sees no change.
+// product, shown only when the build enables it, only to signed-in accounts,
+// and only where an engine is actually configured — so a deployment without it
+// sees no change and reveals nothing.
 const DEVELOPMENT_NAV = { to: '/development', label: 'Development', icon: Code2 };
 
 const QUICK = {
@@ -159,7 +161,12 @@ export default function AppShell() {
   const isVisitor = status !== 'authenticated';
   const developmentEnabled = useDevelopmentEnabled();
   const baseNav = NAV[isVisitor ? 'visitor' : role] || NAV.visitor;
-  const navItems = !isVisitor && developmentEnabled ? [...baseNav, DEVELOPMENT_NAV] : baseNav;
+  // DEV_AREA_VISIBLE leads deliberately: it is a build-time constant, so with
+  // the area switched off this whole expression folds away and the label never
+  // reaches the shipped bundle.
+  const navItems = DEV_AREA_VISIBLE && !isVisitor && developmentEnabled
+    ? [...baseNav, DEVELOPMENT_NAV]
+    : baseNav;
 
   useEffect(() => {
     if (!user?.id) { setUnread(0); return; }

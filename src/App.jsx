@@ -7,6 +7,7 @@ import { AuthProvider } from '@/lib/auth';
 import { HomeGate, ProtectedRoute } from '@/components/routing';
 import AppShell from '@/components/AppShell';
 import { NotificationProvider } from '@/components/Notifications';
+import { DEV_AREA_VISIBLE } from '@/lib/flags';
 
 // ── Route-level code splitting ──────────────────────────────────────────────
 // The whole app used to ship as ONE 910KB chunk, so a visitor reading the
@@ -28,8 +29,6 @@ const ContestDetail = lazy(() => import('@/pages/ContestDetail'));
 const CreateContest = lazy(() => import('@/pages/CreateContest'));
 const CreatorProfile = lazy(() => import('@/pages/CreatorProfile'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Development = lazy(() => import('@/pages/development/Development'));
-const BuildDetail = lazy(() => import('@/pages/development/BuildDetail'));
 const Discover = lazy(() => import('@/pages/Discover'));
 const Explore = lazy(() => import('@/pages/Explore'));
 const Feed = lazy(() => import('@/pages/Feed'));
@@ -53,6 +52,14 @@ const Privacy = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Pri
 const About = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.About })));
 const Contact = lazy(() => import('@/pages/Legal').then((m) => ({ default: m.Contact })));
 const Cookies = lazy(() => import('@/pages/Cookies'));
+
+// The Development area, behind the build-time switch.
+//
+// With the switch off these fold to null and Rollup drops the import() calls
+// with them, so no route exists, no chunk is emitted, and /development falls
+// through to NotFound exactly as an address that was never built would.
+const Development = DEV_AREA_VISIBLE ? lazy(() => import('@/pages/development/Development')) : null;
+const BuildDetail = DEV_AREA_VISIBLE ? lazy(() => import('@/pages/development/BuildDetail')) : null;
 
 
 /**
@@ -131,9 +138,14 @@ export default function App() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             {/* The Development product area. A sibling of the contest, brand and
                 creator areas inside the same application — same shell, same
-                account, same session. It adds a section; it replaces nothing. */}
-            <Route path="/development" element={<ProtectedRoute><Development /></ProtectedRoute>} />
-            <Route path="/development/:id" element={<ProtectedRoute><BuildDetail /></ProtectedRoute>} />
+                account, same session. It adds a section; it replaces nothing,
+                and it is absent entirely unless the build enables it. */}
+            {DEV_AREA_VISIBLE && (
+              <Route path="/development" element={<ProtectedRoute><Development /></ProtectedRoute>} />
+            )}
+            {DEV_AREA_VISIBLE && (
+              <Route path="/development/:id" element={<ProtectedRoute><BuildDetail /></ProtectedRoute>} />
+            )}
             <Route path="/work" element={<ProtectedRoute><Work /></ProtectedRoute>} />
             {/* The RazeKit balance. /wallet is kept as an alias so existing links
                 and bookmarks keep working, but the product no longer uses the

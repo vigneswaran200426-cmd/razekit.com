@@ -143,6 +143,13 @@ export const config = {
   // refuses to run rather than falling back to unsigned headers that any caller
   // could forge.
   development: {
+    // The master switch, and it is OFF unless someone deliberately turns it on.
+    // Not derived from engineUrl: "the engine happens to be configured" and
+    // "this area should exist for users" are different decisions, and only the
+    // second one is a product decision. While this is false the router is not
+    // mounted at all, so /api/development/* is indistinguishable from a path
+    // that was never built.
+    enabled: (process.env.DEV_AREA_ENABLED || 'false') === 'true',
     engineUrl: (process.env.DEV_ENGINE_URL || '').replace(/\/+$/, ''),
     principalSecret: process.env.DEV_PRINCIPAL_SECRET || '',
     principalTtlMs: Number(process.env.DEV_PRINCIPAL_TTL_MS || 120_000),
