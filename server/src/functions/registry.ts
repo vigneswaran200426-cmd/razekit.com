@@ -5,7 +5,7 @@ import { trackingLinkCreate, trackingLinkList } from './tracking.js';
 import { criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet } from './criteria.js';
 import { complianceEvaluate, complianceGet, complianceReview } from './compliance.js';
 import { winnersShowcase, winnersLeaderboard, creatorPublicProfile } from './winners.js';
-import { contestDiscover } from './discover.js';
+import { contestDiscover, exploreDirectory } from './discover.js';
 import {
   socialConnections, socialConnectStart, socialDisconnect, socialSyncPost, socialCapabilities,
 } from './social.js';
@@ -70,7 +70,7 @@ export const HANDLERS = {
   supportTicketCreate, supportTicketList, supportTicketUpdate, supportAsk, supportKnowledge,
   adminOverview, adminContests, adminTraffic, adminUsers, adminAudit,
   winnersShowcase, winnersLeaderboard, creatorPublicProfile,
-  contestDiscover,
+  contestDiscover, exploreDirectory,
   socialConnections, socialConnectStart, socialDisconnect, socialSyncPost, socialCapabilities,
   criteriaLibrary, criteriaRecommend, criteriaConfirm, criteriaGet,
   complianceEvaluate, complianceGet, complianceReview,
@@ -155,6 +155,9 @@ export const HTTP_ALLOWED = new Set([
   // Open contests for the public Discover page. Returns the same rows the
   // Contest entity already serves publicly, minus seeded accounts.
   'contestDiscover',
+  // Creators and published work for the public Explore page — the same rows
+  // UserProfile and Post already serve publicly, minus seeded accounts.
+  'exploreDirectory',
   // A creator connects the platforms they want tracked, and only those. Each
   // handler scopes itself to ctx.user; socialCapabilities carries no user data.
   'socialConnections', 'socialConnectStart', 'socialDisconnect', 'socialSyncPost',
@@ -218,6 +221,9 @@ export const PUBLIC_FUNCTIONS = new Set([
   // Discover is a public page, and the Contest entity it used to read directly
   // is public already — this narrows that read rather than widening anything.
   'contestDiscover',
+  // Explore is a public page and both entities it read directly are already
+  // public (rls.read is {} on each) — this narrows that read, never widens it.
+  'exploreDirectory',
   // What each platform's API can measure. No credentials, no user data — a
   // creator deciding whether to enter, and a brand deciding which platform to
   // run on, both need to know Reddit cannot report views BEFORE they commit.

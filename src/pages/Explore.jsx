@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Film, Image as ImageIcon, Search, Trophy, Users } from 'lucide-react';
-import { entities, fn } from '@/lib/api';
+import { fn } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money } from '@/lib/format';
 import { cn } from '@/lib/cn';
@@ -372,11 +372,16 @@ export default function Explore() {
   const [workQ, setWorkQ] = useState('');
   const [workCat, setWorkCat] = useState('all');
 
+  // exploreDirectory rather than UserProfile.list / Post.list directly. Both
+  // entities are public by RLS, so reading them from the browser returned every
+  // row — including seeded demo accounts. That is why the single creator a
+  // brand saw on this page was "Aria Fields", demo.creator@razekit.demo. The
+  // endpoint returns the same rows with non-real accounts removed.
   const loadCreators = useCallback(() => {
     setProfileError(null);
     setProfiles(null);
-    entities.UserProfile.list('-created_date', PROFILE_LIMIT)
-      .then((rows) => setProfiles(rows || []))
+    fn('exploreDirectory', { limit: PROFILE_LIMIT })
+      .then((d) => setProfiles(d?.creators || []))
       .catch(() => setProfileError('We couldn’t load creator profiles just now.'));
   }, []);
 
@@ -401,8 +406,8 @@ export default function Explore() {
   const loadWork = useCallback(() => {
     setPostError(null);
     setPosts(null);
-    entities.Post.list('-created_date', WORK_LIMIT)
-      .then((rows) => setPosts((rows || []).filter((p) => p.moderation_status !== 'removed' && p.status !== 'removed')))
+    fn('exploreDirectory', { limit: WORK_LIMIT })
+      .then((d) => setPosts((d?.work || []).filter((p) => p.moderation_status !== 'removed' && p.status !== 'removed')))
       .catch(() => setPostError('We couldn’t load published work just now.'));
   }, []);
 

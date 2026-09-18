@@ -56,6 +56,9 @@ test('the public surface stays small and deliberate', () => {
     // returned seeded simulation contests alongside real ones.
     'contestDiscover',
     'creatorPublicProfile',
+    // Creators and published work for Explore. Both entities it replaces were
+    // already public by RLS; this narrows the read to real accounts.
+    'exploreDirectory',
     'paymentModeInfo',
     'platformStats',
     'pollList',

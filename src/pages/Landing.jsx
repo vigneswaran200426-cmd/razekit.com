@@ -7,6 +7,7 @@ import { RazekitLogo } from '@/components/Brand';
 import { Button } from '@/components/ui';
 import ContestCard from '@/components/ContestCard';
 import PollBanners from '@/components/PollBanners';
+import Footer from '@/components/Footer';
 
 const STEPS = [
   { icon: Rocket, title: 'Brands launch', desc: 'A brand funds a prize and briefs the creative work they need.' },
@@ -132,7 +133,15 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-line py-8"><div className="shell flex items-center justify-between text-sm text-muted"><RazekitLogo mark={26} word={18} /><p>© {new Date().getFullYear()} RazeKit</p></div></footer>
+      {/* The shared footer, not a stub.
+          This was a logo and a copyright line, which meant the front page — the
+          one page a signed-out visitor actually lands on — had no route to
+          About, Contact, Terms, Privacy or Cookie settings, and showed no way
+          to reach a human. All of those pages existed; nothing on the homepage
+          pointed at them, because Landing renders outside AppShell and so never
+          received AppShell's footer.
+          Using the same component means the two can no longer drift apart. */}
+      <Footer />
     </div>
   );
 }
