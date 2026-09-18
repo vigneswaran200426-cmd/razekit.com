@@ -228,7 +228,28 @@ export const uploads = {
 // Contest fairness rule table (server-owned data; the server is the enforcer).
 export const contestRules = () => request('GET', '/api/contest-rules');
 
+// ── Development area ────────────────────────────────────────────────────────
+// The autonomous build area. These go to RazeKit's own API like everything
+// else — the browser never talks to the development engine directly, because
+// the signed principal that identifies the account is minted server-side.
+export const development = {
+  status: (opts) => request('GET', '/api/development/status', { ...opts }),
+  analyze: (input) => request('POST', '/api/development/tasks/analyze', { body: input }),
+  list: (opts) => request('GET', '/api/development/tasks', { ...opts }),
+  create: (input) => request('POST', '/api/development/tasks', { body: input }),
+  get: (id, opts) => request('GET', `/api/development/tasks/${enc(id)}`, { ...opts }),
+  update: (id, patch) => request('PATCH', `/api/development/tasks/${enc(id)}`, { body: patch }),
+  dashboard: (id, opts) => request('GET', `/api/development/tasks/${enc(id)}/dashboard`, { ...opts }),
+  acceptance: (id, opts) => request('GET', `/api/development/tasks/${enc(id)}/acceptance`, { ...opts }),
+  command: (id, content) => request('POST', `/api/development/tasks/${enc(id)}/commands`, { body: { content } }),
+  approveChange: (id, changeId, maxBudget) =>
+    request('POST', `/api/development/tasks/${enc(id)}/changes/${enc(changeId)}/approve`, { body: { maxBudget } }),
+  denyChange: (id, changeId, reason) =>
+    request('POST', `/api/development/tasks/${enc(id)}/changes/${enc(changeId)}/deny`, { body: { reason } }),
+  cancel: (id) => request('POST', `/api/development/tasks/${enc(id)}/cancel`),
+};
+
 export const analytics = { track: (evt) => { try { request('POST', '/api/analytics/track', { body: evt || {} }); } catch {} } };
 
-export const api = { BASE, token, request, entities, auth, fn, uploads, analytics, contestRules, onNetworkChange, NetworkError };
+export const api = { BASE, token, request, entities, auth, fn, uploads, analytics, contestRules, development, onNetworkChange, NetworkError };
 export default api;

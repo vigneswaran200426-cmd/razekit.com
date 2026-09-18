@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Activity, Bell, Briefcase, ChevronDown, Compass, FolderKanban, HelpCircle, LayoutDashboard, LogOut, Menu, Search, Settings, Shield, Trophy, User, Video, Wallet, X,
+  Activity, Bell, Briefcase, ChevronDown, Code2, Compass, FolderKanban, HelpCircle, LayoutDashboard, LogOut, Menu, Search, Settings, Shield, Trophy, User, Video, Wallet, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useDevelopmentEnabled } from '@/lib/development';
 import { entities } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
@@ -40,6 +41,14 @@ const NAV = {
     { to: '/winners', label: 'Winners', icon: Trophy },
   ],
 };
+
+// The Development product area — autonomous app, website and game builds.
+//
+// Appended to the nav above rather than folded into it: the contest IA is
+// deliberate and stays exactly as it is. This is an additional area of the same
+// product, shown only to signed-in accounts and only where the deployment has
+// the build engine configured, so a deployment without it sees no change.
+const DEVELOPMENT_NAV = { to: '/development', label: 'Development', icon: Code2 };
 
 const QUICK = {
   // "Balance", never "Wallet": RazeKit is not a wallet provider and the product
@@ -148,7 +157,9 @@ export default function AppShell() {
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isVisitor = status !== 'authenticated';
-  const navItems = NAV[isVisitor ? 'visitor' : role] || NAV.visitor;
+  const developmentEnabled = useDevelopmentEnabled();
+  const baseNav = NAV[isVisitor ? 'visitor' : role] || NAV.visitor;
+  const navItems = !isVisitor && developmentEnabled ? [...baseNav, DEVELOPMENT_NAV] : baseNav;
 
   useEffect(() => {
     if (!user?.id) { setUnread(0); return; }

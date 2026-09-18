@@ -28,6 +28,8 @@ const ContestDetail = lazy(() => import('@/pages/ContestDetail'));
 const CreateContest = lazy(() => import('@/pages/CreateContest'));
 const CreatorProfile = lazy(() => import('@/pages/CreatorProfile'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Development = lazy(() => import('@/pages/development/Development'));
+const BuildDetail = lazy(() => import('@/pages/development/BuildDetail'));
 const Discover = lazy(() => import('@/pages/Discover'));
 const Explore = lazy(() => import('@/pages/Explore'));
 const Feed = lazy(() => import('@/pages/Feed'));
@@ -127,6 +129,11 @@ export default function App() {
             {/* Authenticated */}
             <Route path="/tracker" element={<ProtectedRoute><Tracker /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            {/* The Development product area. A sibling of the contest, brand and
+                creator areas inside the same application — same shell, same
+                account, same session. It adds a section; it replaces nothing. */}
+            <Route path="/development" element={<ProtectedRoute><Development /></ProtectedRoute>} />
+            <Route path="/development/:id" element={<ProtectedRoute><BuildDetail /></ProtectedRoute>} />
             <Route path="/work" element={<ProtectedRoute><Work /></ProtectedRoute>} />
             {/* The RazeKit balance. /wallet is kept as an alias so existing links
                 and bookmarks keep working, but the product no longer uses the
